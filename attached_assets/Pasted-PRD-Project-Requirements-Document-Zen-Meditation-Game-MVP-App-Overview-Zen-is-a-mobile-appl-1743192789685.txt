@@ -1,0 +1,65 @@
+PRD (Project Requirements Document) - Zen Meditation Game MVP
+
+App Overview:
+Zen is a mobile application designed to make meditation a fun and engaging habit. Users nurture a virtual companion, "Mini Zenni" (a monkey-guru character), by completing daily meditation sessions. The core mechanic involves guided breathing exercises where focus is trained by tracking breath, primarily using thumb movements on the screen. Progress is rewarded with Experience Points (XP) for Mini Zenni, Zen Tokens (in-app currency), and streaks, fostering a connection and encouraging consistent practice. The app introduces gentle spiritual lore centered around Mini Zenni and a greater source, Zenni.
+
+User Flows:
+
+Onboarding: New user signs up via email/password, sets a username. Existing user logs in.
+Daily Loop:
+User opens app, lands on Home Screen.
+User completes optional Daily Check-in (1-5 scale rating, optional reflection).
+User initiates a Meditation Session from Home Screen, choosing a type (Calm, Focus, Sleep) and duration (5-10 min).
+User performs meditation, tracking breath via thumb movements (up/down) or uses "I Did It" fallback. Receives gentle haptic feedback if off-rhythm.
+User views Post-Session Summary (Breath Score, XP/Tokens earned, Streak progress, Micro-lesson).
+User sees Mini Zenni potentially level up or receive rewards on returning home.
+Customization: User navigates to Wardrobe, browses unlocked outfits, previews them on Mini Zenni, and equips a chosen outfit.
+Growth (MVP): User earns Zen Tokens via sessions. User can see a placeholder/teaser for future Guru Mode. User can find and share a basic referral code/link.
+Tech Stack & APIs:
+
+Frontend: Expo SDK (latest stable), React Native, TypeScript
+State Management: Zustand
+Navigation: React Navigation
+UI: React Native core components, potentially react-native-paper, styled components or StyleSheet.
+Animation: react-native-reanimated, lottie-react-native
+Haptics: expo-haptics
+Gestures: react-native-gesture-handler
+Backend: Firebase
+Firebase Authentication (Email/Password)
+Firestore (Database)
+Firebase Cloud Functions (Node.js/TypeScript) (for secure logic: rewards, streaks, level-ups)
+Firebase SDK (v9 modular JavaScript SDK)
+Core Features (In Scope for MVP):
+
+Email/Password Authentication (Signup/Login).
+Daily Check-in (1-5 scale + optional reflection), basic storage.
+Mini Zenni display on Home (avatar, level).
+Meditation Session:
+Selection (Calm/Focus/Sleep, 5/10 min duration).
+Timer.
+Thumb-based Breath Tracking (Inhale/Exhale detection).
+Gentle Haptic Feedback for rhythm guidance.
+"I Did It" fallback option.
+Post-Session Summary: Display Breath Score (%), XP Gained, Zen Tokens Earned, Streak Progress, Micro-lesson text.
+Gamification Logic (Backend via Cloud Functions): XP calculation, basic Leveling for Mini Zenni (visual update TBD), Streak tracking (increment/reset), Zen Token awarding (per session).
+Basic Mini Zenni visual update based on level (e.g., number change, simple accessory).
+Zenni Wardrobe: View available/unlocked outfits (fetched from backend), Equip functionality. Default outfit available initially.
+Referral Code: Generate and display a code/link for sharing (no backend tracking/reward for MVP).
+Guru Mode: Static placeholder/teaser screen.
+Home Screen UI: Display Zenni, XP bar, Token count, Streak visual, Check-in prompt, Start Meditation card.
+Out-of-Scope (for MVP):
+
+Full Guru Mode functionality (AI chat, wisdom channeling).
+Zenni+ Subscription / Monetization.
+Purchasing outfits with Zen Tokens.
+Advanced outfit/cosmetic variety.
+Streak Freeze functionality.
+Full referral tracking and reward system.
+Long-form meditations (20-60 min).
+Detailed session history Browse/visualization.
+Social features (leaderboards, sharing progress).
+Push notifications.
+Offline meditation tracking/syncing.
+Advanced analytics dashboards.
+Password Reset flow (consider adding if time permits, but can defer).
+Username changing/Profile editing beyond initial setup.
