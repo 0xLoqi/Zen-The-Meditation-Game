@@ -1,136 +1,642 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { COLORS } from './src/constants/theme';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  Image,
+  TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  SafeAreaView
+} from 'react-native';
+import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from './src/constants/theme';
 
-export default function App() {
+// Create stack navigators for auth and main flows
+const AuthStack = createStackNavigator();
+const MainStack = createStackNavigator();
+
+// Mock auth state for demo
+const mockAuth = {
+  isAuthenticated: false,
+  isLoading: false,
+  login: (email: string, password: string): Promise<void> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        mockAuth.isAuthenticated = true;
+        resolve();
+      }, 1500);
+    });
+  },
+  signup: (email: string, username: string, password: string): Promise<void> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        mockAuth.isAuthenticated = true;
+        resolve();
+      }, 1500);
+    });
+  },
+  logout: (): Promise<void> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        mockAuth.isAuthenticated = false;
+        resolve();
+      }, 500);
+    });
+  }
+};
+
+// Splash Screen Component
+const SplashScreen = ({ navigation }: any) => {
+  useEffect(() => {
+    // Simulate loading assets or checking auth state
+    setTimeout(() => {
+      navigation.replace('Login');
+    }, 2000);
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Zen Meditation</Text>
-        <Text style={styles.subtitle}>Calm your mind, focus your thoughts</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Welcome to Zen!</Text>
-          <Text style={styles.cardText}>
-            A meditation app designed to help you develop mindfulness and reduce stress
-            through guided meditation practices.
-          </Text>
+    <View style={styles.splashContainer}>
+      <View style={styles.logoContainer}>
+        <View style={styles.logo}>
+          {/* Replace with your app logo */}
+          <Text style={styles.logoText}>Zen</Text>
         </View>
+        <Text style={styles.appName}>Zen Meditation</Text>
+      </View>
+      <ActivityIndicator size="large" color={COLORS.accent} />
+    </View>
+  );
+};
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Start Meditating</Text>
+// Login Screen Component
+const LoginScreen = ({ navigation }: any) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      alert('Please enter both email and password');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await mockAuth.login(email, password);
+      // After successful login, navigation will be handled by the auth state change
+    } catch (error) {
+      alert('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.formContainer}>
+          <Text style={styles.screenTitle}>Welcome Back</Text>
+          <Text style={styles.screenSubtitle}>Sign in to continue your meditation journey</Text>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              placeholderTextColor={COLORS.neutralMedium}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              placeholderTextColor={COLORS.neutralMedium}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
+          
+          <TouchableOpacity 
+            style={[styles.button, isLoading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <Text style={styles.buttonText}>Login</Text>
+            )}
+          </TouchableOpacity>
+          
+          <View style={styles.footerTextContainer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+              <Text style={styles.footerLink}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
+
+// Signup Screen Component
+const SignupScreen = ({ navigation }: any) => {
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignup = async () => {
+    if (!email || !username || !password || !confirmPassword) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await mockAuth.signup(email, username, password);
+      // After successful signup, navigation will be handled by the auth state change
+    } catch (error) {
+      alert('Signup failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
+        
+        <View style={styles.formContainer}>
+          <Text style={styles.screenTitle}>Create Account</Text>
+          <Text style={styles.screenSubtitle}>Start your mindfulness journey with Zen</Text>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              placeholderTextColor={COLORS.neutralMedium}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Username</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Choose a username"
+              placeholderTextColor={COLORS.neutralMedium}
+              autoCapitalize="none"
+              value={username}
+              onChangeText={setUsername}
+            />
+          </View>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Create password"
+              placeholderTextColor={COLORS.neutralMedium}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Confirm Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm password"
+              placeholderTextColor={COLORS.neutralMedium}
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+          </View>
+          
+          <TouchableOpacity 
+            style={[styles.button, isLoading && styles.buttonDisabled]}
+            onPress={handleSignup}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <Text style={styles.buttonText}>Sign Up</Text>
+            )}
+          </TouchableOpacity>
+          
+          <View style={styles.footerTextContainer}>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.footerLink}>Login</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
 
-        <View style={styles.statsContainer}>
+// Home Screen Component (simplified)
+const HomeScreen = ({ navigation }: any) => {
+  const handleLogout = async () => {
+    await mockAuth.logout();
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Zen Meditation</Text>
+        <TouchableOpacity 
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <ScrollView contentContainerStyle={styles.homeContent}>
+        <View style={styles.welcomeSection}>
+          <View style={styles.avatarPlaceholder}>
+            {/* Placeholder for Mini Zenni */}
+            <Text style={styles.avatarText}>ZEN</Text>
+          </View>
+          <Text style={styles.welcomeText}>Welcome to Zen!</Text>
+        </View>
+        
+        <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>0</Text>
             <Text style={styles.statLabel}>Days</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Minutes</Text>
+            <Text style={styles.statLabel}>XP</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Sessions</Text>
+            <Text style={styles.statLabel}>Tokens</Text>
           </View>
         </View>
-      </View>
+        
+        <TouchableOpacity style={styles.actionCard}>
+          <Text style={styles.actionTitle}>Daily Check-in</Text>
+          <Text style={styles.actionText}>How zen do you feel today? Take a moment to reflect on your mental state.</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.actionCard}>
+          <Text style={styles.actionTitle}>Start Meditation</Text>
+          <Text style={styles.actionText}>Choose a meditation type and duration to begin your practice.</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
 
+// Navigation configurations
+const AuthNavigator = () => {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Splash" component={SplashScreen} />
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="Signup" component={SignupScreen} />
+    </AuthStack.Navigator>
+  );
+};
+
+const MainNavigator = () => {
+  return (
+    <MainStack.Navigator screenOptions={{ headerShown: false }}>
+      <MainStack.Screen name="Home" component={HomeScreen} />
+    </MainStack.Navigator>
+  );
+};
+
+// Main App Component
+export default function App() {
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Simulate authentication state check
+    const checkAuth = async () => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsAuthenticated(mockAuth.isAuthenticated);
+      setIsInitializing(false);
+    };
+
+    checkAuth();
+
+    // Set up an interval to check auth state every second (for demo purposes)
+    const interval = setInterval(() => {
+      setIsAuthenticated(mockAuth.isAuthenticated);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (isInitializing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      {isAuthenticated ? <MainNavigator /> : <AuthNavigator />}
       <StatusBar style="auto" />
-    </View>
+    </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  // Shared styles
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  header: {
+  scrollContent: {
+    flexGrow: 1,
+    padding: SPACING.screenHorizontal,
+  },
+  
+  // Splash Screen styles
+  splashContainer: {
+    flex: 1,
     backgroundColor: COLORS.primary,
-    paddingTop: 60,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 5,
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
   },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+  logo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.m,
+    ...SHADOWS.medium,
   },
-  content: {
+  logoText: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.huge,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  appName: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.heading1,
+    fontWeight: '600',
+    color: COLORS.white,
+  },
+  
+  // Loading Container
+  loadingContainer: {
     flex: 1,
-    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
   },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+  
+  // Auth screens shared styles
+  formContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    paddingVertical: SPACING.xxl,
   },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: COLORS.text,
+  screenTitle: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.heading1,
+    fontWeight: '600',
+    color: COLORS.neutralDark,
+    marginBottom: SPACING.s,
+    textAlign: 'center',
   },
-  cardText: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: COLORS.textSecondary,
+  screenSubtitle: {
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.regular,
+    color: COLORS.neutralMedium,
+    marginBottom: SPACING.xl,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: SPACING.m,
+  },
+  inputLabel: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.small,
+    fontWeight: '500',
+    color: COLORS.neutralDark,
+    marginBottom: SPACING.xs,
+  },
+  input: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: SIZES.borderRadius,
+    paddingHorizontal: SPACING.m,
+    paddingVertical: SPACING.s,
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.regular,
+    color: COLORS.neutralDark,
+    height: SIZES.inputHeight,
   },
   button: {
-    backgroundColor: COLORS.accent,
-    paddingVertical: 15,
-    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+    borderRadius: SIZES.borderRadius,
+    paddingVertical: SPACING.m,
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'center',
+    marginTop: SPACING.m,
+    height: SIZES.buttonMediumHeight,
+    ...SHADOWS.small,
+  },
+  buttonDisabled: {
+    backgroundColor: COLORS.neutralMedium,
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 18,
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.regular,
+    fontWeight: '600',
+    color: COLORS.white,
   },
-  statsContainer: {
+  footerTextContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: SPACING.xl,
+  },
+  footerText: {
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.small,
+    color: COLORS.neutralMedium,
+  },
+  footerLink: {
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.small,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    marginTop: SPACING.l,
+    marginBottom: SPACING.m,
+  },
+  backButtonText: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.regular,
+    color: COLORS.primary,
+  },
+  
+  // Home Screen styles
+  header: {
+    backgroundColor: COLORS.primary,
+    paddingTop: Platform.OS === 'ios' ? SPACING.l : SPACING.xxl,
+    paddingBottom: SPACING.m,
+    paddingHorizontal: SPACING.m,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.heading3,
+    fontWeight: '600',
+    color: COLORS.white,
+  },
+  logoutButton: {
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.s,
+  },
+  logoutText: {
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.small,
+    color: COLORS.white,
+  },
+  homeContent: {
+    padding: SPACING.m,
+  },
+  welcomeSection: {
+    alignItems: 'center',
+    marginBottom: SPACING.l,
+  },
+  avatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.m,
+    ...SHADOWS.medium,
+  },
+  avatarText: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.heading2,
+    fontWeight: '600',
+    color: COLORS.neutralDark,
+  },
+  welcomeText: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.large,
+    fontWeight: '600',
+    color: COLORS.neutralDark,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.l,
   },
   statItem: {
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
     flex: 1,
-    marginHorizontal: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.borderRadius,
+    padding: SPACING.m,
+    alignItems: 'center',
+    marginHorizontal: SPACING.xs,
+    ...SHADOWS.light,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.heading3,
+    fontWeight: '600',
     color: COLORS.primary,
   },
   statLabel: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginTop: 5,
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.small,
+    color: COLORS.neutralMedium,
+    marginTop: SPACING.xs,
+  },
+  actionCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.borderRadius,
+    padding: SPACING.m,
+    marginBottom: SPACING.m,
+    ...SHADOWS.light,
+  },
+  actionTitle: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.large,
+    fontWeight: '600',
+    color: COLORS.neutralDark,
+    marginBottom: SPACING.xs,
+  },
+  actionText: {
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.regular,
+    color: COLORS.neutralMedium,
+    lineHeight: 22,
   },
 });

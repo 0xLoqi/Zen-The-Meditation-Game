@@ -1,0 +1,40 @@
+Frontend Guidelines - Zen Meditation Game MVP
+
+Fonts: (Ensure fonts are added to the Expo project assets)
+
+Primary: Poppins
+Weights: Regular (400), Medium (500), SemiBold (600)
+Usage: Headings, button text, key UI elements (XP bar text, Token counts), prominent labels.
+Secondary: Lato
+Weights: Regular (400)
+Usage: Body text, descriptions, micro-lessons, input field text, less prominent labels.
+Color Palette:
+
+Primary: #6A5ACD (Medium Slate Blue) - Buttons, active states, main brand color.
+Secondary: #F0E68C (Khaki) - Background elements, cards, subtle highlights.
+Accent: #FFD700 (Gold) - Rewards icons (Tokens), XP bar fill, important highlights.
+Neutral-Light: #F5F5F5 (White Smoke) - Main screen backgrounds.
+Neutral-Medium: #A9A9A9 (Dark Gray) - Placeholder text, disabled states, secondary text content.
+Neutral-Dark: #2F4F4F (Dark Slate Gray) - Primary text color, dark UI elements.
+Success: #90EE90 (Light Green) - Streak visual, success messages/feedback.
+Warning/Feedback: #FFA07A (Light Salmon) - Subtle indication for haptic feedback trigger or attention needed.
+White: #FFFFFF
+Black: #000000
+Spacing & Layout:
+
+Base Unit: 8px.
+Standard Spacing Values: 4px, 8px, 12px, 16px, 24px, 32px, 48px. Apply consistently for margin and padding.
+Layout: Use Flexbox (flex, flexDirection, justifyContent, alignItems) for all screen and component layouts.
+Gutters: Maintain consistent spacing between elements (e.g., 16px between cards).
+Hierarchy: Establish clear visual hierarchy using font size (e.g., H1: 24px SemiBold, H2: 20px Medium, Body: 16px Regular), font weight, and color.
+Buttons: Standard minimum touch target size (e.g., 48px height), consistent padding (e.g., 16px horizontal).
+Border Radius: Use consistent border-radius for cards, buttons, inputs (e.g., 8px or 12px).
+Preferred UI Library:
+
+Primarily use React Native core components (View, Text, Pressable, Image, TextInput, ScrollView).
+Style components using StyleSheet.create({}) for performance. Consider organizing styles into separate files or co-locating with components.
+(If chosen) react-native-paper: Adhere to its component APIs and Material Design principles for consistency.
+Icon Set:
+
+Use icons from @expo/vector-icons, specifying the collection (e.g., MaterialCommunityIcons).
+Usage: Navigation tab bar icons, icons within buttons, status indicators (e.g., locked outfit), list item prefixes. Ensure icons are clear and consistently styled (size, color).
