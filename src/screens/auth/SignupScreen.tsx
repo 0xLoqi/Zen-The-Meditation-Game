@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet,
   View,
   Text,
+  StyleSheet,
   TouchableOpacity,
+  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  SafeAreaView,
+  Alert,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons';
+
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
+import { COLORS, FONTS, SPACING, SIZES } from '../../constants/theme';
+import { useAuthStore } from '../../store/authStore';
+
 import Button from '../../components/Button';
 import Input from '../../components/Input';
-import { useAuthStore } from '../../store/authStore';
 
 type SignupScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Signup'>;
 
@@ -23,185 +27,164 @@ interface SignupScreenProps {
 }
 
 const SignupScreen = ({ navigation }: SignupScreenProps) => {
-  const [username, setUsername] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
-  const [usernameError, setUsernameError] = useState<string>('');
-  const [emailError, setEmailError] = useState<string>('');
-  const [passwordError, setPasswordError] = useState<string>('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState<string>('');
-  
-  const { signup, checkUsernameUnique, isLoading, error } = useAuthStore();
-  
-  const validateUsername = async (username: string): Promise<boolean> => {
+  const { signup, isLoading, error, checkUsernameUnique } = useAuthStore();
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+
+  const validateUsername = async () => {
     if (username.length < 3) {
       setUsernameError('Username must be at least 3 characters');
       return false;
     }
     
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setUsernameError('Username can only contain letters, numbers, and underscores');
+    try {
+      const isUnique = await checkUsernameUnique(username);
+      if (!isUnique) {
+        setUsernameError('Username is already taken');
+        return false;
+      }
+      
+      setUsernameError(null);
+      return true;
+    } catch (error) {
+      setUsernameError('Error checking username');
       return false;
     }
-    
-    const isUnique = await checkUsernameUnique(username);
-    if (!isUnique) {
-      setUsernameError('Username is already taken');
-      return false;
-    }
-    
-    setUsernameError('');
-    return true;
   };
-  
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isValid = emailRegex.test(email);
-    
-    if (!isValid) {
-      setEmailError('Please enter a valid email address');
-    } else {
-      setEmailError('');
-    }
-    
-    return isValid;
-  };
-  
-  const validatePassword = (password: string): boolean => {
-    if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-      return false;
-    }
-    
-    setPasswordError('');
-    return true;
-  };
-  
-  const validateConfirmPassword = (confirmPassword: string): boolean => {
-    if (confirmPassword !== password) {
-      setConfirmPasswordError('Passwords do not match');
-      return false;
-    }
-    
-    setConfirmPasswordError('');
-    return true;
-  };
-  
+
   const handleSignup = async () => {
-    const isUsernameValid = await validateUsername(username);
-    const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
-    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
+    if (!username || !email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
     
-    if (isUsernameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid) {
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+    
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+    
+    const isUsernameValid = await validateUsername();
+    if (!isUsernameValid) {
+      return;
+    }
+    
+    try {
       await signup(email, password, username);
+    } catch (error) {
+      // Error is handled in the store
     }
   };
-  
-  const navigateToLogin = () => {
+
+  const handleLoginPress = () => {
     navigation.navigate('Login');
   };
-  
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        style={styles.keyboardAvoidView}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
-            onPress={navigateToLogin}
+            onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backButtonText}>← Back</Text>
+            <Ionicons name="arrow-back" size={24} color={COLORS.text} />
           </TouchableOpacity>
-          
-          <View style={styles.formContainer}>
-            <Text style={styles.headingText}>Join Zen</Text>
-            <Text style={styles.subheadingText}>
+
+          <View style={styles.header}>
+            <Text style={styles.title}>Join Zen</Text>
+            <Text style={styles.subtitle}>
               Create an account to start your meditation journey
             </Text>
-            
-            <View style={styles.inputsContainer}>
-              <Input
-                label="Username"
-                placeholder="Choose a username"
-                value={username}
-                onChangeText={(text) => {
-                  setUsername(text);
-                  if (usernameError) validateUsername(text);
-                }}
-                error={usernameError}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              
-              <Input
-                label="Email"
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (emailError) validateEmail(text);
-                }}
-                error={emailError}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              
-              <Input
-                label="Password"
-                placeholder="Create a password"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (passwordError) validatePassword(text);
-                  if (confirmPassword && confirmPasswordError) validateConfirmPassword(confirmPassword);
-                }}
-                error={passwordError}
-                secureTextEntry
-                showPasswordToggle
-              />
-              
-              <Input
-                label="Confirm Password"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  if (confirmPasswordError) validateConfirmPassword(text);
-                }}
-                error={confirmPasswordError}
-                secureTextEntry
-                showPasswordToggle
-              />
-            </View>
-            
-            {error && (
-              <Text style={styles.errorText}>{error}</Text>
-            )}
-            
+          </View>
+
+          <View style={styles.formContainer}>
+            <Input
+              label="Username"
+              placeholder="Choose a username"
+              value={username}
+              onChangeText={setUsername}
+              onBlur={validateUsername}
+              error={usernameError || undefined}
+              autoCapitalize="none"
+              leftIcon={
+                <Ionicons name="person-outline" size={20} color={COLORS.textLight} />
+              }
+            />
+
+            <Input
+              label="Email"
+              placeholder="your.email@example.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              leftIcon={
+                <Ionicons name="mail-outline" size={20} color={COLORS.textLight} />
+              }
+            />
+
+            <Input
+              label="Password"
+              placeholder="Choose a password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              showPasswordToggle
+              leftIcon={
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.textLight} />
+              }
+            />
+
+            <Input
+              label="Confirm Password"
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              showPasswordToggle
+              leftIcon={
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.textLight} />
+              }
+            />
+
+            {error && <Text style={styles.errorText}>{error}</Text>}
+
             <Button
-              title="Sign Up"
+              title="Create Account"
               onPress={handleSignup}
-              variant="primary"
-              size="large"
               isLoading={isLoading}
               style={styles.signupButton}
             />
-          </View>
-          
-          <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>Already have an account?</Text>
-            <TouchableOpacity onPress={navigateToLogin}>
-              <Text style={styles.loginText}>Log In</Text>
+
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.loginContainer}
+              onPress={handleLoginPress}
+            >
+              <Text style={styles.loginText}>
+                Already have an account?{' '}
+                <Text style={styles.loginLink}>Sign In</Text>
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -211,64 +194,84 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  container: {
+  keyboardAvoidView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    padding: SPACING.l,
+    paddingHorizontal: SPACING.large,
+    paddingVertical: SPACING.large,
   },
   backButton: {
-    marginBottom: SPACING.xl,
+    marginTop: SPACING.medium,
+    alignSelf: 'flex-start',
   },
-  backButtonText: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralDark,
+  header: {
+    alignItems: 'center',
+    marginTop: SPACING.large,
+    marginBottom: SPACING.large,
+  },
+  title: {
+    fontFamily: FONTS.primary,
+    fontWeight: FONTS.bold,
+    fontSize: FONTS.xxlarge,
+    color: COLORS.primary,
+    marginBottom: SPACING.small,
+  },
+  subtitle: {
+    fontFamily: FONTS.primary,
+    fontWeight: FONTS.regular,
+    fontSize: FONTS.medium,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.large,
   },
   formContainer: {
-    marginTop: SPACING.m,
-  },
-  headingText: {
-    ...FONTS.heading.h1,
-    color: COLORS.neutralDark,
-    marginBottom: SPACING.s,
-  },
-  subheadingText: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralMedium,
-    marginBottom: SPACING.xl,
-  },
-  inputsContainer: {
-    marginBottom: SPACING.l,
+    width: '100%',
+    marginBottom: SPACING.large,
   },
   errorText: {
-    ...FONTS.body.small,
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.small,
     color: COLORS.error,
-    marginBottom: SPACING.m,
+    marginBottom: SPACING.medium,
   },
   signupButton: {
-    marginTop: SPACING.l,
+    marginTop: SPACING.large,
   },
-  footerContainer: {
+  dividerContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: SPACING.xxl,
-    marginBottom: SPACING.l,
+    marginVertical: SPACING.xxlarge,
+    paddingHorizontal: SPACING.large,
   },
-  footerText: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralMedium,
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  dividerText: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.small,
+    color: COLORS.textSecondary,
+    marginHorizontal: SPACING.small,
+  },
+  loginContainer: {
+    alignItems: 'center',
+    marginTop: SPACING.small,
   },
   loginText: {
-    ...FONTS.body.regular,
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  loginLink: {
     color: COLORS.primary,
-    fontWeight: 'bold',
-    marginLeft: SPACING.xs,
+    fontWeight: FONTS.bold,
   },
 });
 

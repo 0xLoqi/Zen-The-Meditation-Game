@@ -1,33 +1,16 @@
 import { FirebaseUser } from '../types';
 
-// Mock data storage
-const mockUsers: Record<string, { email: string; password: string; username: string; uid: string }> = {
-  'user@example.com': {
-    email: 'user@example.com',
-    password: 'password123',
-    username: 'ZenUser',
-    uid: 'mock-user-id-123',
-  },
-};
-
-const usernameLookup: Record<string, string> = {
-  'ZenUser': 'user@example.com',
-};
-
-// Simulated delay helper
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 /**
  * Check if a username is available
  * @param username - Username to check
  * @returns True if username is available
  */
 export const checkUsernameUnique = async (username: string): Promise<boolean> => {
-  // Simulate network request
-  await delay(800);
+  // Simulate API call to check username availability
+  await new Promise(resolve => setTimeout(resolve, 500));
   
-  // Check if username exists in our mock lookup
-  return !usernameLookup[username];
+  // For demo, let's say all usernames except "taken" are available
+  return username.toLowerCase() !== 'taken';
 };
 
 /**
@@ -38,29 +21,21 @@ export const checkUsernameUnique = async (username: string): Promise<boolean> =>
  * @returns Firebase user object
  */
 export const signup = async (email: string, password: string, username: string): Promise<FirebaseUser> => {
-  // Simulate network request
-  await delay(1500);
+  // Simulate API call to create a new user
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Check if email is already registered
-  if (mockUsers[email]) {
-    throw new Error('Email already in use');
+  // Simulate validation
+  if (password.length < 6) {
+    throw new Error('Password must be at least 6 characters long');
   }
   
-  // Check if username is already taken
-  if (usernameLookup[username]) {
-    throw new Error('Username is already taken');
+  if (!email.includes('@')) {
+    throw new Error('Invalid email address');
   }
   
-  // Create a new user
-  const uid = `user-${Date.now()}`;
-  
-  // Store in our mock databases
-  mockUsers[email] = { email, password, username, uid };
-  usernameLookup[username] = email;
-  
-  // Return Firebase user format
+  // Return a mock user object
   return {
-    uid,
+    uid: `user_${Math.random().toString(36).substring(2, 9)}`,
     email,
     displayName: username,
   };
@@ -73,37 +48,36 @@ export const signup = async (email: string, password: string, username: string):
  * @returns Firebase user object
  */
 export const login = async (email: string, password: string): Promise<FirebaseUser> => {
-  // Simulate network request
-  await delay(1000);
+  // Simulate API call to authenticate
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Check if user exists
-  const user = mockUsers[email];
-  
-  if (!user) {
-    throw new Error('User not found');
+  // Demo credentials check
+  if (email === 'demo@example.com' && password === 'password') {
+    return {
+      uid: '123456789',
+      email,
+      displayName: 'DemoUser',
+    };
   }
   
-  // Check if password matches
-  if (user.password !== password) {
-    throw new Error('Invalid password');
+  // For demo purposes, accept any combination except empty
+  if (email && password) {
+    return {
+      uid: `user_${Math.random().toString(36).substring(2, 9)}`,
+      email,
+      displayName: email.split('@')[0],
+    };
   }
   
-  // Return Firebase user format
-  return {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.username,
-  };
+  throw new Error('Invalid email or password');
 };
 
 /**
  * Sign out the current user
  */
 export const signOut = async (): Promise<void> => {
-  // Simulate network request
-  await delay(500);
-  
-  // Nothing to do for mock implementation
+  // Simulate API call to sign out
+  await new Promise(resolve => setTimeout(resolve, 500));
   return;
 };
 
@@ -113,20 +87,15 @@ export const signOut = async (): Promise<void> => {
  * @returns Unsubscribe function
  */
 export const listenToAuthState = (callback: (user: FirebaseUser | null) => void): (() => void) => {
-  // For now, just immediately call with mock user
-  // In a real implementation, this would set up a Firebase listener
+  // In a real app, this would use Firebase's onAuthStateChanged
+  // For the demo, we'll just immediately return a mock user
+  
   const mockUser: FirebaseUser = {
-    uid: 'mock-user-id-123',
-    email: 'user@example.com',
-    displayName: 'ZenUser',
+    uid: '123456789',
+    email: 'demo@example.com',
+    displayName: 'DemoUser',
   };
   
-  setTimeout(() => {
-    callback(mockUser);
-  }, 0);
-  
-  // Return unsubscribe function
-  return () => {
-    // Nothing to clean up in mock implementation
-  };
+  // Return a mock unsubscribe function
+  return () => {};
 };

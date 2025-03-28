@@ -1,16 +1,14 @@
 import React from 'react';
 import { 
-  StyleSheet, 
-  Text, 
   TouchableOpacity, 
+  Text, 
+  StyleSheet, 
   ActivityIndicator,
-  View,
   ViewStyle,
   TextStyle,
   TouchableOpacityProps
 } from 'react-native';
-import { COLORS, FONTS, SIZES, SPACING } from '../constants/theme';
-import { triggerHapticFeedback } from '../utils/haptics';
+import { COLORS, SIZES, SPACING, FONTS } from '../constants/theme';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -40,7 +38,7 @@ const Button = ({
 }: ButtonProps) => {
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
-      borderRadius: SIZES.borderRadius.medium,
+      borderRadius: SIZES.radiusMedium,
       justifyContent: 'center',
       alignItems: 'center',
       flexDirection: 'row',
@@ -50,61 +48,47 @@ const Button = ({
     switch (size) {
       case 'small':
         sizeStyle = {
-          height: SIZES.buttonHeight.small,
-          paddingHorizontal: SPACING.m,
+          height: SIZES.buttonSmallHeight,
+          paddingHorizontal: SPACING.medium,
         };
         break;
       case 'large':
         sizeStyle = {
-          height: SIZES.buttonHeight.large,
-          paddingHorizontal: SPACING.xl,
+          height: SIZES.buttonLargeHeight,
+          paddingHorizontal: SPACING.large,
         };
         break;
-      case 'medium':
       default:
         sizeStyle = {
-          height: SIZES.buttonHeight.medium,
-          paddingHorizontal: SPACING.l,
+          height: SIZES.buttonMediumHeight,
+          paddingHorizontal: SPACING.medium,
         };
-        break;
     }
     
     let variantStyle: ViewStyle = {};
     switch (variant) {
+      case 'primary':
+        variantStyle = {
+          backgroundColor: disabled ? COLORS.disabled : COLORS.primary,
+        };
+        break;
       case 'secondary':
         variantStyle = {
-          backgroundColor: COLORS.secondary,
+          backgroundColor: disabled ? COLORS.disabled : COLORS.secondary,
         };
         break;
       case 'outlined':
         variantStyle = {
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          borderColor: COLORS.primary,
+          backgroundColor: COLORS.transparent,
+          borderWidth: 1,
+          borderColor: disabled ? COLORS.disabled : COLORS.primary,
         };
         break;
       case 'text':
         variantStyle = {
-          backgroundColor: 'transparent',
-          paddingHorizontal: 0,
+          backgroundColor: COLORS.transparent,
         };
         break;
-      case 'primary':
-      default:
-        variantStyle = {
-          backgroundColor: COLORS.primary,
-        };
-        break;
-    }
-    
-    // Add disabled styles if necessary
-    if (disabled || isLoading) {
-      return {
-        ...baseStyle,
-        ...sizeStyle,
-        ...variantStyle,
-        opacity: 0.6,
-      };
     }
     
     return {
@@ -116,46 +100,40 @@ const Button = ({
   
   const getTextStyle = (): TextStyle => {
     const baseStyle: TextStyle = {
-      textAlign: 'center',
+      fontFamily: FONTS.primary,
+      fontWeight: FONTS.medium,
     };
     
     let sizeStyle: TextStyle = {};
     switch (size) {
       case 'small':
         sizeStyle = {
-          ...FONTS.button.small,
+          fontSize: FONTS.small,
         };
         break;
       case 'large':
         sizeStyle = {
-          ...FONTS.button.large,
+          fontSize: FONTS.large,
         };
         break;
-      case 'medium':
       default:
         sizeStyle = {
-          ...FONTS.button.regular,
+          fontSize: FONTS.regular,
         };
-        break;
     }
     
     let variantStyle: TextStyle = {};
     switch (variant) {
-      case 'outlined':
-        variantStyle = {
-          color: COLORS.primary,
-        };
-        break;
-      case 'text':
-        variantStyle = {
-          color: COLORS.primary,
-        };
-        break;
       case 'primary':
       case 'secondary':
-      default:
         variantStyle = {
-          color: COLORS.white,
+          color: disabled ? COLORS.disabledText : COLORS.textInverse,
+        };
+        break;
+      case 'outlined':
+      case 'text':
+        variantStyle = {
+          color: disabled ? COLORS.disabledText : COLORS.primary,
         };
         break;
     }
@@ -166,49 +144,29 @@ const Button = ({
       ...variantStyle,
     };
   };
-
-  const handlePress = () => {
-    // Don't trigger press when disabled or loading
-    if (disabled || isLoading) return;
-    
-    // Trigger haptic feedback
-    triggerHapticFeedback('light');
-    
-    // Call the onPress handler
-    onPress();
-  };
   
   return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={handlePress}
-      disabled={disabled || isLoading}
+    <TouchableOpacity 
       style={[getButtonStyle(), style]}
+      onPress={onPress}
+      disabled={disabled || isLoading}
+      activeOpacity={0.7}
       {...rest}
     >
+      {leftIcon && !isLoading && leftIcon}
+      
       {isLoading ? (
-        <ActivityIndicator
+        <ActivityIndicator 
           size="small"
-          color={variant === 'outlined' || variant === 'text' ? COLORS.primary : COLORS.white}
+          color={variant === 'primary' || variant === 'secondary' ? COLORS.textInverse : COLORS.primary}
         />
       ) : (
-        <>
-          {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
-          <Text style={[getTextStyle(), textStyle]}>{title}</Text>
-          {rightIcon && <View style={styles.iconRight}>{rightIcon}</View>}
-        </>
+        <Text style={[getTextStyle(), textStyle]}>{title}</Text>
       )}
+      
+      {rightIcon && !isLoading && rightIcon}
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  iconLeft: {
-    marginRight: SPACING.s,
-  },
-  iconRight: {
-    marginLeft: SPACING.s,
-  },
-});
 
 export default Button;

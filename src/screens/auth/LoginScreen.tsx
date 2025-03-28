@@ -1,21 +1,25 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet,
   View,
   Text,
+  StyleSheet,
+  ImageBackground,
   TouchableOpacity,
+  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
-  SafeAreaView,
+  Alert,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons';
+
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { COLORS, FONTS, SPACING, SIZES } from '../../constants/theme';
+import { useAuthStore } from '../../store/authStore';
+
 import Button from '../../components/Button';
 import Input from '../../components/Input';
-import { useAuthStore } from '../../store/authStore';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -24,122 +28,93 @@ interface LoginScreenProps {
 }
 
 const LoginScreen = ({ navigation }: LoginScreenProps) => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [emailError, setEmailError] = useState<string>('');
-  const [passwordError, setPasswordError] = useState<string>('');
-  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { login, isLoading, error } = useAuthStore();
-  
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isValid = emailRegex.test(email);
-    
-    if (!isValid) {
-      setEmailError('Please enter a valid email address');
-    } else {
-      setEmailError('');
-    }
-    
-    return isValid;
-  };
-  
-  const validatePassword = (password: string): boolean => {
-    const isValid = password.length >= 6;
-    
-    if (!isValid) {
-      setPasswordError('Password must be at least 6 characters');
-    } else {
-      setPasswordError('');
-    }
-    
-    return isValid;
-  };
-  
+
   const handleLogin = async () => {
-    const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
     
-    if (isEmailValid && isPasswordValid) {
+    try {
       await login(email, password);
+    } catch (error) {
+      // Error is handled in the store
     }
   };
-  
-  const navigateToSignup = () => {
+
+  const handleSignupPress = () => {
     navigation.navigate('Signup');
   };
-  
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        style={styles.keyboardAvoidView}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.logoContainer}>
-            {/* Logo will go here */}
-            <View style={styles.logoPlaceholder}>
-              <Text style={styles.logoText}>Zen</Text>
-            </View>
-          </View>
-          
-          <View style={styles.formContainer}>
-            <Text style={styles.headingText}>Welcome back</Text>
-            <Text style={styles.subheadingText}>
-              Log in to continue your meditation journey
+          <View style={styles.header}>
+            <Text style={styles.title}>Welcome to</Text>
+            <Text style={styles.brandTitle}>Zen</Text>
+            <Text style={styles.subtitle}>
+              Your mindful meditation journey starts here
             </Text>
-            
-            <View style={styles.inputsContainer}>
-              <Input
-                label="Email"
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (emailError) validateEmail(text);
-                }}
-                error={emailError}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              
-              <Input
-                label="Password"
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (passwordError) validatePassword(text);
-                }}
-                error={passwordError}
-                secureTextEntry
-                showPasswordToggle
-              />
-            </View>
-            
-            {error && (
-              <Text style={styles.errorText}>{error}</Text>
-            )}
-            
+          </View>
+
+          <View style={styles.formContainer}>
+            <Input
+              label="Email"
+              placeholder="your.email@example.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              leftIcon={
+                <Ionicons name="mail-outline" size={20} color={COLORS.textLight} />
+              }
+            />
+
+            <Input
+              label="Password"
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              showPasswordToggle
+              leftIcon={
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.textLight} />
+              }
+            />
+
+            {error && <Text style={styles.errorText}>{error}</Text>}
+
             <Button
-              title="Log In"
+              title="Sign In"
               onPress={handleLogin}
-              variant="primary"
-              size="large"
               isLoading={isLoading}
               style={styles.loginButton}
             />
-          </View>
-          
-          <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={navigateToSignup}>
-              <Text style={styles.signupText}>Sign Up</Text>
+
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.signupContainer}
+              onPress={handleSignupPress}
+            >
+              <Text style={styles.signupText}>
+                Don't have an account?{' '}
+                <Text style={styles.signupLink}>Sign Up</Text>
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -149,73 +124,87 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  container: {
+  keyboardAvoidView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    padding: SPACING.l,
+    paddingHorizontal: SPACING.large,
+    paddingVertical: SPACING.large,
   },
-  logoContainer: {
+  header: {
     alignItems: 'center',
-    marginTop: SPACING.xl,
+    marginTop: SPACING.xlarge,
+    marginBottom: SPACING.xlarge,
   },
-  logoPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+  title: {
+    fontFamily: FONTS.primary,
+    fontWeight: FONTS.bold,
+    fontSize: FONTS.xlarge,
+    color: COLORS.text,
+    marginBottom: SPACING.tiny,
   },
-  logoText: {
-    ...FONTS.heading.large,
-    color: COLORS.white,
+  brandTitle: {
+    fontFamily: FONTS.primary,
+    fontWeight: FONTS.bold,
+    fontSize: FONTS.huge,
+    color: COLORS.primary,
+    marginBottom: SPACING.small,
+  },
+  subtitle: {
+    fontFamily: FONTS.primary,
+    fontWeight: FONTS.regular,
+    fontSize: FONTS.medium,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.large,
   },
   formContainer: {
-    marginTop: SPACING.xxl,
-  },
-  headingText: {
-    ...FONTS.heading.h1,
-    color: COLORS.neutralDark,
-    marginBottom: SPACING.s,
-  },
-  subheadingText: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralMedium,
-    marginBottom: SPACING.xl,
-  },
-  inputsContainer: {
-    marginBottom: SPACING.l,
+    width: '100%',
+    marginBottom: SPACING.large,
   },
   errorText: {
-    ...FONTS.body.small,
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.small,
     color: COLORS.error,
-    marginBottom: SPACING.m,
+    marginBottom: SPACING.medium,
   },
   loginButton: {
-    marginTop: SPACING.l,
+    marginTop: SPACING.large,
   },
-  footerContainer: {
+  dividerContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: SPACING.xxl,
-    marginBottom: SPACING.l,
+    marginVertical: SPACING.xxlarge,
+    paddingHorizontal: SPACING.large,
   },
-  footerText: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralMedium,
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  dividerText: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.small,
+    color: COLORS.textSecondary,
+    marginHorizontal: SPACING.small,
+  },
+  signupContainer: {
+    alignItems: 'center',
+    marginTop: SPACING.small,
   },
   signupText: {
-    ...FONTS.body.regular,
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  signupLink: {
     color: COLORS.primary,
-    fontWeight: 'bold',
-    marginLeft: SPACING.xs,
+    fontWeight: FONTS.bold,
   },
 });
 

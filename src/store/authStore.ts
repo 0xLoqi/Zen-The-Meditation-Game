@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import * as AuthAPI from '../api/auth';
 import { FirebaseUser } from '../types';
+import { login as apiLogin, signup as apiSignup, signOut as apiSignOut, checkUsernameUnique as apiCheckUsernameUnique } from '../api/auth';
 
 interface AuthState {
   user: FirebaseUser | null;
@@ -19,105 +19,66 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   error: null,
   isAuthenticated: false,
-  
+
   checkAuth: () => {
-    // For now, just simulate auth check
-    // Later, implement with Firebase Auth
-    console.log('Checking auth state...');
-    
-    // Automatically set a user for development purposes
-    // This helps with testing authenticated views
-    // In production, we'd use Firebase Auth state listener
-    
-    // MOCK USER FOR DEVELOPMENT
-    // Remove this in production or replace with actual Firebase Auth
+    // Simulating auth state in a demo
     const mockUser: FirebaseUser = {
-      uid: 'mock-user-id-123',
-      email: 'user@example.com',
-      displayName: 'ZenUser',
+      uid: '123456789',
+      email: 'demo@example.com',
+      displayName: 'DemoUser',
     };
     
-    set({
-      user: mockUser,
-      isAuthenticated: true,
-      isLoading: false,
-      error: null,
+    // For demo purposes, we're setting authenticated to false to show login screen
+    set({ 
+      user: null,
+      isAuthenticated: false,
+      isLoading: false
     });
   },
-  
-  signup: async (email, password, username) => {
-    set({ isLoading: true, error: null });
-    
+
+  signup: async (email: string, password: string, username: string) => {
     try {
-      const isUnique = await AuthAPI.checkUsernameUnique(username);
+      set({ isLoading: true, error: null });
+      const isUnique = await apiCheckUsernameUnique(username);
       
       if (!isUnique) {
         set({ isLoading: false, error: 'Username is already taken' });
         return;
       }
-      
-      const user = await AuthAPI.signup(email, password, username);
-      
-      set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
+
+      const user = await apiSignup(email, password, username);
+      set({ user, isAuthenticated: true, isLoading: false });
     } catch (error) {
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to sign up',
-      });
+      set({ isLoading: false, error: (error as Error).message });
     }
   },
-  
-  login: async (email, password) => {
-    set({ isLoading: true, error: null });
-    
+
+  login: async (email: string, password: string) => {
     try {
-      const user = await AuthAPI.login(email, password);
-      
-      set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
+      set({ isLoading: true, error: null });
+      const user = await apiLogin(email, password);
+      set({ user, isAuthenticated: true, isLoading: false });
     } catch (error) {
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to log in',
-      });
+      set({ isLoading: false, error: (error as Error).message });
     }
   },
-  
+
   signOut: async () => {
-    set({ isLoading: true, error: null });
-    
     try {
-      await AuthAPI.signOut();
-      
-      set({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      });
+      set({ isLoading: true });
+      await apiSignOut();
+      set({ user: null, isAuthenticated: false, isLoading: false });
     } catch (error) {
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to sign out',
-      });
+      set({ isLoading: false, error: (error as Error).message });
     }
   },
-  
-  checkUsernameUnique: async (username) => {
+
+  checkUsernameUnique: async (username: string) => {
     try {
-      return await AuthAPI.checkUsernameUnique(username);
+      return await apiCheckUsernameUnique(username);
     } catch (error) {
-      console.error('Error checking username uniqueness:', error);
+      set({ error: (error as Error).message });
       return false;
     }
-  },
+  }
 }));

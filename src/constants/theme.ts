@@ -1,165 +1,85 @@
-// Theme constants for the Zen Meditation app
-
 export const COLORS = {
-  // Primary colors
-  primary: '#6B5CE7', // Main purple for primary actions
-  primaryLight: '#8B7FF7', // Lighter purple for secondary elements
-  primaryDark: '#4A3CB2', // Darker purple for accents
+  // Brand Colors
+  primary: '#8C6FF7',
+  primaryLight: '#B9A2FF',
+  primaryDark: '#6B4CD5',
   
-  // Secondary colors
-  secondary: '#FF8E6E', // Orange for contrast and energy
-  secondaryLight: '#FFA98F', // Lighter orange
-  secondaryDark: '#E06E52', // Darker orange
+  // Secondary Colors
+  secondary: '#64DFDF',
+  secondaryLight: '#9EEDF9',
+  secondaryDark: '#28C2C2',
   
-  // Neutral colors
-  white: '#FFFFFF',
-  offWhite: '#F8F8F8',
-  neutralLight: '#F0F0F0',
-  lighterGrey: '#F0F0F0',
-  lightGrey: '#E0E0E0',
-  neutralMedium: '#A0A0A0',
-  grey: '#A0A0A0',
-  darkGrey: '#606060',
-  neutralDark: '#505050',
-  black: '#303030',
+  // Accent Colors
+  accent: '#FFA062',
+  accentLight: '#FFD1A7',
+  accentDark: '#FF7C30',
   
-  // Semantic colors
-  success: '#4CAF50', // Green
-  warning: '#FFCC00', // Yellow
-  error: '#F44336', // Red
-  info: '#2196F3', // Blue
-  
-  // Background colors
+  // Background Colors
   background: '#FFFFFF',
-  surface: '#FAFAFA',
-  card: '#FFFFFF',
+  backgroundDark: '#F2F2F2',
+  backgroundLight: '#FAFAFA',
   
-  // Transparent colors for overlays
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  transparentPrimary: 'rgba(107, 92, 231, 0.2)',
+  // Text Colors
+  text: '#333333',
+  textSecondary: '#666666',
+  textLight: '#999999',
+  textInverse: '#FFFFFF',
+  
+  // Status Colors
+  success: '#4CAF50',
+  error: '#F44336',
+  warning: '#FFC107',
+  info: '#2196F3',
+  
+  // UI Element Colors
+  border: '#E0E0E0',
+  borderDark: '#BDBDBD',
+  disabled: '#E9E9E9',
+  disabledText: '#9E9E9E',
+  
+  // Transparent Colors
+  transparent: 'transparent',
+  semiTransparent: 'rgba(0, 0, 0, 0.3)',
+  
+  // Additional Colors needed for components
+  white: '#FFFFFF',
+  neutralDark: '#333333',
+  neutralMedium: '#666666',
+  neutralLight: '#EEEEEE',
+  
+  // Gradients - provide the start and end colors
+  gradientPurple: ['#8C6FF7', '#6B4CD5'],
+  gradientBlue: ['#64DFDF', '#28C2C2'],
+  gradientOrange: ['#FFA062', '#FF7C30'],
 };
 
 export const FONTS = {
-  heading: {
-    extraLarge: {
-      fontFamily: 'System',
-      fontSize: 32,
-      fontWeight: 'bold' as const,
-      lineHeight: 40,
-    },
-    large: {
-      fontFamily: 'System',
-      fontSize: 28,
-      fontWeight: 'bold' as const,
-      lineHeight: 36,
-    },
-    medium: {
-      fontFamily: 'System',
-      fontSize: 24,
-      fontWeight: 'bold' as const,
-      lineHeight: 32,
-    },
-    small: {
-      fontFamily: 'System',
-      fontSize: 20,
-      fontWeight: 'bold' as const,
-      lineHeight: 28,
-    },
-    // Aliases for easier reference
-    h1: {
-      fontFamily: 'System',
-      fontSize: 32,
-      fontWeight: 'bold' as const,
-      lineHeight: 40,
-    },
-    h2: {
-      fontFamily: 'System',
-      fontSize: 28,
-      fontWeight: 'bold' as const,
-      lineHeight: 36,
-    },
-    h3: {
-      fontFamily: 'System',
-      fontSize: 24,
-      fontWeight: 'bold' as const,
-      lineHeight: 32,
-    },
-  },
-  subheading: {
-    large: {
-      fontFamily: 'System',
-      fontSize: 18,
-      fontWeight: '600' as const,
-      lineHeight: 26,
-    },
-    medium: {
-      fontFamily: 'System',
-      fontSize: 16,
-      fontWeight: '600' as const,
-      lineHeight: 24,
-    },
-    small: {
-      fontFamily: 'System',
-      fontSize: 14,
-      fontWeight: '600' as const,
-      lineHeight: 20,
-    },
-  },
-  body: {
-    large: {
-      fontFamily: 'System',
-      fontSize: 18,
-      fontWeight: 'normal' as const,
-      lineHeight: 26,
-    },
-    regular: {
-      fontFamily: 'System',
-      fontSize: 16,
-      fontWeight: 'normal' as const,
-      lineHeight: 24,
-    },
-    small: {
-      fontFamily: 'System',
-      fontSize: 14,
-      fontWeight: 'normal' as const,
-      lineHeight: 20,
-    },
-    xsmall: {
-      fontFamily: 'System',
-      fontSize: 12,
-      fontWeight: 'normal' as const,
-      lineHeight: 18,
-    },
-    tiny: {
-      fontFamily: 'System',
-      fontSize: 10,
-      fontWeight: 'normal' as const,
-      lineHeight: 14,
-    },
-  },
-  button: {
-    large: {
-      fontFamily: 'System',
-      fontSize: 18,
-      fontWeight: '600' as const,
-      lineHeight: 26,
-    },
-    regular: {
-      fontFamily: 'System',
-      fontSize: 16,
-      fontWeight: '600' as const,
-      lineHeight: 24,
-    },
-    small: {
-      fontFamily: 'System',
-      fontSize: 14,
-      fontWeight: '600' as const,
-      lineHeight: 20,
-    },
-  },
+  // Font Families
+  primary: 'System',
+  
+  // Font Weights as strings for React Native
+  light: '300' as const,
+  regular: '400' as const,
+  medium: '500' as const,
+  bold: '700' as const,
+  
+  // Font Sizes
+  tiny: 10,
+  small: 12,
+  medium_size: 14,
+  regular_size: 16,
+  large: 18,
+  xlarge: 22,
+  xxlarge: 28,
+  huge: 36,
+  
+  // Font Styles
+  body: 'System',
+  heading: 'System',
 };
 
 export const SPACING = {
+  // Spacing Scale
   xxs: 2,
   xs: 4,
   s: 8,
@@ -167,58 +87,88 @@ export const SPACING = {
   l: 24,
   xl: 32,
   xxl: 48,
-  xxxl: 64,
+  
+  // Legacy Spacing (to avoid breaking existing code)
+  tiny: 4,
+  small: 8,
+  medium: 16,
+  large: 24,
+  xlarge: 32,
+  xxlarge: 48,
+  
+  // Common UI Spacing
+  screenHorizontal: 16,
+  screenVertical: 24,
+  cardPadding: 16,
+  buttonPadding: 12,
+  inputPadding: 14,
+  elementGap: 16,
 };
 
 export const SIZES = {
-  inputHeight: 56,
-  buttonHeight: {
-    small: 36,
-    medium: 48,
-    large: 56,
-  },
-  iconSize: {
-    small: 16,
-    medium: 24,
-    large: 32,
-  },
-  borderRadius: {
-    small: 4,
-    medium: 8,
-    large: 16,
-    full: 999, // Large value for rounded components
-    round: 999, // Large value for circular elements
-  },
-  maxWidth: 768, // Max content width for larger screens
+  // Border Radius
+  radiusSmall: 4,
+  radiusMedium: 8,
+  radiusLarge: 16,
+  borderRadius: 8, // Default border radius
+  
+  // Icon Sizes
+  iconSmall: 16,
+  iconMedium: 24,
+  iconLarge: 32,
+  
+  // Button Sizes
+  buttonSmallHeight: 32,
+  buttonMediumHeight: 44,
+  buttonLargeHeight: 56,
+  
+  // Input Sizes
+  inputHeight: 48,
+  
+  // Header Sizes
+  headerHeight: 56,
+  
+  // Avatar Sizes
+  avatarSmall: 32,
+  avatarMedium: 48,
+  avatarLarge: 64,
 };
 
 export const SHADOWS = {
-  none: {
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
-  },
-  light: {
-    shadowColor: '#000',
+  small: {
+    shadowColor: COLORS.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 2,
   },
   medium: {
-    shadowColor: '#000',
+    shadowColor: COLORS.text,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowRadius: 8,
     elevation: 4,
   },
-  dark: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
+  large: {
+    shadowColor: COLORS.text,
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: 12,
     elevation: 8,
+  },
+  // Intensity levels for shadow
+  light: {
+    shadowColor: COLORS.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  dark: {
+    shadowColor: COLORS.text,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
   },
 };

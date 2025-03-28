@@ -1,7 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import LottieView from 'lottie-react-native';
-import { getOutfitById } from '../constants/outfits';
 import { OutfitId } from '../types';
 
 interface MiniZenniProps {
@@ -13,83 +11,70 @@ interface MiniZenniProps {
   loop?: boolean;
 }
 
+// Simple placeholder for MiniZenni component
+// In a real implementation, this would use animations and images for different outfits
 const MiniZenni = ({
-  outfitId,
+  outfitId = 'default',
   size = 'medium',
   style,
   animationState = 'idle',
   autoPlay = true,
   loop = true,
 }: MiniZenniProps) => {
-  const lottieRef = useRef<LottieView>(null);
-  const outfit = getOutfitById(outfitId);
-  
-  // This would be the path to the actual animation file for this outfit & animation state
-  // For now, we'll use placeholder paths - these will need to be created and added to the assets folder
-  const getAnimationSource = () => {
-    // In a real implementation, we would return different animations based on outfit and state
-    // For now, we'll use placeholder animation paths
-    switch (animationState) {
-      case 'meditating':
-        return require('../../assets/animations/zenni_meditating.json');
-      case 'levelUp':
-        return require('../../assets/animations/zenni_level_up.json');
-      case 'idle':
-      default:
-        return require('../../assets/animations/zenni_idle.json');
-    }
-  };
-  
-  // Will need actual animation files in the assets/animations folder
-  // Currently using placeholders that should be replaced with real animations
-
-  useEffect(() => {
-    if (lottieRef.current && autoPlay) {
-      lottieRef.current.play();
-    }
-  }, [autoPlay, animationState, outfitId]);
-
-  const getDimensions = (): number => {
+  // Determine dimensions based on size
+  const getDimensions = () => {
     switch (size) {
       case 'small':
-        return 80;
+        return { width: 80, height: 80 };
       case 'large':
-        return 200;
+        return { width: 200, height: 200 };
       case 'medium':
       default:
-        return 140;
+        return { width: 120, height: 120 };
     }
   };
 
+  const dimensions = getDimensions();
+
+  // For now, just return a colored View as a placeholder
   return (
     <View
       style={[
         styles.container,
-        { width: getDimensions(), height: getDimensions() },
+        dimensions,
         style,
+        { backgroundColor: getOutfitColor(outfitId, animationState) }
       ]}
-    >
-      <LottieView
-        ref={lottieRef}
-        source={getAnimationSource()}
-        style={styles.animation}
-        autoPlay={autoPlay}
-        loop={loop}
-        speed={animationState === 'levelUp' ? 1.2 : 1}
-      />
-    </View>
+    />
   );
+};
+
+// Helper function to get a color based on outfit and animation state
+const getOutfitColor = (outfitId: OutfitId, animationState: string): string => {
+  const baseColors: {[key in OutfitId]: string} = {
+    default: '#8C6FF7',
+    zen_master: '#64DFDF',
+    lotus: '#FFA062',
+    cosmic: '#9D4EDD',
+    nature_spirit: '#70E000',
+    meditation_guru: '#FF7C30'
+  };
+
+  // For animation states, we could adjust the color
+  if (animationState === 'meditating') {
+    return baseColors[outfitId] + '88'; // Add transparency
+  } else if (animationState === 'levelUp') {
+    return '#FFD700'; // Gold for level up
+  }
+
+  return baseColors[outfitId];
 };
 
 const styles = StyleSheet.create({
   container: {
+    borderRadius: 60, // Half of the medium size for circle
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  animation: {
-    width: '100%',
-    height: '100%',
   },
 });
 
