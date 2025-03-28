@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, View, Text, ViewStyle } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../constants/theme';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { COLORS, FONTS, SIZES, SPACING } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { formatStreak } from '../utils/formatters';
 
 interface StreakIndicatorProps {
   streakCount: number;
@@ -10,62 +11,56 @@ interface StreakIndicatorProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-const StreakIndicator: React.FC<StreakIndicatorProps> = ({
+const StreakIndicator = ({
   streakCount,
   style,
   showLabel = true,
   size = 'medium',
-}) => {
-  // Get icon size based on component size
-  const getIconSize = () => {
+}: StreakIndicatorProps) => {
+  const getSize = (): number => {
     switch (size) {
       case 'small':
-        return 16;
-      case 'large':
-        return 32;
-      default: // medium
         return 24;
+      case 'large':
+        return 40;
+      case 'medium':
+      default:
+        return 32;
     }
   };
-  
-  // Get text style based on component size
-  const getTextStyle = () => {
+
+  const getFontSize = (): number => {
     switch (size) {
       case 'small':
-        return { ...FONTS.body.small };
+        return 10;
       case 'large':
-        return { ...FONTS.heading.h3 };
-      default: // medium
-        return { ...FONTS.body.regular };
+        return 16;
+      case 'medium':
+      default:
+        return 14;
     }
   };
-  
+
   return (
     <View style={[styles.container, style]}>
-      <View style={[
-        styles.iconContainer, 
-        size === 'small' && styles.smallIconContainer,
-        size === 'large' && styles.largeIconContainer,
-      ]}>
-        <MaterialCommunityIcons
-          name="fire"
-          size={getIconSize()}
+      <View 
+        style={[
+          styles.iconContainer,
+          { width: getSize(), height: getSize() }
+        ]}
+      >
+        <Ionicons
+          name="flame"
+          size={getSize() * 0.6}
           color={COLORS.white}
         />
       </View>
-      <View style={styles.textContainer}>
-        <Text style={[styles.streakCount, getTextStyle()]}>
-          {streakCount}
+      
+      {showLabel && (
+        <Text style={[styles.streakText, { fontSize: getFontSize() }]}>
+          {formatStreak(streakCount)}
         </Text>
-        {showLabel && (
-          <Text style={[
-            styles.streakLabel,
-            size === 'small' && styles.smallStreakLabel,
-          ]}>
-            {streakCount === 1 ? 'Day' : 'Days'}
-          </Text>
-        )}
-      </View>
+      )}
     </View>
   );
 };
@@ -77,34 +72,15 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     backgroundColor: COLORS.warning,
-    width: 40,
-    height: 40,
-    borderRadius: SIZES.borderRadius.circle,
+    borderRadius: SIZES.borderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.light,
   },
-  smallIconContainer: {
-    width: 28,
-    height: 28,
-  },
-  largeIconContainer: {
-    width: 56,
-    height: 56,
-  },
-  textContainer: {
-    marginLeft: SPACING.s,
-  },
-  streakCount: {
-    color: COLORS.neutralDark,
-    fontWeight: 'bold',
-  },
-  streakLabel: {
+  streakText: {
     ...FONTS.body.small,
-    color: COLORS.neutralMedium,
-  },
-  smallStreakLabel: {
-    ...FONTS.body.tiny,
+    color: COLORS.neutralDark,
+    fontWeight: 'bold' as const,
+    marginLeft: SPACING.xs,
   },
 });
 

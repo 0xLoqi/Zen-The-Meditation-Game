@@ -1,198 +1,206 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
-  StyleSheet,
   View,
   Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
   ScrollView,
-  RefreshControl,
-  StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MainStackParamList } from '../../navigation/MainNavigator';
+import { useUserStore } from '../../store/userStore';
+import { useAuthStore } from '../../store/authStore';
 import { COLORS, FONTS, SPACING, SIZES } from '../../constants/theme';
 import Card from '../../components/Card';
-import MiniZenni from '../../components/MiniZenni';
-import XPBar from '../../components/XPBar';
-import StreakIndicator from '../../components/StreakIndicator';
 import Button from '../../components/Button';
-import { useUserStore } from '../../store/userStore';
-import { useMeditationStore } from '../../store/meditationStore';
-import { getXPForNextLevel } from '../../api/meditation';
+import { Ionicons } from '@expo/vector-icons';
+import { triggerHapticFeedback } from '../../utils/haptics';
+import { formatStreak } from '../../utils/formatters';
+
+type HomeScreenNavigationProp = StackNavigationProp<MainStackParamList, 'Home'>;
 
 const HomeScreen = () => {
-  const navigation = useNavigation<StackNavigationProp<any>>();
-  const { userData, todayCheckIn, getUserData, getTodayCheckIn, isLoadingUser } = useUserStore();
-  const { resetMeditationSession } = useMeditationStore();
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+  const { signOut } = useAuthStore();
+  const { userData, isLoadingUser, userError, getUserData, todayCheckIn, getTodayCheckIn } = useUserStore();
   
-  const [refreshing, setRefreshing] = useState(false);
-  
-  // Load user data and today's check-in
   useEffect(() => {
-    loadData();
+    getUserData();
+    getTodayCheckIn();
   }, []);
-  
-  // Load data function for initial load and refresh
-  const loadData = async () => {
-    await getUserData();
-    await getTodayCheckIn();
-  };
-  
-  // Handle refresh
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
-  };
-  
-  // Navigate to daily check-in
-  const navigateToCheckIn = () => {
-    navigation.navigate('DailyCheckIn');
-  };
-  
-  // Navigate to meditation selection
-  const navigateToMeditation = () => {
-    resetMeditationSession();
+
+  const handleMeditatePress = () => {
+    triggerHapticFeedback('selection');
     navigation.navigate('MeditationSelection');
   };
   
-  // Navigate to referral screen
-  const navigateToReferral = () => {
+  const handleDailyCheckInPress = () => {
+    triggerHapticFeedback('selection');
+    navigation.navigate('DailyCheckIn');
+  };
+  
+  const handleWardrobePress = () => {
+    triggerHapticFeedback('selection');
+    navigation.navigate('Wardrobe');
+  };
+  
+  const handleGuruModePress = () => {
+    triggerHapticFeedback('selection');
+    navigation.navigate('GuruMode');
+  };
+  
+  const handleReferralPress = () => {
+    triggerHapticFeedback('selection');
     navigation.navigate('Referral');
   };
   
-  // Calculate XP required for next level
-  const getRequiredXP = () => {
-    if (!userData) return 100;
-    return getXPForNextLevel(userData.level);
+  const handleSignOut = async () => {
+    triggerHapticFeedback('selection');
+    await signOut();
   };
-  
+
+  if (isLoadingUser) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (userError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{userError}</Text>
+          <Button title="Retry" onPress={getUserData} variant="primary" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={COLORS.primary} barStyle="light-content" />
-      
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Text style={styles.welcomeText}>
-            Welcome, {userData?.username || 'Zen Friend'}
-          </Text>
-          <View style={styles.statsRow}>
-            <View style={styles.tokenContainer}>
-              <MaterialCommunityIcons
-                name="coin"
-                size={SIZES.icon.medium}
-                color={COLORS.accent}
-              />
-              <Text style={styles.tokenText}>
-                {userData?.tokens || 0}
-              </Text>
-            </View>
-            <StreakIndicator
-              streakCount={userData?.streak || 0}
-              size="small"
-            />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header with User Info */}
+        <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <Text style={styles.username}>
+              Hi, {userData?.username || 'Zen User'}
+            </Text>
+            <Text style={styles.userStats}>
+              Level {userData?.level || 1} · {userData?.streak || 0} Day Streak
+            </Text>
           </View>
-        </View>
-      </View>
-      
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={[COLORS.primary]}
-            tintColor={COLORS.primary}
-          />
-        }
-      >
-        {/* Mini Zenni Section */}
-        <View style={styles.zenniSection}>
-          <MiniZenni
-            outfitId={userData?.equippedOutfit || 'default'}
-            size="large"
-            animationState="idle"
-          />
           
-          {/* XP Progress */}
-          <View style={styles.xpContainer}>
-            <XPBar
-              currentXP={userData?.xp || 0}
-              requiredXP={getRequiredXP()}
-              level={userData?.level || 1}
-            />
-          </View>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <Ionicons name="log-out-outline" size={24} color={COLORS.neutralDark} />
+          </TouchableOpacity>
         </View>
         
         {/* Daily Check-In Card */}
-        {!todayCheckIn && (
-          <Card style={styles.card} onPress={navigateToCheckIn}>
-            <View style={styles.cardHeader}>
-              <MaterialCommunityIcons
-                name="checkbox-marked-circle-outline"
-                size={SIZES.icon.medium}
-                color={COLORS.primary}
-              />
-              <Text style={styles.cardTitle}>Daily Check-in</Text>
+        <Card
+          variant={todayCheckIn ? 'flat' : 'default'}
+          style={styles.dailyCheckInCard}
+          onPress={handleDailyCheckInPress}
+        >
+          <View style={styles.cardContent}>
+            <View style={styles.cardIconContainer}>
+              <Ionicons name="sunny-outline" size={32} color={COLORS.primary} />
             </View>
-            <Text style={styles.cardDescription}>
-              How zen have you felt lately? Take a moment to reflect.
-            </Text>
-            <Button
-              title="Check In"
-              onPress={navigateToCheckIn}
-              variant="outlined"
-              size="small"
-              style={styles.cardButton}
+            <View style={styles.cardTextContainer}>
+              <Text style={styles.cardTitle}>
+                {todayCheckIn ? 'Daily Check-In Complete!' : 'Daily Check-In'}
+              </Text>
+              <Text style={styles.cardDescription}>
+                {todayCheckIn
+                  ? 'You\'ve completed your check-in for today.'
+                  : 'How are you feeling today? Record your mood.'}
+              </Text>
+            </View>
+            <Ionicons
+              name={todayCheckIn ? 'checkmark-circle' : 'chevron-forward'}
+              size={24}
+              color={todayCheckIn ? COLORS.success : COLORS.neutralMedium}
             />
+          </View>
+        </Card>
+        
+        {/* Main Action Button */}
+        <Button
+          title="Meditate Now"
+          onPress={handleMeditatePress}
+          variant="primary"
+          size="large"
+          style={styles.meditateButton}
+          leftIcon={<Ionicons name="flower-outline" size={24} color={COLORS.white} style={{marginRight: SPACING.s}} />}
+        />
+        
+        {/* Feature Cards */}
+        <View style={styles.cardsContainer}>
+          {/* Wardrobe Card */}
+          <Card style={styles.featureCard} onPress={handleWardrobePress}>
+            <View style={styles.featureCardContent}>
+              <Ionicons name="shirt-outline" size={32} color={COLORS.primary} />
+              <Text style={styles.featureCardTitle}>Wardrobe</Text>
+              <Text style={styles.featureCardDescription}>
+                Customize your Zenni companion
+              </Text>
+            </View>
           </Card>
-        )}
+          
+          {/* Guru Mode Card */}
+          <Card style={styles.featureCard} onPress={handleGuruModePress}>
+            <View style={styles.featureCardContent}>
+              <Ionicons name="bulb-outline" size={32} color={COLORS.primary} />
+              <Text style={styles.featureCardTitle}>Guru Mode</Text>
+              <Text style={styles.featureCardDescription}>
+                AI guidance for your meditation
+              </Text>
+            </View>
+          </Card>
+          
+          {/* Referral Card */}
+          <Card style={styles.featureCard} onPress={handleReferralPress}>
+            <View style={styles.featureCardContent}>
+              <Ionicons name="share-outline" size={32} color={COLORS.primary} />
+              <Text style={styles.featureCardTitle}>Invite Friends</Text>
+              <Text style={styles.featureCardDescription}>
+                Share Zen and earn rewards
+              </Text>
+            </View>
+          </Card>
+        </View>
         
-        {/* Start Meditation Card */}
-        <Card style={styles.card} onPress={navigateToMeditation}>
-          <View style={styles.cardHeader}>
-            <MaterialCommunityIcons
-              name="meditation"
-              size={SIZES.icon.medium}
-              color={COLORS.primary}
-            />
-            <Text style={styles.cardTitle}>Start Meditation</Text>
+        {/* Stats Section */}
+        <View style={styles.statsSection}>
+          <Text style={styles.statsSectionTitle}>Your Zen Journey</Text>
+          
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{userData?.level || 1}</Text>
+              <Text style={styles.statLabel}>Level</Text>
+            </View>
+            
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{userData?.xp || 0}</Text>
+              <Text style={styles.statLabel}>XP</Text>
+            </View>
+            
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{userData?.tokens || 0}</Text>
+              <Text style={styles.statLabel}>Tokens</Text>
+            </View>
+            
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{userData?.streak || 0}</Text>
+              <Text style={styles.statLabel}>Streak</Text>
+            </View>
           </View>
-          <Text style={styles.cardDescription}>
-            Take a moment to breathe and nurture your Mini Zenni.
-          </Text>
-          <Button
-            title="Begin Session"
-            onPress={navigateToMeditation}
-            variant="primary"
-            size="small"
-            style={styles.cardButton}
-          />
-        </Card>
-        
-        {/* Referral Card */}
-        <Card style={styles.card} onPress={navigateToReferral}>
-          <View style={styles.cardHeader}>
-            <MaterialCommunityIcons
-              name="share-variant"
-              size={SIZES.icon.medium}
-              color={COLORS.primary}
-            />
-            <Text style={styles.cardTitle}>Share Zen</Text>
-          </View>
-          <Text style={styles.cardDescription}>
-            Invite friends to join your meditation journey.
-          </Text>
-          <Button
-            title="Share"
-            onPress={navigateToReferral}
-            variant="secondary"
-            size="small"
-            style={styles.cardButton}
-          />
-        </Card>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -203,73 +211,131 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.neutralLight,
   },
-  header: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.xl,
-    paddingBottom: SPACING.xl,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+  scrollContent: {
+    flexGrow: 1,
+    padding: SPACING.m,
   },
-  headerContent: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: SPACING.l,
   },
-  welcomeText: {
-    ...FONTS.heading.h3,
-    color: COLORS.white,
+  userInfo: {
+    flex: 1,
+  },
+  username: {
+    ...FONTS.heading.h2,
+    color: COLORS.neutralDark,
+    fontWeight: 'bold' as const,
+  },
+  userStats: {
+    ...FONTS.body.small,
+    color: COLORS.neutralMedium,
+  },
+  signOutButton: {
+    padding: SPACING.xs,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    ...FONTS.body.regular,
+    color: COLORS.neutralDark,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.l,
+  },
+  errorText: {
+    ...FONTS.body.regular,
+    color: COLORS.error,
+    textAlign: 'center',
+    marginBottom: SPACING.m,
+  },
+  dailyCheckInCard: {
+    marginBottom: SPACING.m,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cardIconContainer: {
+    marginRight: SPACING.m,
+  },
+  cardTextContainer: {
+    flex: 1,
+  },
+  cardTitle: {
+    ...FONTS.body.regular,
+    fontWeight: 'bold' as const,
+    color: COLORS.neutralDark,
+    marginBottom: SPACING.xs,
+  },
+  cardDescription: {
+    ...FONTS.body.small,
+    color: COLORS.neutralMedium,
+  },
+  meditateButton: {
+    marginBottom: SPACING.l,
+  },
+  cardsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.l,
+  },
+  featureCard: {
+    width: '48%',
+    marginBottom: SPACING.m,
+  },
+  featureCardContent: {
+    alignItems: 'center',
+    padding: SPACING.s,
+  },
+  featureCardTitle: {
+    ...FONTS.body.regular,
+    fontWeight: 'bold' as const,
+    color: COLORS.neutralDark,
+    marginTop: SPACING.s,
+    marginBottom: SPACING.xs,
+  },
+  featureCardDescription: {
+    ...FONTS.body.small,
+    color: COLORS.neutralMedium,
+    textAlign: 'center',
+  },
+  statsSection: {
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.borderRadius.medium,
+    padding: SPACING.m,
+    marginBottom: SPACING.m,
+  },
+  statsSectionTitle: {
+    ...FONTS.body.regular,
+    fontWeight: 'bold' as const,
+    color: COLORS.neutralDark,
+    marginBottom: SPACING.m,
   },
   statsRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statItem: {
     alignItems: 'center',
   },
-  tokenContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: SPACING.l,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: SPACING.m,
-    paddingVertical: SPACING.xs,
-    borderRadius: SIZES.borderRadius.small,
+  statValue: {
+    ...FONTS.heading.h3,
+    color: COLORS.primary,
+    fontWeight: 'bold' as const,
   },
-  tokenText: {
-    ...FONTS.body.regular,
-    color: COLORS.white,
-    fontWeight: '600',
-    marginLeft: SPACING.xs,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: SPACING.xl,
-  },
-  zenniSection: {
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
-  xpContainer: {
-    width: '100%',
-    marginTop: SPACING.l,
-  },
-  card: {
-    marginBottom: SPACING.l,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.s,
-  },
-  cardTitle: {
-    ...FONTS.heading.h4,
-    color: COLORS.neutralDark,
-    marginLeft: SPACING.s,
-  },
-  cardDescription: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralDark,
-    marginBottom: SPACING.l,
-  },
-  cardButton: {
-    alignSelf: 'flex-start',
+  statLabel: {
+    ...FONTS.body.small,
+    color: COLORS.neutralMedium,
   },
 });
 

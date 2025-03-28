@@ -1,9 +1,6 @@
-import create from 'zustand';
-import { 
-  submitMeditationSession as apiSubmitMeditationSession,
-  calculateSessionRewards as apiCalculateSessionRewards
-} from '../api/meditation';
-import { MeditationType, MeditationDuration, MeditationSession } from '../types';
+import { create } from 'zustand';
+import { MeditationType, MeditationDuration } from '../types';
+import * as meditationApi from '../api/meditation';
 import { getMicroLesson } from '../constants/microLessons';
 
 interface MeditationState {
@@ -25,6 +22,28 @@ interface MeditationState {
   resetMeditationSession: () => void;
 }
 
+// Helper functions for calculating rewards
+const calculateXP = (duration: MeditationDuration, breathScore: number): number => {
+  // Base XP based on duration
+  const baseXP = duration === 5 ? 25 : 50;
+  
+  // Bonus XP based on breath score (up to 100% bonus)
+  const breathBonus = Math.floor(baseXP * (breathScore / 100));
+  
+  return baseXP + breathBonus;
+};
+
+const calculateTokens = (duration: MeditationDuration, breathScore: number): number => {
+  // Tokens are usually fewer than XP
+  // Base tokens based on duration
+  const baseTokens = duration === 5 ? 5 : 10;
+  
+  // Bonus tokens based on breath score (up to 50% bonus)
+  const breathBonus = Math.floor(baseTokens * (breathScore / 200));
+  
+  return baseTokens + breathBonus;
+};
+
 export const useMeditationStore = create<MeditationState>((set, get) => ({
   isLoading: false,
   error: null,
@@ -39,53 +58,47 @@ export const useMeditationStore = create<MeditationState>((set, get) => ({
   sessionCompleted: false,
   microLesson: '',
   
-  selectMeditationSettings: (type, duration) => {
-    set({ 
-      selectedType: type, 
+  selectMeditationSettings: (type: MeditationType, duration: MeditationDuration) => {
+    set({
+      selectedType: type,
       selectedDuration: duration,
-      sessionCompleted: false,
-      breathScore: 0,
-      xpGained: 0,
-      tokensEarned: 0,
-      streakUpdated: 0,
-      leveledUp: false
+      microLesson: getMicroLesson(type),
     });
   },
   
-  submitMeditationSession: async (breathScore, didUseBreathTracking) => {
+  submitMeditationSession: async (breathScore: number, didUseBreathTracking: boolean) => {
     const { selectedType, selectedDuration } = get();
     
     if (!selectedType || !selectedDuration) {
-      set({ error: 'Meditation settings not selected' });
+      set({ error: 'No meditation type or duration selected' });
       return;
     }
     
-    set({ isLoading: true, error: null });
-    
     try {
-      const result = await apiSubmitMeditationSession(
+      set({ isLoading: true, error: null });
+      
+      const result = await meditationApi.submitMeditationSession(
         selectedType,
         selectedDuration,
         breathScore,
         didUseBreathTracking
       );
       
-      // Get a micro lesson based on the selected meditation type
-      const microLesson = getMicroLesson(selectedType);
-      
       set({
+        isLoading: false,
         breathScore,
-        didUseBreathTracking,
         xpGained: result.xpGained,
         tokensEarned: result.tokensEarned,
         streakUpdated: result.streakUpdated,
         leveledUp: result.leveledUp,
+        didUseBreathTracking,
         sessionCompleted: true,
-        isLoading: false,
-        microLesson
       });
     } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+      set({
+        isLoading: false,
+        error: error.message,
+      });
     }
   },
   
@@ -101,7 +114,7 @@ export const useMeditationStore = create<MeditationState>((set, get) => ({
       didUseBreathTracking: false,
       sessionCompleted: false,
       microLesson: '',
-      error: null
+      error: null,
     });
-  }
+  },
 }));

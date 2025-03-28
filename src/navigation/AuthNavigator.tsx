@@ -2,37 +2,25 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
-import { COLORS } from '../constants/theme';
 
-const Stack = createStackNavigator();
+// Define the auth stack parameter list for type safety
+export type AuthStackParamList = {
+  Login: undefined;
+  Signup: undefined;
+};
+
+const AuthStack = createStackNavigator<AuthStackParamList>();
 
 const AuthNavigator = () => {
   return (
-    <Stack.Navigator
-      initialRouteName="Login"
+    <AuthStack.Navigator
       screenOptions={{
-        headerStyle: {
-          backgroundColor: COLORS.primary,
-        },
-        headerTintColor: COLORS.white,
-        headerTitleStyle: {
-          fontFamily: 'Poppins_600SemiBold',
-          fontSize: 18,
-        },
-        cardStyle: { backgroundColor: COLORS.neutralLight },
+        headerShown: false,
       }}
     >
-      <Stack.Screen
-        name="Login"
-        component={LoginScreen}
-        options={{ title: 'Login to Zen' }}
-      />
-      <Stack.Screen
-        name="Signup"
-        component={SignupScreen}
-        options={{ title: 'Create Zen Account' }}
-      />
-    </Stack.Navigator>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="Signup" component={SignupScreen} />
+    </AuthStack.Navigator>
   );
 };
 

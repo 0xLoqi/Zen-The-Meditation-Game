@@ -1,13 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import LottieView from 'lottie-react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-  withDelay,
-} from 'react-native-reanimated';
+import { getOutfitById } from '../constants/outfits';
 import { OutfitId } from '../types';
 
 interface MiniZenniProps {
@@ -19,113 +13,83 @@ interface MiniZenniProps {
   loop?: boolean;
 }
 
-const MiniZenni: React.FC<MiniZenniProps> = ({
-  outfitId = 'default',
+const MiniZenni = ({
+  outfitId,
   size = 'medium',
   style,
   animationState = 'idle',
   autoPlay = true,
   loop = true,
-}) => {
-  const animationRef = useRef<LottieView>(null);
+}: MiniZenniProps) => {
+  const lottieRef = useRef<LottieView>(null);
+  const outfit = getOutfitById(outfitId);
   
-  // Animation values for subtle movements
-  const translateY = useSharedValue(0);
-  const scale = useSharedValue(1);
-  
-  // Setup subtle breathing animation for idle state
-  useEffect(() => {
-    if (animationState === 'idle') {
-      // Subtle up and down movement with scaling
-      const breathingAnimation = () => {
-        translateY.value = withSequence(
-          withSpring(-5, { damping: 10, stiffness: 40 }),
-          withDelay(
-            1000,
-            withSpring(0, { damping: 10, stiffness: 40 })
-          )
-        );
-        
-        scale.value = withSequence(
-          withSpring(1.03, { damping: 10, stiffness: 40 }),
-          withDelay(
-            1000,
-            withSpring(1, { damping: 10, stiffness: 40 })
-          )
-        );
-        
-        // Repeat the animation after a delay
-        setTimeout(breathingAnimation, 3000);
-      };
-      
-      breathingAnimation();
-    }
-    
-    if (animationState === 'levelUp') {
-      // More dramatic animation for level up
-      scale.value = withSequence(
-        withSpring(1.2, { damping: 10, stiffness: 40 }),
-        withDelay(
-          500,
-          withSpring(1, { damping: 10, stiffness: 40 })
-        )
-      );
-    }
-  }, [animationState]);
-  
-  // Apply animated styles
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateY: translateY.value },
-        { scale: scale.value },
-      ],
-    };
-  });
-  
-  // Get animation source based on state and outfit
+  // This would be the path to the actual animation file for this outfit & animation state
+  // For now, we'll use placeholder paths - these will need to be created and added to the assets folder
   const getAnimationSource = () => {
-    // For now, use the animation state directly
-    // In a real app, you would have different animations for different outfits
+    // In a real implementation, we would return different animations based on outfit and state
+    // For now, we'll use placeholder animation paths
     switch (animationState) {
       case 'meditating':
-        return require('../assets/animations/mini_zenni_meditating.json');
+        return require('../../assets/animations/zenni_meditating.json');
       case 'levelUp':
-        return require('../assets/animations/mini_zenni_level_up.json');
-      default: // idle
-        return require('../assets/animations/mini_zenni_default.json');
+        return require('../../assets/animations/zenni_level_up.json');
+      case 'idle':
+      default:
+        return require('../../assets/animations/zenni_idle.json');
     }
   };
   
-  // Get size dimensions
-  const getDimensions = () => {
+  // Will need actual animation files in the assets/animations folder
+  // Currently using placeholders that should be replaced with real animations
+
+  useEffect(() => {
+    if (lottieRef.current && autoPlay) {
+      lottieRef.current.play();
+    }
+  }, [autoPlay, animationState, outfitId]);
+
+  const getDimensions = (): number => {
     switch (size) {
       case 'small':
-        return { width: 100, height: 100 };
+        return 80;
       case 'large':
-        return { width: 240, height: 240 };
-      default: // medium
-        return { width: 160, height: 160 };
+        return 200;
+      case 'medium':
+      default:
+        return 140;
     }
   };
-  
+
   return (
-    <Animated.View style={[styles.container, animatedStyle, style]}>
+    <View
+      style={[
+        styles.container,
+        { width: getDimensions(), height: getDimensions() },
+        style,
+      ]}
+    >
       <LottieView
-        ref={animationRef}
+        ref={lottieRef}
         source={getAnimationSource()}
-        style={[getDimensions()]}
+        style={styles.animation}
         autoPlay={autoPlay}
         loop={loop}
+        speed={animationState === 'levelUp' ? 1.2 : 1}
       />
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  animation: {
+    width: '100%',
+    height: '100%',
   },
 });
 

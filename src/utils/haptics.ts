@@ -37,8 +37,8 @@ export const triggerHapticFeedback = async (type: HapticType = 'light'): Promise
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   } catch (error) {
-    // Silently fail if haptics are not available
-    console.log('Haptic feedback not available:', error);
+    // Silently fail if haptics not available
+    console.log('Haptic feedback not available');
   }
 };
 
@@ -48,18 +48,12 @@ export const triggerHapticFeedback = async (type: HapticType = 'light'): Promise
  * @param interval - Time between haptic feedback in milliseconds
  */
 export const triggerHapticSequence = async (types: HapticType[], interval: number = 150): Promise<void> => {
-  try {
-    for (let i = 0; i < types.length; i++) {
-      triggerHapticFeedback(types[i]);
-      
-      // Wait for interval before next haptic, except for the last one
-      if (i < types.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, interval));
-      }
+  for (const type of types) {
+    await triggerHapticFeedback(type);
+    
+    if (types.indexOf(type) < types.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, interval));
     }
-  } catch (error) {
-    // Silently fail if haptics are not available
-    console.log('Haptic sequence failed:', error);
   }
 };
 
@@ -68,15 +62,12 @@ export const triggerHapticSequence = async (types: HapticType[], interval: numbe
  * @param isInhaling - Whether the user is inhaling
  */
 export const triggerBreathHaptic = (isInhaling: boolean): void => {
-  try {
-    if (isInhaling) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-  } catch (error) {
-    // Silently fail if haptics are not available
-    console.log('Breath haptic failed:', error);
+  if (isInhaling) {
+    // Increasing intensity for inhale
+    triggerHapticFeedback('light');
+  } else {
+    // Decreasing intensity for exhale
+    triggerHapticFeedback('light');
   }
 };
 
@@ -84,21 +75,7 @@ export const triggerBreathHaptic = (isInhaling: boolean): void => {
  * Trigger level up celebration haptic feedback
  */
 export const triggerLevelUpHaptic = async (): Promise<void> => {
-  try {
-    // Success notification
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    // Wait a moment
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Sequence of impacts
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await new Promise(resolve => setTimeout(resolve, 100));
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  } catch (error) {
-    // Silently fail if haptics are not available
-    console.log('Level up haptic failed:', error);
-  }
+  await triggerHapticSequence(['medium', 'medium', 'success']);
 };
 
 /**
@@ -107,7 +84,7 @@ export const triggerLevelUpHaptic = async (): Promise<void> => {
  */
 export const isHapticAvailable = async (): Promise<boolean> => {
   try {
-    // Attempt a light impact to see if it works
+    // Try to trigger a light impact
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     return true;
   } catch (error) {

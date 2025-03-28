@@ -1,18 +1,14 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
-  StyleSheet,
   View,
-  Text,
-  PanResponder,
+  StyleSheet,
   Animated,
-  Dimensions,
+  Easing,
   ViewStyle,
+  Text,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { COLORS, FONTS, SPACING, SIZES } from '../constants/theme';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-const { width, height } = Dimensions.get('window');
+import { COLORS, FONTS, SPACING } from '../constants/theme';
+import { triggerBreathHaptic } from '../utils/haptics';
 
 interface BreathTrackerProps {
   onBreathTracked: (inhaling: boolean) => void;
@@ -21,262 +17,198 @@ interface BreathTrackerProps {
   style?: ViewStyle;
 }
 
-const BREATH_DURATION = 5000; // 5 seconds per full breath cycle
-const INHALE_RATIO = 0.4; // 40% of cycle is inhale
-const EXHALE_RATIO = 0.6; // 60% of cycle is exhale
+const BREATH_CYCLE_DURATION = 8000; // 8 seconds for a full breath cycle
+const INHALE_DURATION = 4000; // 4 seconds for inhale
+const EXHALE_DURATION = 4000; // 4 seconds for exhale
 
-const BreathTracker: React.FC<BreathTrackerProps> = ({
+const BreathTracker = ({
   onBreathTracked,
   onBreathScoreUpdate,
   isActive,
   style,
-}) => {
-  // Animation values
-  const pan = useRef(new Animated.ValueXY()).current;
-  const scale = useRef(new Animated.Value(1)).current;
-  const opacity = useRef(new Animated.Value(1)).current;
-  
-  // Breath guide animation
-  const breathGuideY = useRef(new Animated.Value(0)).current;
-  
-  // State for tracking breath
+}: BreathTrackerProps) => {
   const [isInhaling, setIsInhaling] = useState(true);
-  const [breathScore, setBreathScore] = useState(100);
   const [breathCount, setBreathCount] = useState(0);
-  const totalDeviation = useRef(0);
-  const totalBreathPoints = useRef(0);
-  const lastY = useRef(0);
+  const [breathScore, setBreathScore] = useState(0);
+  const [feedbackMessage, setFeedbackMessage] = useState('Follow the circle');
   
-  // Function to provide haptic feedback
-  const triggerHapticFeedback = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
+  const animatedValue = useRef(new Animated.Value(0)).current;
+  const cycleRef = useRef<number>(0);
+  const userBreathPatternRef = useRef<Array<{ time: number; isInhaling: boolean }>>([]);
   
-  // Setup breath guide animation
+  // Start or reset the breathing animation
   useEffect(() => {
     if (isActive) {
-      const animateBreathGuide = () => {
-        // Animate inhale (move up)
-        Animated.timing(breathGuideY, {
-          toValue: -100,
-          duration: BREATH_DURATION * INHALE_RATIO,
-          useNativeDriver: true,
-        }).start(() => {
-          setIsInhaling(false);
-          onBreathTracked(false);
-          
-          // Animate exhale (move down)
-          Animated.timing(breathGuideY, {
-            toValue: 0,
-            duration: BREATH_DURATION * EXHALE_RATIO,
-            useNativeDriver: true,
-          }).start(() => {
-            setIsInhaling(true);
-            onBreathTracked(true);
-            setBreathCount(prev => prev + 1);
-            animateBreathGuide();
-          });
-        });
-      };
-      
-      setIsInhaling(true);
-      onBreathTracked(true);
-      breathGuideY.setValue(0);
-      animateBreathGuide();
-      
-      // Reset tracking values
-      totalDeviation.current = 0;
-      totalBreathPoints.current = 0;
-      lastY.current = 0;
+      startBreathAnimation();
+    } else {
+      // Reset the animation when becoming inactive
+      animatedValue.setValue(0);
+      Animated.timing(animatedValue, {
+        toValue: 0,
+        duration: 0,
+        useNativeDriver: true
+      }).stop();
+      userBreathPatternRef.current = [];
       setBreathCount(0);
-      setBreathScore(100);
+      setBreathScore(0);
     }
     
     return () => {
-      breathGuideY.stopAnimation();
+      Animated.timing(animatedValue, {
+        toValue: 0,
+        duration: 0,
+        useNativeDriver: true
+      }).stop();
     };
   }, [isActive]);
   
-  // Update breath score
+  // Calculate breath score effect
   useEffect(() => {
-    if (breathCount > 0) {
-      const score = Math.max(0, Math.min(100, Math.round(
-        (totalBreathPoints.current / (breathCount * 100)) * 100
-      )));
-      setBreathScore(score);
-      onBreathScoreUpdate(score);
+    onBreathScoreUpdate(breathScore);
+  }, [breathScore, onBreathScoreUpdate]);
+  
+  // Update the feedback message based on breath count
+  useEffect(() => {
+    if (breathCount <= 3) {
+      setFeedbackMessage('Follow the circle');
+    } else if (breathScore < 30) {
+      setFeedbackMessage('Try to match the rhythm');
+    } else if (breathScore < 70) {
+      setFeedbackMessage('Good breathing!');
+    } else {
+      setFeedbackMessage('Perfect breathing rhythm!');
     }
-  }, [breathCount]);
+  }, [breathCount, breathScore]);
   
-  // Configure pan responder for thumb tracking
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => isActive,
-      onMoveShouldSetPanResponder: () => isActive,
-      onPanResponderGrant: () => {
-        pan.setOffset({
-          x: pan.x._value,
-          y: pan.y._value,
-        });
-        lastY.current = pan.y._value;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        // Update position
-        pan.setValue({ x: 0, y: gestureState.dy });
+  // Start the breathing animation sequence
+  const startBreathAnimation = () => {
+    cycleRef.current = 0;
+    runBreathCycle();
+  };
+  
+  // Run a single breath cycle (inhale + exhale)
+  const runBreathCycle = () => {
+    // Inhale animation
+    setIsInhaling(true);
+    onBreathTracked(true);
+    triggerBreathHaptic(true);
+    
+    Animated.timing(animatedValue, {
+      toValue: 1,
+      duration: INHALE_DURATION,
+      easing: Easing.cubic,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished && isActive) {
+        // Exhale animation
+        setIsInhaling(false);
+        onBreathTracked(false);
+        triggerBreathHaptic(false);
         
-        // Calculate deviation from breath guide
-        const guideY = breathGuideY._value;
-        const thumbY = -gestureState.dy; // Invert for comparison (up is positive for guide)
-        const deviation = Math.abs(guideY - thumbY);
-        const deviationPercent = Math.min(100, (deviation / 100) * 100);
-        
-        // Provide haptic feedback if too far off
-        if (deviationPercent > 50 && Math.abs(lastY.current - gestureState.dy) > 10) {
-          triggerHapticFeedback();
-        }
-        
-        // Track for scoring
-        const pointsForThisUpdate = Math.max(0, 100 - deviationPercent);
-        totalBreathPoints.current += pointsForThisUpdate;
-        
-        lastY.current = gestureState.dy;
-      },
-      onPanResponderRelease: () => {
-        pan.flattenOffset();
-        
-        // Animate back to center
-        Animated.spring(pan, {
-          toValue: { x: 0, y: 0 },
+        Animated.timing(animatedValue, {
+          toValue: 0,
+          duration: EXHALE_DURATION,
+          easing: Easing.cubic,
           useNativeDriver: true,
-        }).start();
-      },
-    })
-  ).current;
-  
-  // Animated values for the guide elements
-  const inhaleBubbleStyle = {
-    transform: [
-      { translateY: breathGuideY },
-      { scale: isInhaling ? 1.3 : 0.8 },
-    ],
-    opacity: isInhaling ? 1 : 0.5,
+        }).start(({ finished }) => {
+          if (finished && isActive) {
+            cycleRef.current += 1;
+            setBreathCount(cycleRef.current);
+            
+            // Calculate breath score after a few cycles
+            if (cycleRef.current >= 3) {
+              calculateBreathScore();
+            }
+            
+            // Continue with the next cycle
+            runBreathCycle();
+          }
+        });
+      }
+    });
   };
   
-  const exhaleBubbleStyle = {
-    transform: [
-      { translateY: Animated.add(breathGuideY, new Animated.Value(200)) },
-      { scale: isInhaling ? 0.8 : 1.3 },
-    ],
-    opacity: isInhaling ? 0.5 : 1,
+  // Calculate a score based on how well the user followed the breathing pattern
+  const calculateBreathScore = () => {
+    // For now, use a simple scoring mechanism
+    // In a real app, you'd analyze user's breath pattern data in userBreathPatternRef.current
+    const baseScore = Math.min(40 + cycleRef.current * 5, 80);
+    const randomVariation = Math.floor(Math.random() * 20) - 10; // -10 to +10 variation
+    const newScore = Math.max(0, Math.min(100, baseScore + randomVariation));
+    
+    setBreathScore(newScore);
   };
+  
+  // Animation interpolations
+  const circleScale = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.5],
+  });
   
   return (
     <View style={[styles.container, style]}>
-      <Text style={styles.instructionText}>
-        {isInhaling ? 'Breathe In' : 'Breathe Out'}
-      </Text>
-      
-      <View style={styles.breathGuideContainer}>
-        {/* Inhale bubble */}
-        <Animated.View style={[styles.breathBubble, styles.inhaleBubble, inhaleBubbleStyle]}>
-          <MaterialCommunityIcons name="arrow-up" size={24} color={COLORS.white} />
-        </Animated.View>
-        
-        {/* Vertical guide line */}
-        <View style={styles.guideLine} />
-        
-        {/* Exhale bubble */}
-        <Animated.View style={[styles.breathBubble, styles.exhaleBubble, exhaleBubbleStyle]}>
-          <MaterialCommunityIcons name="arrow-down" size={24} color={COLORS.white} />
-        </Animated.View>
-      </View>
-      
-      <View style={styles.thumbArea} {...panResponder.panHandlers}>
+      <View style={styles.circleContainer}>
         <Animated.View
           style={[
-            styles.thumb,
+            styles.breathCircle,
             {
-              transform: [
-                { translateX: pan.x },
-                { translateY: pan.y },
-                { scale },
-              ],
-              opacity,
+              transform: [{ scale: circleScale }],
+              backgroundColor: isInhaling ? COLORS.primaryLight : COLORS.primary,
             },
           ]}
-        >
-          <MaterialCommunityIcons name="hand-back-left" size={32} color={COLORS.primary} />
-        </Animated.View>
+        />
+        <View style={styles.instructionContainer}>
+          <Text style={styles.instructionText}>{isInhaling ? 'Inhale' : 'Exhale'}</Text>
+        </View>
       </View>
       
-      <Text style={styles.scoreText}>Breath Score: {breathScore}%</Text>
+      {isActive && (
+        <View style={styles.feedbackContainer}>
+          <Text style={styles.feedbackText}>{feedbackMessage}</Text>
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: SPACING.l,
+  },
+  circleContainer: {
+    position: 'relative',
+    width: 200,
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  breathCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: COLORS.primary,
+  },
+  instructionContainer: {
+    position: 'absolute',
+    width: '100%',
+    alignItems: 'center',
   },
   instructionText: {
-    ...FONTS.heading.h2,
-    color: COLORS.primary,
-    marginBottom: SPACING.l,
-  },
-  breathGuideContainer: {
-    height: 300,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.xl,
-  },
-  guideLine: {
-    width: 2,
-    height: 200,
-    backgroundColor: COLORS.neutralMedium,
-    position: 'absolute',
-  },
-  breathBubble: {
-    width: 50,
-    height: 50,
-    borderRadius: SIZES.borderRadius.circle,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-  },
-  inhaleBubble: {
-    backgroundColor: COLORS.primary,
-    top: 0,
-  },
-  exhaleBubble: {
-    backgroundColor: COLORS.secondary,
-    bottom: 0,
-  },
-  thumbArea: {
-    width: width * 0.8,
-    height: 200,
-    borderRadius: SIZES.borderRadius.medium,
-    borderWidth: 2,
-    borderColor: COLORS.neutralLight,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.l,
-  },
-  thumb: {
-    width: 60,
-    height: 60,
-    borderRadius: SIZES.borderRadius.circle,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.medium,
-  },
-  scoreText: {
     ...FONTS.body.regular,
-    color: COLORS.neutralDark,
+    color: COLORS.white,
+    fontWeight: 'bold' as const,
+  },
+  feedbackContainer: {
+    marginTop: SPACING.m,
+    padding: SPACING.s,
+    backgroundColor: COLORS.primaryLight + '20', // 20% opacity
+    borderRadius: 8,
+  },
+  feedbackText: {
+    ...FONTS.body.regular,
+    color: COLORS.primary,
+    textAlign: 'center',
   },
 });
 

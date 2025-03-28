@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, ViewStyle } from 'react-native';
-import { COLORS, FONTS, SPACING, SIZES } from '../constants/theme';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { COLORS, FONTS, SIZES, SPACING } from '../constants/theme';
+import { formatPercentage } from '../utils/formatters';
 
 interface XPBarProps {
   currentXP: number;
@@ -11,65 +12,83 @@ interface XPBarProps {
   showXPCount?: boolean;
 }
 
-const XPBar: React.FC<XPBarProps> = ({
+const XPBar = ({
   currentXP,
   requiredXP,
   level,
   style,
   showLevel = true,
   showXPCount = true,
-}) => {
-  // Calculate progress percentage
+}: XPBarProps) => {
+  // Calculate percentage of XP progress
   const progressPercentage = Math.min((currentXP / requiredXP) * 100, 100);
   
   return (
     <View style={[styles.container, style]}>
       {showLevel && (
-        <Text style={styles.levelText}>Level {level}</Text>
+        <View style={styles.levelContainer}>
+          <Text style={styles.levelText}>{level}</Text>
+        </View>
       )}
       
       <View style={styles.barContainer}>
-        <View
-          style={[
-            styles.progressBar,
-            { width: `${progressPercentage}%` },
-          ]}
-        />
+        <View style={styles.barBackground}>
+          <View 
+            style={[
+              styles.barFill, 
+              { width: `${progressPercentage}%` }
+            ]} 
+          />
+        </View>
+        
+        {showXPCount && (
+          <Text style={styles.xpText}>
+            {currentXP} / {requiredXP} XP ({formatPercentage(progressPercentage)})
+          </Text>
+        )}
       </View>
-      
-      {showXPCount && (
-        <Text style={styles.xpText}>
-          {currentXP} / {requiredXP} XP
-        </Text>
-      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'row',
+    alignItems: 'center',
     width: '100%',
   },
+  levelContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: SIZES.borderRadius.full,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.s,
+  },
   levelText: {
-    ...FONTS.heading.h4,
-    color: COLORS.neutralDark,
-    marginBottom: SPACING.xs,
+    ...FONTS.body.small,
+    color: COLORS.white,
+    fontWeight: 'bold' as const,
   },
   barContainer: {
+    flex: 1,
+  },
+  barBackground: {
     height: 12,
     backgroundColor: COLORS.neutralLight,
-    borderRadius: SIZES.borderRadius.small,
+    borderRadius: SIZES.borderRadius.full,
     overflow: 'hidden',
   },
-  progressBar: {
+  barFill: {
     height: '100%',
-    backgroundColor: COLORS.accent,
-    borderRadius: SIZES.borderRadius.small,
+    backgroundColor: COLORS.primary,
+    borderRadius: SIZES.borderRadius.full,
   },
   xpText: {
-    ...FONTS.body.small,
+    ...FONTS.body.tiny,
     color: COLORS.neutralMedium,
-    marginTop: SPACING.xs,
+    marginTop: SPACING.xxs,
     textAlign: 'right',
   },
 });

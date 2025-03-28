@@ -1,63 +1,68 @@
-import { Outfit } from '../types';
+import { Outfit, OutfitId } from '../types';
 
-// Collection of outfits for Mini Zenni
+// Collection of all available outfits for the MiniZenni character
 export const OUTFITS: Outfit[] = [
   {
     id: 'default',
-    name: 'Classic Zenni',
-    description: 'The timeless look of a meditation master in training.',
+    name: 'Zen Novice',
+    description: 'The default outfit for beginning your meditation journey.',
     requiredLevel: 1,
-    tokenCost: null, // Default outfit, not purchasable
-    imagePath: 'mini_zenni_default'
+    tokenCost: null, // Not purchasable, automatically unlocked
+    imagePath: '../../assets/outfits/default.png',
   },
   {
     id: 'zen_master',
     name: 'Zen Master',
-    description: 'Traditional robes worn by enlightened meditation teachers.',
+    description: 'Traditional robes worn by meditation masters.',
     requiredLevel: 5,
-    tokenCost: 100,
-    imagePath: 'mini_zenni_zen_master'
+    tokenCost: 500,
+    imagePath: '../../assets/outfits/zen_master.png',
   },
   {
     id: 'lotus',
     name: 'Lotus Bloom',
-    description: 'Adorned with lotus flowers, symbolizing purity of mind.',
+    description: 'Embody the serenity of a lotus flower.',
     requiredLevel: 10,
-    tokenCost: 200,
-    imagePath: 'mini_zenni_lotus'
+    tokenCost: 1000,
+    imagePath: '../../assets/outfits/lotus.png',
   },
   {
     id: 'cosmic',
-    name: 'Cosmic Explorer',
-    description: 'Journey through the universe of consciousness with this stellar outfit.',
+    name: 'Cosmic Consciousness',
+    description: 'Connect with the universe through this celestial outfit.',
     requiredLevel: 15,
-    tokenCost: 300,
-    imagePath: 'mini_zenni_cosmic'
+    tokenCost: 2000,
+    imagePath: '../../assets/outfits/cosmic.png',
   },
   {
     id: 'nature_spirit',
     name: 'Nature Spirit',
-    description: 'Connect with the natural world in this earthy ensemble.',
+    description: 'Become one with nature and the elements.',
     requiredLevel: 20,
-    tokenCost: 400,
-    imagePath: 'mini_zenni_nature_spirit'
+    tokenCost: 3000,
+    imagePath: '../../assets/outfits/nature_spirit.png',
   },
   {
     id: 'meditation_guru',
-    name: 'Ultimate Guru',
-    description: 'The pinnacle of meditation mastery, radiating wisdom and serenity.',
+    name: 'Meditation Guru',
+    description: 'The ultimate outfit for those who have achieved meditation mastery.',
     requiredLevel: 25,
-    tokenCost: 500,
-    imagePath: 'mini_zenni_meditation_guru'
+    tokenCost: null, // Not purchasable, automatically unlocked at level 25
+    imagePath: '../../assets/outfits/meditation_guru.png',
   },
 ];
 
-// Get available outfits based on user level
+/**
+ * Returns all outfits that should be visible to a user of the given level
+ * This includes both unlocked outfits and outfits that can be purchased
+ */
 export const getAvailableOutfits = (userLevel: number): Outfit[] => {
   return OUTFITS.filter(outfit => outfit.requiredLevel <= userLevel);
 };
 
-// Get outfit by ID
+/**
+ * Find an outfit by its ID
+ */
 export const getOutfitById = (outfitId: string): Outfit | undefined => {
   return OUTFITS.find(outfit => outfit.id === outfitId);
 };

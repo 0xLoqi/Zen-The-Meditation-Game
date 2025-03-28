@@ -1,198 +1,122 @@
-import { 
-  doc, 
-  getDoc, 
-  updateDoc, 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs, 
-  Timestamp 
-} from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { getFirebaseAuth, getFirebaseFirestore, getFirebaseFunctions } from './firebase';
 import { User, DailyCheckIn, OutfitId } from '../types';
+import { getFirebaseFirestore } from './firebase';
 
-// Get current user data
+// Mock user for development
+const mockUser: User = {
+  id: 'mock-user-id',
+  username: 'ZenMaster',
+  email: 'user@example.com',
+  level: 5,
+  xp: 350,
+  tokens: 120,
+  streak: 7,
+  lastMeditationDate: new Date(),
+  equippedOutfit: 'default',
+  unlockedOutfits: ['default', 'zen_master'],
+  referralCode: 'ZENMASTER123',
+  createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+};
+
+// Mock check-in
+const mockCheckIn: DailyCheckIn = {
+  id: 'mock-check-in-id',
+  userId: 'mock-user-id',
+  rating: 4,
+  reflection: 'Feeling peaceful today',
+  timestamp: new Date(),
+};
+
 export const getUserData = async (): Promise<User | null> => {
   try {
-    const auth = getFirebaseAuth();
-    const user = auth.currentUser;
-    
-    if (!user) {
-      return null;
-    }
-    
-    const firestore = getFirebaseFirestore();
-    const userDoc = await getDoc(doc(firestore, 'users', user.uid));
-    
-    if (!userDoc.exists()) {
-      return null;
-    }
-    
-    return { id: userDoc.id, ...userDoc.data() } as User;
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    throw error;
+    // In a real app, this would fetch the user's data from Firestore
+    // For now, return mock data
+    return mockUser;
+  } catch (error: any) {
+    console.error('Error getting user data:', error);
+    throw new Error('Failed to fetch user data');
   }
 };
 
-// Submit daily check-in
 export const submitDailyCheckIn = async (rating: number, reflection?: string): Promise<void> => {
   try {
-    const auth = getFirebaseAuth();
-    const user = auth.currentUser;
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-    
-    const firestore = getFirebaseFirestore();
-    
-    // Add check-in to history
-    await addDoc(collection(firestore, 'checkIns'), {
-      userId: user.uid,
-      rating,
-      reflection: reflection || '',
-      timestamp: new Date()
-    });
-  } catch (error) {
+    // In a real app, this would save the check-in to Firestore
+    console.log('Submitting daily check-in:', { rating, reflection });
+    // Simulate a small delay for the API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return;
+  } catch (error: any) {
     console.error('Error submitting daily check-in:', error);
-    throw error;
+    throw new Error('Failed to submit daily check-in');
   }
 };
 
-// Get today's check-in if it exists
 export const getTodayCheckIn = async (): Promise<DailyCheckIn | null> => {
   try {
-    const auth = getFirebaseAuth();
-    const user = auth.currentUser;
-    
-    if (!user) {
-      return null;
-    }
-    
-    const firestore = getFirebaseFirestore();
-    
-    // Get start and end of today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const todayStart = Timestamp.fromDate(today);
-    const todayEnd = Timestamp.fromDate(tomorrow);
-    
-    // Query check-ins for today
-    const checkInsRef = collection(firestore, 'checkIns');
-    const q = query(
-      checkInsRef,
-      where('userId', '==', user.uid),
-      where('timestamp', '>=', todayStart),
-      where('timestamp', '<', todayEnd),
-      orderBy('timestamp', 'desc'),
-      // limit(1) // Not needed as we'll just take the first one if multiple exist
-    );
-    
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.empty) {
-      return null;
-    }
-    
-    const checkInDoc = querySnapshot.docs[0];
-    return { id: checkInDoc.id, ...checkInDoc.data() } as DailyCheckIn;
-  } catch (error) {
-    console.error('Error fetching today\'s check-in:', error);
-    throw error;
+    // In a real app, this would fetch today's check-in from Firestore if it exists
+    // For now, randomly return a check-in or null to simulate both states
+    const hasCheckedIn = Math.random() > 0.7; // 30% chance of having already checked in
+    return hasCheckedIn ? mockCheckIn : null;
+  } catch (error: any) {
+    console.error('Error getting today\'s check-in:', error);
+    throw new Error('Failed to fetch today\'s check-in');
   }
 };
 
-// Equip an outfit for Mini Zenni
 export const equipOutfit = async (outfitId: OutfitId): Promise<void> => {
   try {
-    const auth = getFirebaseAuth();
-    const user = auth.currentUser;
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-    
-    const userData = await getUserData();
-    
-    if (!userData) {
-      throw new Error('User data not found');
-    }
-    
-    // Check if outfit is unlocked
-    if (!userData.unlockedOutfits.includes(outfitId)) {
-      throw new Error('Outfit not unlocked');
-    }
-    
-    const firestore = getFirebaseFirestore();
-    
-    // Update the equipped outfit
-    await updateDoc(doc(firestore, 'users', user.uid), {
-      equippedOutfit: outfitId
-    });
-  } catch (error) {
+    // In a real app, this would update the user's equipped outfit in Firestore
+    console.log('Equipping outfit:', outfitId);
+    // Simulate a small delay for the API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return;
+  } catch (error: any) {
     console.error('Error equipping outfit:', error);
-    throw error;
+    throw new Error('Failed to equip outfit');
   }
 };
 
-// Get user streak
 export const getUserStreak = async (): Promise<number> => {
   try {
-    const userData = await getUserData();
-    return userData?.streak || 0;
-  } catch (error) {
+    // In a real app, this would be calculated from the user's meditation history
+    return mockUser.streak;
+  } catch (error: any) {
     console.error('Error getting user streak:', error);
-    throw error;
+    throw new Error('Failed to fetch user streak');
   }
 };
 
-// Get user XP
 export const getUserXP = async (): Promise<number> => {
   try {
-    const userData = await getUserData();
-    return userData?.xp || 0;
-  } catch (error) {
+    return mockUser.xp;
+  } catch (error: any) {
     console.error('Error getting user XP:', error);
-    throw error;
+    throw new Error('Failed to fetch user XP');
   }
 };
 
-// Get user tokens
 export const getUserTokens = async (): Promise<number> => {
   try {
-    const userData = await getUserData();
-    return userData?.tokens || 0;
-  } catch (error) {
+    return mockUser.tokens;
+  } catch (error: any) {
     console.error('Error getting user tokens:', error);
-    throw error;
+    throw new Error('Failed to fetch user tokens');
   }
 };
 
-// Get user level
 export const getUserLevel = async (): Promise<number> => {
   try {
-    const userData = await getUserData();
-    return userData?.level || 1;
-  } catch (error) {
+    return mockUser.level;
+  } catch (error: any) {
     console.error('Error getting user level:', error);
-    throw error;
+    throw new Error('Failed to fetch user level');
   }
 };
 
-// Get user referral code
 export const getReferralCode = async (): Promise<string> => {
   try {
-    const userData = await getUserData();
-    return userData?.referralCode || '';
-  } catch (error) {
+    return mockUser.referralCode;
+  } catch (error: any) {
     console.error('Error getting referral code:', error);
-    throw error;
+    throw new Error('Failed to fetch referral code');
   }
 };

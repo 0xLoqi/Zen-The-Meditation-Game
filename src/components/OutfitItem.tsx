@@ -1,8 +1,16 @@
 import React from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../constants/theme';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import { Outfit } from '../types';
+import { COLORS, FONTS, SHADOWS, SIZES, SPACING } from '../constants/theme';
+import Card from './Card';
+import { Ionicons } from '@expo/vector-icons';
+import { formatNumber } from '../utils/formatters';
 
 interface OutfitItemProps {
   outfit: Outfit;
@@ -11,164 +19,157 @@ interface OutfitItemProps {
   onPress: () => void;
 }
 
-const OutfitItem: React.FC<OutfitItemProps> = ({
+const OutfitItem = ({
   outfit,
   isUnlocked,
   isEquipped,
   onPress,
-}) => {
+}: OutfitItemProps) => {
+  // Determine whether the outfit is purchasable or level-locked
+  const isPurchasable = isUnlocked && outfit.tokenCost !== null;
+  const isLevelLocked = !isUnlocked && outfit.tokenCost === null;
+  
+  // Define status badge color and text
+  const getBadgeConfig = () => {
+    if (isEquipped) {
+      return {
+        color: COLORS.primary,
+        text: 'Equipped',
+        icon: 'checkmark-circle',
+      };
+    }
+    
+    if (isUnlocked) {
+      return {
+        color: COLORS.success,
+        text: 'Unlocked',
+        icon: 'unlock',
+      };
+    }
+    
+    if (isPurchasable) {
+      return {
+        color: COLORS.secondary,
+        text: `${formatNumber(outfit.tokenCost!)} tokens`,
+        icon: 'cash',
+      };
+    }
+    
+    return {
+      color: COLORS.neutralMedium,
+      text: `Level ${outfit.requiredLevel}`,
+      icon: 'lock-closed',
+    };
+  };
+  
+  const badgeConfig = getBadgeConfig();
+  
   return (
-    <TouchableOpacity
-      style={[
-        styles.container,
-        isEquipped && styles.equippedContainer,
-      ]}
-      onPress={onPress}
-      disabled={!isUnlocked}
-      activeOpacity={0.8}
+    <Card
+      style={styles.container}
+      shadowLevel="light"
+      onPress={isUnlocked || isPurchasable ? onPress : undefined}
     >
-      <View style={styles.imageContainer}>
-        {/* Use SVG placeholder for image */}
-        <View style={styles.imagePlaceholder}>
-          <MaterialCommunityIcons
-            name="hanger"
-            size={SIZES.icon.large}
-            color={isUnlocked ? COLORS.primary : COLORS.neutralMedium}
+      <View style={styles.content}>
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: outfit.imagePath }}
+            style={[
+              styles.image,
+              (!isUnlocked && !isPurchasable) && styles.imageLocked,
+            ]}
           />
+          {isEquipped && (
+            <View style={styles.equippedBadge}>
+              <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
+            </View>
+          )}
         </View>
         
-        {/* Lock overlay if not unlocked */}
-        {!isUnlocked && (
-          <View style={styles.lockOverlay}>
-            <MaterialCommunityIcons
-              name="lock"
-              size={SIZES.icon.medium}
-              color={COLORS.white}
-            />
-          </View>
-        )}
-        
-        {/* Equipped indicator */}
-        {isEquipped && (
-          <View style={styles.equippedIndicator}>
-            <MaterialCommunityIcons
-              name="check-circle"
-              size={SIZES.icon.medium}
-              color={COLORS.success}
-            />
-          </View>
-        )}
-      </View>
-      
-      <View style={styles.infoContainer}>
-        <Text
-          style={[
-            styles.outfitName,
-            !isUnlocked && styles.disabledText,
-          ]}
-          numberOfLines={1}
-        >
-          {outfit.name}
-        </Text>
-        
-        {outfit.tokenCost !== null && !isUnlocked && (
-          <View style={styles.costContainer}>
-            <MaterialCommunityIcons
-              name="coin"
-              size={16}
-              color={COLORS.accent}
-              style={{ marginRight: 4 }}
-            />
-            <Text style={styles.costText}>{outfit.tokenCost}</Text>
-          </View>
-        )}
-        
-        {!isUnlocked && outfit.tokenCost === null && (
-          <Text style={styles.levelRequiredText}>
-            Level {outfit.requiredLevel}
+        <View style={styles.detailsContainer}>
+          <Text style={styles.outfitName}>
+            {outfit.name}
           </Text>
-        )}
-        
-        {isEquipped && (
-          <Text style={styles.equippedText}>Equipped</Text>
-        )}
+          
+          <Text style={styles.description} numberOfLines={2}>
+            {outfit.description}
+          </Text>
+          
+          <View style={[
+            styles.statusBadge,
+            { backgroundColor: badgeConfig.color + '20' } // 20% opacity
+          ]}>
+            <Ionicons name={badgeConfig.icon as any} size={16} color={badgeConfig.color} />
+            <Text style={[styles.statusText, { color: badgeConfig.color }]}>
+              {badgeConfig.text}
+            </Text>
+          </View>
+        </View>
       </View>
-    </TouchableOpacity>
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: 130,
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.borderRadius.medium,
-    overflow: 'hidden',
-    marginHorizontal: SPACING.s,
-    marginBottom: SPACING.l,
-    ...SHADOWS.light,
-  },
-  equippedContainer: {
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-  },
-  imageContainer: {
-    position: 'relative',
+    marginBottom: SPACING.m,
     width: '100%',
-    height: 100,
-    backgroundColor: COLORS.neutralLight,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lockOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  equippedIndicator: {
-    position: 'absolute',
-    top: SPACING.xs,
-    right: SPACING.xs,
-  },
-  infoContainer: {
-    padding: SPACING.s,
-  },
-  outfitName: {
-    ...FONTS.body.small,
-    color: COLORS.neutralDark,
-    fontWeight: '500',
-    marginBottom: SPACING.xs,
-  },
-  disabledText: {
-    color: COLORS.neutralMedium,
-  },
-  costContainer: {
+  content: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  costText: {
+  imageContainer: {
+    position: 'relative',
+    width: 80,
+    height: 80,
+    borderRadius: SIZES.borderRadius.small,
+    overflow: 'hidden',
+    marginRight: SPACING.m,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imageLocked: {
+    opacity: 0.5,
+  },
+  equippedBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.borderRadius.full,
+    padding: 2,
+    ...SHADOWS.light,
+  },
+  detailsContainer: {
+    flex: 1,
+  },
+  outfitName: {
+    ...FONTS.body.regular,
+    fontWeight: 'bold' as const,
+    color: COLORS.neutralDark,
+    marginBottom: SPACING.xxs,
+  },
+  description: {
     ...FONTS.body.small,
-    color: COLORS.accent,
-    fontWeight: '500',
-  },
-  levelRequiredText: {
-    ...FONTS.body.tiny,
     color: COLORS.neutralMedium,
+    marginBottom: SPACING.s,
   },
-  equippedText: {
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: SPACING.s,
+    paddingVertical: SPACING.xxs,
+    borderRadius: SIZES.borderRadius.full,
+  },
+  statusText: {
     ...FONTS.body.tiny,
-    color: COLORS.primary,
-    fontWeight: '500',
+    fontWeight: 'bold' as const,
+    marginLeft: 4,
   },
 });
 

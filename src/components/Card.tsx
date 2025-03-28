@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  StyleSheet,
-  View,
-  ViewStyle,
   TouchableOpacity,
+  View,
+  StyleSheet,
+  ViewStyle,
   TouchableOpacityProps,
 } from 'react-native';
-import { COLORS, SIZES, SHADOWS, SPACING } from '../constants/theme';
+import { COLORS, SHADOWS, SIZES } from '../constants/theme';
 
 interface CardProps extends TouchableOpacityProps {
   children: React.ReactNode;
@@ -16,87 +16,68 @@ interface CardProps extends TouchableOpacityProps {
   onPress?: () => void;
 }
 
-const Card: React.FC<CardProps> = ({
+const Card = ({
   children,
   variant = 'default',
   shadowLevel = 'medium',
   style,
   onPress,
   ...rest
-}) => {
-  // Get card style based on variant
+}: CardProps) => {
   const getCardStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
       borderRadius: SIZES.borderRadius.medium,
-      padding: SPACING.l,
+      overflow: 'hidden',
+      backgroundColor: COLORS.white,
+      padding: 16,
     };
 
+    // Variant styling
+    let variantStyle: ViewStyle = {};
     switch (variant) {
       case 'outlined':
-        return {
-          ...baseStyle,
-          backgroundColor: COLORS.white,
+        variantStyle = {
           borderWidth: 1,
-          borderColor: COLORS.neutralMedium,
-        };
-      case 'flat':
-        return {
-          ...baseStyle,
+          borderColor: COLORS.neutralLight,
           backgroundColor: 'transparent',
         };
-      default: // default
-        return {
-          ...baseStyle,
+        break;
+      case 'flat':
+        variantStyle = {
+          backgroundColor: COLORS.neutralLight,
+        };
+        break;
+      case 'default':
+      default:
+        variantStyle = {
           backgroundColor: COLORS.white,
         };
+        break;
     }
+
+    return { ...baseStyle, ...variantStyle };
   };
 
-  // Get shadow style based on shadow level
   const getShadowStyle = (): ViewStyle => {
-    switch (shadowLevel) {
-      case 'light':
-        return SHADOWS.light;
-      case 'medium':
-        return SHADOWS.medium;
-      case 'dark':
-        return SHADOWS.dark;
-      default: // none
-        return {};
+    if (shadowLevel === 'none' || variant === 'flat') {
+      return {};
     }
+
+    return SHADOWS[shadowLevel];
   };
 
-  // If onPress is provided, use TouchableOpacity, otherwise use View
-  if (onPress) {
-    return (
-      <TouchableOpacity
-        style={[
-          getCardStyle(),
-          shadowLevel !== 'none' && getShadowStyle(),
-          style,
-        ]}
-        onPress={onPress}
-        activeOpacity={0.8}
-        {...rest}
-      >
-        {children}
-      </TouchableOpacity>
-    );
-  }
+  const CardComponent = onPress ? TouchableOpacity : View;
 
   return (
-    <View
-      style={[
-        getCardStyle(),
-        shadowLevel !== 'none' && getShadowStyle(),
-        style,
-      ]}
+    <CardComponent
+      style={[getCardStyle(), getShadowStyle(), style]}
+      onPress={onPress}
+      activeOpacity={0.8}
+      {...rest}
     >
       {children}
-    </View>
+    </CardComponent>
   );
 };
-
-const styles = StyleSheet.create({});
 
 export default Card;

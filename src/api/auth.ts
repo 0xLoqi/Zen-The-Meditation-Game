@@ -1,94 +1,132 @@
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  User as FirebaseUser
-} from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { getFirebaseAuth, getFirebaseFirestore, getFirebaseFunctions } from './firebase';
+import { FirebaseUser } from '../types';
 
-// Check if username is unique
+// Mock data storage
+const mockUsers: Record<string, { email: string; password: string; username: string; uid: string }> = {
+  'user@example.com': {
+    email: 'user@example.com',
+    password: 'password123',
+    username: 'ZenUser',
+    uid: 'mock-user-id-123',
+  },
+};
+
+const usernameLookup: Record<string, string> = {
+  'ZenUser': 'user@example.com',
+};
+
+// Simulated delay helper
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Check if a username is available
+ * @param username - Username to check
+ * @returns True if username is available
+ */
 export const checkUsernameUnique = async (username: string): Promise<boolean> => {
-  try {
-    const functions = getFirebaseFunctions();
-    const checkUniqueUsername = httpsCallable(functions, 'checkUniqueUsername');
-    const result = await checkUniqueUsername({ username });
-    return (result.data as { isUnique: boolean }).isUnique;
-  } catch (error) {
-    console.error('Error checking username uniqueness:', error);
-    throw error;
-  }
+  // Simulate network request
+  await delay(800);
+  
+  // Check if username exists in our mock lookup
+  return !usernameLookup[username];
 };
 
-// Sign up a new user
+/**
+ * Sign up a new user
+ * @param email - User email
+ * @param password - User password
+ * @param username - User's chosen username
+ * @returns Firebase user object
+ */
 export const signup = async (email: string, password: string, username: string): Promise<FirebaseUser> => {
-  try {
-    // Check if username is unique first
-    const isUnique = await checkUsernameUnique(username);
-    if (!isUnique) {
-      throw new Error('Username is already taken');
-    }
-
-    // Create the user with email and password
-    const auth = getFirebaseAuth();
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    
-    // Create user document in Firestore
-    const firestore = getFirebaseFirestore();
-    await setDoc(doc(firestore, 'users', user.uid), {
-      username,
-      email,
-      createdAt: new Date(),
-      level: 1,
-      xp: 0,
-      tokens: 0,
-      streak: 0,
-      lastMeditationDate: null,
-      equippedOutfit: 'default',
-      unlockedOutfits: ['default'],
-      referralCode: generateReferralCode(username),
-    });
-    
-    return user;
-  } catch (error) {
-    console.error('Error signing up:', error);
-    throw error;
+  // Simulate network request
+  await delay(1500);
+  
+  // Check if email is already registered
+  if (mockUsers[email]) {
+    throw new Error('Email already in use');
   }
+  
+  // Check if username is already taken
+  if (usernameLookup[username]) {
+    throw new Error('Username is already taken');
+  }
+  
+  // Create a new user
+  const uid = `user-${Date.now()}`;
+  
+  // Store in our mock databases
+  mockUsers[email] = { email, password, username, uid };
+  usernameLookup[username] = email;
+  
+  // Return Firebase user format
+  return {
+    uid,
+    email,
+    displayName: username,
+  };
 };
 
-// Sign in an existing user
+/**
+ * Log in an existing user
+ * @param email - User email
+ * @param password - User password
+ * @returns Firebase user object
+ */
 export const login = async (email: string, password: string): Promise<FirebaseUser> => {
-  try {
-    const auth = getFirebaseAuth();
-    const { user } = await signInWithEmailAndPassword(auth, email, password);
-    return user;
-  } catch (error) {
-    console.error('Error logging in:', error);
-    throw error;
+  // Simulate network request
+  await delay(1000);
+  
+  // Check if user exists
+  const user = mockUsers[email];
+  
+  if (!user) {
+    throw new Error('User not found');
   }
+  
+  // Check if password matches
+  if (user.password !== password) {
+    throw new Error('Invalid password');
+  }
+  
+  // Return Firebase user format
+  return {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.username,
+  };
 };
 
-// Sign out the current user
+/**
+ * Sign out the current user
+ */
 export const signOut = async (): Promise<void> => {
-  try {
-    const auth = getFirebaseAuth();
-    await firebaseSignOut(auth);
-  } catch (error) {
-    console.error('Error signing out:', error);
-    throw error;
-  }
+  // Simulate network request
+  await delay(500);
+  
+  // Nothing to do for mock implementation
+  return;
 };
 
-// Listen to auth state changes
+/**
+ * Listen to auth state changes
+ * @param callback - Function to call when auth state changes
+ * @returns Unsubscribe function
+ */
 export const listenToAuthState = (callback: (user: FirebaseUser | null) => void): (() => void) => {
-  const auth = getFirebaseAuth();
-  return onAuthStateChanged(auth, callback);
-};
-
-// Generate a referral code based on username
-const generateReferralCode = (username: string): string => {
-  const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${username.substring(0, 4).toUpperCase()}-${randomChars}`;
+  // For now, just immediately call with mock user
+  // In a real implementation, this would set up a Firebase listener
+  const mockUser: FirebaseUser = {
+    uid: 'mock-user-id-123',
+    email: 'user@example.com',
+    displayName: 'ZenUser',
+  };
+  
+  setTimeout(() => {
+    callback(mockUser);
+  }, 0);
+  
+  // Return unsubscribe function
+  return () => {
+    // Nothing to clean up in mock implementation
+  };
 };

@@ -8,11 +8,7 @@ import { MeditationType, MeditationDuration } from '../types';
 export const formatTime = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
-  
-  // Add leading zero to seconds if less than 10
-  const formattedSeconds = remainingSeconds < 10 ? `0${remainingSeconds}` : `${remainingSeconds}`;
-  
-  return `${minutes}:${formattedSeconds}`;
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
 /**
@@ -21,13 +17,11 @@ export const formatTime = (seconds: number): string => {
  * @returns Formatted date string
  */
 export const formatDate = (date: Date): string => {
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
+  return new Date(date).toLocaleDateString('en-US', {
+    weekday: 'short',
     month: 'short',
     day: 'numeric',
-  };
-  
-  return date.toLocaleDateString(undefined, options);
+  });
 };
 
 /**
@@ -36,7 +30,7 @@ export const formatDate = (date: Date): string => {
  * @returns Formatted meditation type name
  */
 export const formatMeditationType = (type: MeditationType): string => {
-  return type; // Types are already in display format
+  return type; // Currently matching UI display, but could add special formatting in the future
 };
 
 /**
@@ -72,7 +66,7 @@ export const formatPercentage = (value: number): string => {
  * @returns Formatted streak string
  */
 export const formatStreak = (streakCount: number): string => {
-  return streakCount === 1 ? '1 Day' : `${streakCount} Days`;
+  return streakCount === 1 ? `${streakCount} day` : `${streakCount} days`;
 };
 
 /**
@@ -91,23 +85,23 @@ export const msToSeconds = (ms: number): number => {
  */
 export const formatTimeElapsed = (date: Date): string => {
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
+  const elapsed = now.getTime() - new Date(date).getTime();
   
-  if (diffDays > 0) {
-    return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+  const minutes = Math.floor(elapsed / (1000 * 60));
+  const hours = Math.floor(elapsed / (1000 * 60 * 60));
+  const days = Math.floor(elapsed / (1000 * 60 * 60 * 24));
+  
+  if (days > 0) {
+    return days === 1 ? '1 day ago' : `${days} days ago`;
   }
   
-  if (diffHours > 0) {
-    return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+  if (hours > 0) {
+    return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
   }
   
-  if (diffMinutes > 0) {
-    return diffMinutes === 1 ? '1 minute ago' : `${diffMinutes} minutes ago`;
+  if (minutes > 0) {
+    return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
   }
   
-  return 'Just now';
+  return 'just now';
 };
