@@ -9,12 +9,13 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ImageBackground,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
-import { COLORS, FONTS, SPACING, SIZES } from '../../constants/theme';
+import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 
 import Button from '../../components/Button';
@@ -106,6 +107,16 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
           </TouchableOpacity>
 
           <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              {/* Use the MiniZenni character as logo */}
+              <View style={styles.logoImageWrapper}>
+                <ImageBackground 
+                  source={require('../../../assets/minizenni.png')} 
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
             <Text style={styles.title}>Join Zen</Text>
             <Text style={styles.subtitle}>
               Create an account to start your meditation journey
@@ -215,17 +226,32 @@ const styles = StyleSheet.create({
     marginTop: SPACING.large,
     marginBottom: SPACING.large,
   },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: SPACING.large,
+  },
+  logoImageWrapper: {
+    width: 120,
+    height: 120,
+    borderRadius: 60, 
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
   title: {
     fontFamily: FONTS.primary,
-    fontWeight: FONTS.bold,
-    fontSize: FONTS.xxlarge,
+    fontWeight: FONTS.bold as '700',
+    fontSize: FONTS.heading1,
     color: COLORS.primary,
     marginBottom: SPACING.small,
   },
   subtitle: {
     fontFamily: FONTS.primary,
-    fontWeight: FONTS.regular,
-    fontSize: FONTS.medium,
+    fontWeight: FONTS.regular as '400',
+    fontSize: FONTS.base,
     color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: SPACING.large,
@@ -246,7 +272,7 @@ const styles = StyleSheet.create({
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: SPACING.xxlarge,
+    marginVertical: SPACING.xl,
     paddingHorizontal: SPACING.large,
   },
   divider: {
@@ -266,12 +292,12 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontFamily: FONTS.primary,
-    fontSize: FONTS.regular,
+    fontSize: FONTS.regular_size,
     color: COLORS.textSecondary,
   },
   loginLink: {
     color: COLORS.primary,
-    fontWeight: FONTS.bold,
+    fontWeight: FONTS.bold as '700',
   },
 });
 

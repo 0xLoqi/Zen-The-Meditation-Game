@@ -15,7 +15,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
-import { COLORS, FONTS, SPACING, SIZES } from '../../constants/theme';
+import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 
 import Button from '../../components/Button';
@@ -60,6 +60,16 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              {/* Use the Zenni character as logo */}
+              <View style={styles.logoImageWrapper}>
+                <ImageBackground 
+                  source={require('../../../assets/zenni.png')} 
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
             <Text style={styles.title}>Welcome to</Text>
             <Text style={styles.brandTitle}>Zen</Text>
             <Text style={styles.subtitle}>
@@ -141,24 +151,39 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xlarge,
     marginBottom: SPACING.xlarge,
   },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: SPACING.large,
+  },
+  logoImageWrapper: {
+    width: 150,
+    height: 150,
+    borderRadius: 75, 
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
   title: {
     fontFamily: FONTS.primary,
-    fontWeight: FONTS.bold,
+    fontWeight: FONTS.bold as '700',
     fontSize: FONTS.xlarge,
     color: COLORS.text,
     marginBottom: SPACING.tiny,
   },
   brandTitle: {
     fontFamily: FONTS.primary,
-    fontWeight: FONTS.bold,
+    fontWeight: FONTS.bold as '700',
     fontSize: FONTS.huge,
     color: COLORS.primary,
     marginBottom: SPACING.small,
   },
   subtitle: {
     fontFamily: FONTS.primary,
-    fontWeight: FONTS.regular,
-    fontSize: FONTS.medium,
+    fontWeight: FONTS.regular as '400',
+    fontSize: FONTS.base,
     color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: SPACING.large,
@@ -199,12 +224,12 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontFamily: FONTS.primary,
-    fontSize: FONTS.regular,
+    fontSize: FONTS.regular_size,
     color: COLORS.textSecondary,
   },
   signupLink: {
     color: COLORS.primary,
-    fontWeight: FONTS.bold,
+    fontWeight: FONTS.bold as '700',
   },
 });
 

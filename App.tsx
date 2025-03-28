@@ -590,31 +590,39 @@ const styles = StyleSheet.create({
   
   // Home Screen styles
   header: {
-    backgroundColor: COLORS.primary,
-    paddingTop: Platform.OS === 'ios' ? SPACING.l : SPACING.xxl,
+    backgroundColor: 'transparent',
+    paddingTop: Platform.OS === 'ios' ? SPACING.xl : SPACING.xxl,
     paddingBottom: SPACING.m,
     paddingHorizontal: SPACING.m,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderBottomWidth: 0,
+    elevation: 0,
+    zIndex: 10,
   },
   headerTitle: {
     fontFamily: FONTS.primary,
     fontSize: FONTS.heading3,
     fontWeight: '600',
-    color: COLORS.white,
+    color: COLORS.text,
   },
   logoutButton: {
     paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.s,
+    paddingHorizontal: SPACING.m,
+    backgroundColor: COLORS.primary,
+    borderRadius: 20,
+    ...SHADOWS.small,
   },
   logoutText: {
     fontFamily: FONTS.secondary,
     fontSize: FONTS.small,
     color: COLORS.white,
+    fontWeight: '500',
   },
   homeContent: {
     padding: SPACING.m,
+    paddingTop: 0,
   },
   welcomeSection: {
     alignItems: 'center',
