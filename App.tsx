@@ -13,9 +13,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  SafeAreaView
+  SafeAreaView,
+  ImageBackground,
+  Dimensions
 } from 'react-native';
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from './src/constants/theme';
+
+// Get device dimensions
+const { width, height } = Dimensions.get('window');
+
+// Import images
+const zenni = require('./assets/images/zenni.png');
+const miniZenni = require('./assets/images/minizenni.png');
 
 // Create stack navigators for auth and main flows
 const AuthStack = createStackNavigator();
@@ -63,10 +72,11 @@ const SplashScreen = ({ navigation }: any) => {
   return (
     <View style={styles.splashContainer}>
       <View style={styles.logoContainer}>
-        <View style={styles.logo}>
-          {/* Replace with your app logo */}
-          <Text style={styles.logoText}>Zen</Text>
-        </View>
+        <Image 
+          source={zenni} 
+          style={styles.zenniLogo}
+          resizeMode="contain"
+        />
         <Text style={styles.appName}>Zen Meditation</Text>
       </View>
       <ActivityIndicator size="large" color={COLORS.accent} />
@@ -106,6 +116,14 @@ const LoginScreen = ({ navigation }: any) => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={styles.zenniImageContainer}>
+          <Image 
+            source={zenni} 
+            style={styles.zenniImage}
+            resizeMode="contain"
+          />
+        </View>
+        
         <View style={styles.formContainer}>
           <Text style={styles.screenTitle}>Welcome Back</Text>
           <Text style={styles.screenSubtitle}>Sign in to continue your meditation journey</Text>
@@ -205,6 +223,14 @@ const SignupScreen = ({ navigation }: any) => {
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         
+        <View style={styles.zenniImageContainerSmall}>
+          <Image 
+            source={zenni} 
+            style={styles.zenniImageSmall}
+            resizeMode="contain"
+          />
+        </View>
+        
         <View style={styles.formContainer}>
           <Text style={styles.screenTitle}>Create Account</Text>
           <Text style={styles.screenSubtitle}>Start your mindfulness journey with Zen</Text>
@@ -302,9 +328,12 @@ const HomeScreen = ({ navigation }: any) => {
       
       <ScrollView contentContainerStyle={styles.homeContent}>
         <View style={styles.welcomeSection}>
-          <View style={styles.avatarPlaceholder}>
-            {/* Placeholder for Mini Zenni */}
-            <Text style={styles.avatarText}>ZEN</Text>
+          <View style={styles.miniZenniContainer}>
+            <Image 
+              source={miniZenni} 
+              style={styles.miniZenniImage}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.welcomeText}>Welcome to Zen!</Text>
         </View>
@@ -418,27 +447,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.xl,
   },
-  logo: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
+  zenniLogo: {
+    width: 150, 
+    height: 150,
     marginBottom: SPACING.m,
-    ...SHADOWS.medium,
-  },
-  logoText: {
-    fontFamily: FONTS.primary,
-    fontSize: FONTS.huge,
-    fontWeight: '600',
-    color: COLORS.primary,
   },
   appName: {
     fontFamily: FONTS.primary,
     fontSize: FONTS.heading1,
     fontWeight: '600',
     color: COLORS.white,
+    marginTop: SPACING.m,
   },
   
   // Loading Container
@@ -449,12 +468,42 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   
+  // Zenni Image Styles
+  zenniImageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.l,
+    marginBottom: SPACING.m,
+  },
+  zenniImage: {
+    width: 180,
+    height: 180,
+  },
+  zenniImageContainerSmall: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.s,
+  },
+  zenniImageSmall: {
+    width: 120,
+    height: 120,
+  },
+  miniZenniContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.m,
+  },
+  miniZenniImage: {
+    width: 150,
+    height: 150,
+  },
+  
   // Auth screens shared styles
   formContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'stretch',
-    paddingVertical: SPACING.xxl,
+    paddingVertical: SPACING.l,
   },
   screenTitle: {
     fontFamily: FONTS.primary,
@@ -466,7 +515,7 @@ const styles = StyleSheet.create({
   },
   screenSubtitle: {
     fontFamily: FONTS.secondary,
-    fontSize: FONTS.regular,
+    fontSize: FONTS.regular_size,
     color: COLORS.neutralMedium,
     marginBottom: SPACING.xl,
     textAlign: 'center',
@@ -489,7 +538,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.m,
     paddingVertical: SPACING.s,
     fontFamily: FONTS.secondary,
-    fontSize: FONTS.regular,
+    fontSize: FONTS.regular_size,
     color: COLORS.neutralDark,
     height: SIZES.inputHeight,
   },
@@ -508,7 +557,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: FONTS.primary,
-    fontSize: FONTS.regular,
+    fontSize: FONTS.regular_size,
     fontWeight: '600',
     color: COLORS.white,
   },
@@ -535,7 +584,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontFamily: FONTS.primary,
-    fontSize: FONTS.regular,
+    fontSize: FONTS.regular_size,
     color: COLORS.primary,
   },
   
@@ -571,27 +620,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.l,
   },
-  avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: COLORS.secondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.m,
-    ...SHADOWS.medium,
-  },
-  avatarText: {
-    fontFamily: FONTS.primary,
-    fontSize: FONTS.heading2,
-    fontWeight: '600',
-    color: COLORS.neutralDark,
-  },
   welcomeText: {
     fontFamily: FONTS.primary,
     fontSize: FONTS.large,
     fontWeight: '600',
     color: COLORS.neutralDark,
+    marginTop: SPACING.s,
   },
   statsRow: {
     flexDirection: 'row',
@@ -606,6 +640,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: SPACING.xs,
     ...SHADOWS.light,
+    borderWidth: 1,
+    borderColor: COLORS.secondary,
   },
   statValue: {
     fontFamily: FONTS.primary,
@@ -625,6 +661,8 @@ const styles = StyleSheet.create({
     padding: SPACING.m,
     marginBottom: SPACING.m,
     ...SHADOWS.light,
+    borderWidth: 1,
+    borderColor: COLORS.secondary,
   },
   actionTitle: {
     fontFamily: FONTS.primary,
@@ -635,7 +673,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontFamily: FONTS.secondary,
-    fontSize: FONTS.regular,
+    fontSize: FONTS.regular_size,
     color: COLORS.neutralMedium,
     lineHeight: 22,
   },

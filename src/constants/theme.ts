@@ -1,56 +1,66 @@
 export const COLORS = {
-  // Primary Colors - From Frontend Guidelines
-  primary: '#6A5ACD', // Medium Slate Blue - Buttons, active states, main brand color
-  primaryLight: '#8A7BEC', // Lighter version of primary
-  primaryDark: '#5A4ABD', // Darker version of primary
+  // Earth Tones - Based on Zenni Character
+  primary: '#CD8500', // Saffron - Main brand color, buttons, active states 
+  primaryLight: '#E9A030', // Light Orange - Lighter version of primary
+  primaryDark: '#A66A00', // Deep Amber - Darker version of primary
   
-  // Secondary Colors
-  secondary: '#F0E68C', // Khaki - Background elements, cards, subtle highlights
-  secondaryLight: '#FFF8A9', // Lighter version of secondary
-  secondaryDark: '#D1C66E', // Darker version of secondary
+  // Secondary Colors - Earth Tones
+  secondary: '#D2B48C', // Tan - Background elements, cards, subtle highlights
+  secondaryLight: '#E8D0B0', // Light Tan - Lighter version of secondary
+  secondaryDark: '#B69B7B', // Dark Tan - Darker version of secondary
   
   // Accent Colors
-  accent: '#FFD700', // Gold - Rewards icons (Tokens), XP bar fill, important highlights
-  accentLight: '#FFE44D', // Lighter version of accent
-  accentDark: '#CCAC00', // Darker version of accent
+  accent: '#FF8C42', // Bright Orange - Highlights, accents (from Zenni's robe)
+  accentLight: '#FFAB76', // Light Orange - Lighter version of accent
+  accentDark: '#DA6B20', // Deep Orange - Darker version of accent
+  
+  // Tertiary Colors
+  tertiary: '#8B4513', // SaddleBrown - For outlines and borders (from Zenni's outline)
+  tertiaryLight: '#A86642', // Lighter Brown
+  tertiaryDark: '#723A10', // Darker Brown
   
   // Background and Text Colors
-  background: '#F5F5F5', // White Smoke - Main screen backgrounds
-  backgroundDark: '#E0E0E0', // Darker version of background
-  backgroundLight: '#FFFFFF', // Lighter version of background
+  background: '#FFF8E1', // Very Light Cream - Main screen backgrounds (warm, gentle)
+  backgroundDark: '#F5EBD1', // Cream - Darker version of background
+  backgroundLight: '#FFFDF5', // Off-White - Lighter version of background
   
   // Text Colors
-  text: '#2F4F4F', // Dark Slate Gray - Primary text color, dark UI elements
-  textSecondary: '#A9A9A9', // Dark Gray - Placeholder text, disabled states, secondary text
-  textLight: '#CCCCCC', // Light Gray - For low-emphasis text, subtitles
+  text: '#5D4037', // Brown - Primary text color (warm brown like Zenni's outline)
+  textSecondary: '#8D6E63', // Light Brown - Secondary text, disabled states
+  textLight: '#A1887F', // Very Light Brown - For low-emphasis text
   textInverse: '#FFFFFF', // White - For text on dark backgrounds
   
   // Status Colors
-  success: '#90EE90', // Light Green - Streak visual, success messages/feedback
-  warning: '#FFA07A', // Light Salmon - Feedback for attention needed
-  error: '#FF6347', // Tomato - Error states, important alerts
-  info: '#ADD8E6', // Light Blue - Informational messages
+  success: '#7CB342', // Olive Green - Success feedback (earth tone green)
+  warning: '#FFB74D', // Light Orange - Feedback for attention needed
+  error: '#E57373', // Light Red - Error states, important alerts
+  info: '#90CAF9', // Light Blue - Informational messages
   
   // UI Element Colors
-  border: '#E0E0E0',
-  borderDark: '#BDBDBD',
-  disabled: '#D3D3D3',
-  disabledText: '#A9A9A9',
+  border: '#D7CCC8', // Light Taupe - Borders
+  borderDark: '#BCAAA4', // Taupe - Darker borders
+  disabled: '#E0E0E0', // Light Gray - Disabled elements
+  disabledText: '#9E9E9E', // Medium Gray - Disabled text
   
-  // Neutral Colors - From Frontend Guidelines
-  neutralLight: '#F5F5F5', // White Smoke - Main screen backgrounds
-  neutralMedium: '#A9A9A9', // Dark Gray - Placeholder text, disabled states
-  neutralDark: '#2F4F4F', // Dark Slate Gray - Primary text color
+  // Neutral Colors - Earth Tone Variations
+  neutralLight: '#FFF8E1', // Very Light Cream - Main screen backgrounds
+  neutralMedium: '#D7CCC8', // Light Taupe - Placeholder text, disabled states
+  neutralDark: '#5D4037', // Brown - Primary text color
   
   // Basic Colors
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
-  semiTransparent: 'rgba(0, 0, 0, 0.3)',
+  semiTransparent: 'rgba(0, 0, 0, 0.2)',
   
-  // Gradients - provide the start and end colors
-  gradientPurple: ['#6A5ACD', '#5A4ABD'],
-  gradientGold: ['#FFD700', '#CCAC00'],
+  // Meditation-specific colors
+  calmColor: '#A1C2BB', // Sage - For Calm meditation type
+  focusColor: '#B48A76', // Mocha - For Focus meditation type
+  sleepColor: '#8E7F97', // Lavender Gray - For Sleep meditation type
+  
+  // Gradients - provide the start and end colors (earth tones)
+  gradientOrange: ['#FF8C42', '#FFAB76'],
+  gradientBrown: ['#8B4513', '#A86642'],
 };
 
 export const FONTS = {
