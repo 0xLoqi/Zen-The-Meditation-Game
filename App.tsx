@@ -15,20 +15,27 @@ import {
   ScrollView,
   SafeAreaView,
   ImageBackground,
-  Dimensions
+  Dimensions,
+  Animated,
+  Easing
 } from 'react-native';
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from './src/constants/theme';
+import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 // Get device dimensions
 const { width, height } = Dimensions.get('window');
 
 // Import images
-const zenni = require('./assets/images/zenni.png');
-const miniZenni = require('./assets/images/minizenni.png');
+const zenni = require('./attached_assets/zenni.png');
+const miniZenni = require('./attached_assets/minizenni.png');
 
 // Create stack navigators for auth and main flows
 const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
+
+// Types
+import { MeditationType, MeditationDuration, OutfitId } from './src/types/index';
 
 // Mock auth state for demo
 const mockAuth = {
@@ -62,24 +69,51 @@ const mockAuth = {
 
 // Splash Screen Component
 const SplashScreen = ({ navigation }: any) => {
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const scaleAnim = useState(new Animated.Value(0.8))[0];
+  
   useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic)
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.back())
+      })
+    ]).start();
+    
     // Simulate loading assets or checking auth state
     setTimeout(() => {
       navigation.replace('Login');
-    }, 2000);
+    }, 2500);
   }, []);
 
   return (
     <View style={styles.splashContainer}>
-      <View style={styles.logoContainer}>
+      <Animated.View 
+        style={[
+          styles.logoContainer, 
+          { 
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }]
+          }
+        ]}
+      >
         <Image 
           source={zenni} 
           style={styles.zenniLogo}
           resizeMode="contain"
         />
-        <Text style={styles.appName}>Zen Meditation</Text>
-      </View>
-      <ActivityIndicator size="large" color={COLORS.accent} />
+      </Animated.View>
+      <Animated.View style={{opacity: fadeAnim}}>
+        <ActivityIndicator size="large" color={COLORS.accent} />
+      </Animated.View>
     </View>
   );
 };
@@ -89,9 +123,33 @@ const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(50))[0];
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic)
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic)
+      })
+    ]).start();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       alert('Please enter both email and password');
       return;
     }
@@ -101,6 +159,9 @@ const LoginScreen = ({ navigation }: any) => {
       await mockAuth.login(email, password);
       // After successful login, navigation will be handled by the auth state change
     } catch (error) {
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       alert('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -116,20 +177,41 @@ const LoginScreen = ({ navigation }: any) => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.zenniImageContainer}>
+        <Animated.View 
+          style={[
+            styles.zenniImageContainer, 
+            { 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
           <Image 
             source={zenni} 
             style={styles.zenniImage}
             resizeMode="contain"
           />
-        </View>
+        </Animated.View>
         
-        <View style={styles.formContainer}>
+        <Animated.View 
+          style={[
+            styles.formContainer, 
+            { 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
           <Text style={styles.screenTitle}>Welcome Back</Text>
           <Text style={styles.screenSubtitle}>Sign in to continue your meditation journey</Text>
           
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
+          <View style={styles.inputWrapper}>
+            <Ionicons 
+              name="mail-outline" 
+              size={24} 
+              color={COLORS.primaryDark} 
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Enter your email"
@@ -141,22 +223,38 @@ const LoginScreen = ({ navigation }: any) => {
             />
           </View>
           
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
+          <View style={styles.inputWrapper}>
+            <Ionicons 
+              name="lock-closed-outline" 
+              size={24} 
+              color={COLORS.primaryDark} 
+              style={styles.inputIcon}
+            />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { flex: 1 }]}
               placeholder="Enter your password"
               placeholderTextColor={COLORS.neutralMedium}
-              secureTextEntry
+              secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
             />
+            <TouchableOpacity 
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.passwordToggle}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                size={24} 
+                color={COLORS.neutralMedium} 
+              />
+            </TouchableOpacity>
           </View>
           
           <TouchableOpacity 
             style={[styles.button, isLoading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={isLoading}
+            activeOpacity={0.7}
           >
             {isLoading ? (
               <ActivityIndicator color={COLORS.white} />
@@ -167,11 +265,18 @@ const LoginScreen = ({ navigation }: any) => {
           
           <View style={styles.footerTextContainer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+            <TouchableOpacity 
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                navigation.navigate('Signup');
+              }}
+            >
               <Text style={styles.footerLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -184,14 +289,42 @@ const SignupScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(50))[0];
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic)
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic)
+      })
+    ]).start();
+  }, []);
 
   const handleSignup = async () => {
     if (!email || !username || !password || !confirmPassword) {
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       alert('Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       alert('Passwords do not match');
       return;
     }
@@ -201,6 +334,9 @@ const SignupScreen = ({ navigation }: any) => {
       await mockAuth.signup(email, username, password);
       // After successful signup, navigation will be handled by the auth state change
     } catch (error) {
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       alert('Signup failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -218,25 +354,51 @@ const SignupScreen = ({ navigation }: any) => {
       >
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (Platform.OS !== 'web') {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+            navigation.goBack();
+          }}
         >
-          <Text style={styles.backButtonText}>Back</Text>
+          <Ionicons name="chevron-back" size={26} color={COLORS.neutralDark} />
         </TouchableOpacity>
         
-        <View style={styles.zenniImageContainerSmall}>
+        <Animated.View 
+          style={[
+            styles.zenniImageContainerSmall, 
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
           <Image 
             source={zenni} 
             style={styles.zenniImageSmall}
             resizeMode="contain"
           />
-        </View>
+        </Animated.View>
         
-        <View style={styles.formContainer}>
+        <Animated.View 
+          style={[
+            styles.formContainer, 
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
           <Text style={styles.screenTitle}>Create Account</Text>
           <Text style={styles.screenSubtitle}>Start your mindfulness journey with Zen</Text>
           
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
+          <View style={styles.inputWrapper}>
+            <Ionicons 
+              name="mail-outline" 
+              size={24} 
+              color={COLORS.primaryDark} 
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Enter your email"
@@ -248,8 +410,13 @@ const SignupScreen = ({ navigation }: any) => {
             />
           </View>
           
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Username</Text>
+          <View style={styles.inputWrapper}>
+            <Ionicons 
+              name="person-outline" 
+              size={24} 
+              color={COLORS.primaryDark} 
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Choose a username"
@@ -260,34 +427,65 @@ const SignupScreen = ({ navigation }: any) => {
             />
           </View>
           
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
+          <View style={styles.inputWrapper}>
+            <Ionicons 
+              name="lock-closed-outline" 
+              size={24} 
+              color={COLORS.primaryDark} 
+              style={styles.inputIcon}
+            />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { flex: 1 }]}
               placeholder="Create password"
               placeholderTextColor={COLORS.neutralMedium}
-              secureTextEntry
+              secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
             />
+            <TouchableOpacity 
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.passwordToggle}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                size={24} 
+                color={COLORS.neutralMedium} 
+              />
+            </TouchableOpacity>
           </View>
           
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Confirm Password</Text>
+          <View style={styles.inputWrapper}>
+            <Ionicons 
+              name="shield-checkmark-outline" 
+              size={24} 
+              color={COLORS.primaryDark} 
+              style={styles.inputIcon}
+            />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { flex: 1 }]}
               placeholder="Confirm password"
               placeholderTextColor={COLORS.neutralMedium}
-              secureTextEntry
+              secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
             />
+            <TouchableOpacity 
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={styles.passwordToggle}
+            >
+              <Ionicons 
+                name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
+                size={24} 
+                color={COLORS.neutralMedium} 
+              />
+            </TouchableOpacity>
           </View>
           
           <TouchableOpacity 
             style={[styles.button, isLoading && styles.buttonDisabled]}
             onPress={handleSignup}
             disabled={isLoading}
+            activeOpacity={0.7}
           >
             {isLoading ? (
               <ActivityIndicator color={COLORS.white} />
@@ -298,71 +496,326 @@ const SignupScreen = ({ navigation }: any) => {
           
           <View style={styles.footerTextContainer}>
             <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <TouchableOpacity 
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                navigation.navigate('Login');
+              }}
+            >
               <Text style={styles.footerLink}>Login</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
-// Home Screen Component (simplified)
+// Home Screen Component (redesigned)
 const HomeScreen = ({ navigation }: any) => {
+  // Mock data for demo
+  const userData = {
+    streak: 7,
+    xp: 350,
+    level: 3,
+    tokens: 120,
+    equippedOutfit: 'default' as OutfitId,
+    username: 'ZenUser'
+  };
+  
+  const requiredXP = 400; // XP needed for next level
+  const xpPercentage = (userData.xp / requiredXP) * 100;
+  
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const slideAnim = useState(new Animated.Value(20))[0];
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic)
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic)
+      })
+    ]).start();
+  }, []);
+
+  const openMeditationSelection = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    alert('Meditation Selection would open here');
+  };
+  
+  const openDailyCheckIn = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    alert('Daily Check-in would open here');
+  };
+  
+  const openWardrobe = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    alert('Wardrobe would open here');
+  };
+  
+  const openGuruMode = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    alert('Guru Mode would open here');
+  };
+
   const handleLogout = async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
     await mockAuth.logout();
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Zen Meditation</Text>
-        <TouchableOpacity 
-          style={styles.logoutButton}
-          onPress={handleLogout}
+      <ScrollView contentContainerStyle={styles.homeContent}>
+        {/* User Profile and Stats Section */}
+        <Animated.View 
+          style={[
+            styles.profileSection,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
         >
-          <Text style={styles.logoutText}>Logout</Text>
+          <View style={styles.profileHeader}>
+            <View style={styles.miniZenniContainer}>
+              <Image 
+                source={miniZenni} 
+                style={styles.miniZenniImage}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.username}>{userData.username}</Text>
+              <View style={styles.levelContainer}>
+                <Text style={styles.levelText}>Level {userData.level}</Text>
+              </View>
+              
+              {/* XP Bar */}
+              <View style={styles.xpBarContainer}>
+                <View style={styles.xpBarBackground}>
+                  <View 
+                    style={[
+                      styles.xpBarFill, 
+                      { width: `${xpPercentage}%` }
+                    ]} 
+                  />
+                </View>
+                <Text style={styles.xpText}>{userData.xp}/{requiredXP} XP</Text>
+              </View>
+            </View>
+          </View>
+          
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <View style={styles.statIconContainer}>
+                <Ionicons name="flame" size={18} color={COLORS.accent} />
+              </View>
+              <Text style={styles.statValue}>{userData.streak}</Text>
+              <Text style={styles.statLabel}>Day Streak</Text>
+            </View>
+            
+            <View style={styles.statDivider} />
+            
+            <View style={styles.statItem}>
+              <View style={styles.statIconContainer}>
+                <MaterialCommunityIcons name="meditation" size={18} color={COLORS.primary} />
+              </View>
+              <Text style={styles.statValue}>{userData.xp}</Text>
+              <Text style={styles.statLabel}>Total XP</Text>
+            </View>
+            
+            <View style={styles.statDivider} />
+            
+            <View style={styles.statItem}>
+              <View style={styles.statIconContainer}>
+                <FontAwesome5 name="coins" size={16} color={COLORS.accent} />
+              </View>
+              <Text style={styles.statValue}>{userData.tokens}</Text>
+              <Text style={styles.statLabel}>Tokens</Text>
+            </View>
+          </View>
+        </Animated.View>
+        
+        {/* Meditation Card */}
+        <Animated.View
+          style={[
+            styles.mainFeatureCard,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <TouchableOpacity 
+            style={styles.mainFeatureButton}
+            onPress={openMeditationSelection}
+            activeOpacity={0.8}
+          >
+            <View style={styles.mainFeatureContent}>
+              <View style={styles.mainFeatureIconContainer}>
+                <MaterialCommunityIcons name="meditation" size={36} color={COLORS.white} />
+              </View>
+              <View style={styles.mainFeatureTextContainer}>
+                <Text style={styles.mainFeatureTitle}>Start Meditation</Text>
+                <Text style={styles.mainFeatureSubtitle}>Choose type and duration</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={28} color={COLORS.white} />
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+        
+        {/* Feature Tiles */}
+        <Animated.View 
+          style={[
+            styles.featureTileRow,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <TouchableOpacity 
+            style={styles.featureTile} 
+            onPress={openDailyCheckIn}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.featureTileIcon, { backgroundColor: COLORS.primaryLight }]}>
+              <Ionicons name="calendar" size={26} color={COLORS.white} />
+            </View>
+            <Text style={styles.featureTileText}>Daily{'\n'}Check-in</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.featureTile} 
+            onPress={openWardrobe}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.featureTileIcon, { backgroundColor: COLORS.accentLight }]}>
+              <Ionicons name="shirt-outline" size={26} color={COLORS.white} />
+            </View>
+            <Text style={styles.featureTileText}>Zenni{'\n'}Wardrobe</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.featureTile} 
+            onPress={openGuruMode}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.featureTileIcon, { backgroundColor: COLORS.tertiaryLight }]}>
+              <Ionicons name="sparkles" size={26} color={COLORS.white} />
+            </View>
+            <Text style={styles.featureTileText}>Guru{'\n'}Mode</Text>
+          </TouchableOpacity>
+        </Animated.View>
+        
+        {/* Meditation Types Cards */}
+        <Animated.View
+          style={[
+            { marginTop: SPACING.xl, marginBottom: SPACING.m },
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <Text style={styles.sectionTitle}>Meditation Types</Text>
+          
+          <TouchableOpacity 
+            style={[styles.meditationTypeCard, { backgroundColor: COLORS.calmColor }]}
+            onPress={() => openMeditationSelection()}
+            activeOpacity={0.8}
+          >
+            <View style={styles.meditationTypeContent}>
+              <View style={styles.meditationTypeIconContainer}>
+                <Ionicons name="water-outline" size={28} color={COLORS.white} />
+              </View>
+              <View style={styles.meditationTypeTextContainer}>
+                <Text style={styles.meditationTypeTitle}>Calm Meditation</Text>
+                <Text style={styles.meditationTypeDescription}>Reduce anxiety and find inner peace</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.meditationTypeCard, { backgroundColor: COLORS.focusColor }]}
+            onPress={() => openMeditationSelection()}
+            activeOpacity={0.8}
+          >
+            <View style={styles.meditationTypeContent}>
+              <View style={styles.meditationTypeIconContainer}>
+                <Ionicons name="bulb-outline" size={28} color={COLORS.white} />
+              </View>
+              <View style={styles.meditationTypeTextContainer}>
+                <Text style={styles.meditationTypeTitle}>Focus Meditation</Text>
+                <Text style={styles.meditationTypeDescription}>Improve concentration and clarity</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.meditationTypeCard, { backgroundColor: COLORS.sleepColor }]}
+            onPress={() => openMeditationSelection()}
+            activeOpacity={0.8}
+          >
+            <View style={styles.meditationTypeContent}>
+              <View style={styles.meditationTypeIconContainer}>
+                <Ionicons name="moon-outline" size={28} color={COLORS.white} />
+              </View>
+              <View style={styles.meditationTypeTextContainer}>
+                <Text style={styles.meditationTypeTitle}>Sleep Meditation</Text>
+                <Text style={styles.meditationTypeDescription}>Improve sleep quality and relaxation</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      </ScrollView>
+      
+      {/* Tab Bar - Simplified for demo */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7}>
+          <Ionicons name="home" size={26} color={COLORS.primary} />
+          <Text style={[styles.tabLabel, { color: COLORS.primary }]}>Home</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.tabItem} 
+          activeOpacity={0.7}
+          onPress={openMeditationSelection}
+        >
+          <MaterialCommunityIcons name="meditation" size={26} color={COLORS.neutralMedium} />
+          <Text style={styles.tabLabel}>Meditate</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.tabItem} 
+          activeOpacity={0.7}
+          onPress={openWardrobe}
+        >
+          <Ionicons name="person" size={26} color={COLORS.neutralMedium} />
+          <Text style={styles.tabLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
-      
-      <ScrollView contentContainerStyle={styles.homeContent}>
-        <View style={styles.welcomeSection}>
-          <View style={styles.miniZenniContainer}>
-            <Image 
-              source={miniZenni} 
-              style={styles.miniZenniImage}
-              resizeMode="contain"
-            />
-          </View>
-          <Text style={styles.welcomeText}>Welcome to Zen!</Text>
-        </View>
-        
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Days</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>XP</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Tokens</Text>
-          </View>
-        </View>
-        
-        <TouchableOpacity style={styles.actionCard}>
-          <Text style={styles.actionTitle}>Daily Check-in</Text>
-          <Text style={styles.actionText}>How zen do you feel today? Take a moment to reflect on your mental state.</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionCard}>
-          <Text style={styles.actionTitle}>Start Meditation</Text>
-          <Text style={styles.actionText}>Choose a meditation type and duration to begin your practice.</Text>
-        </TouchableOpacity>
-      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -439,7 +892,7 @@ const styles = StyleSheet.create({
   // Splash Screen styles
   splashContainer: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -448,16 +901,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
   },
   zenniLogo: {
-    width: 150, 
-    height: 150,
+    width: 180, 
+    height: 180,
     marginBottom: SPACING.m,
-  },
-  appName: {
-    fontFamily: FONTS.primary,
-    fontSize: FONTS.heading1,
-    fontWeight: '600',
-    color: COLORS.white,
-    marginTop: SPACING.m,
   },
   
   // Loading Container
@@ -494,8 +940,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.m,
   },
   miniZenniImage: {
-    width: 150,
-    height: 150,
+    width: 80,
+    height: 80,
   },
   
   // Auth screens shared styles
@@ -508,7 +954,7 @@ const styles = StyleSheet.create({
   screenTitle: {
     fontFamily: FONTS.primary,
     fontSize: FONTS.heading1,
-    fontWeight: '600',
+    fontWeight: FONTS.semiBold,
     color: COLORS.neutralDark,
     marginBottom: SPACING.s,
     textAlign: 'center',
@@ -520,45 +966,50 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
     textAlign: 'center',
   },
-  inputContainer: {
-    marginBottom: SPACING.m,
-  },
-  inputLabel: {
-    fontFamily: FONTS.primary,
-    fontSize: FONTS.small,
-    fontWeight: '500',
-    color: COLORS.neutralDark,
-    marginBottom: SPACING.xs,
-  },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.white,
+    borderRadius: SIZES.borderRadius,
+    marginBottom: SPACING.m,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: SIZES.borderRadius,
-    paddingHorizontal: SPACING.m,
-    paddingVertical: SPACING.s,
+    ...SHADOWS.small,
+  },
+  inputIcon: {
+    padding: SPACING.s,
+    paddingLeft: SPACING.m,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: SPACING.m,
+    paddingHorizontal: SPACING.s,
     fontFamily: FONTS.secondary,
-    fontSize: FONTS.regular_size,
+    fontSize: FONTS.base,
     color: COLORS.neutralDark,
     height: SIZES.inputHeight,
   },
+  passwordToggle: {
+    padding: SPACING.m,
+  },
   button: {
     backgroundColor: COLORS.primary,
-    borderRadius: SIZES.borderRadius,
+    borderRadius: SIZES.radiusMedium,
     paddingVertical: SPACING.m,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: SPACING.m,
     height: SIZES.buttonMediumHeight,
-    ...SHADOWS.small,
+    ...SHADOWS.medium,
   },
   buttonDisabled: {
-    backgroundColor: COLORS.neutralMedium,
+    backgroundColor: COLORS.primaryLight,
+    opacity: 0.7,
   },
   buttonText: {
     fontFamily: FONTS.primary,
     fontSize: FONTS.regular_size,
-    fontWeight: '600',
+    fontWeight: FONTS.semiBold,
     color: COLORS.white,
   },
   footerTextContainer: {
@@ -568,121 +1019,273 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontFamily: FONTS.secondary,
-    fontSize: FONTS.small,
+    fontSize: FONTS.base,
     color: COLORS.neutralMedium,
   },
   footerLink: {
     fontFamily: FONTS.secondary,
-    fontSize: FONTS.small,
-    fontWeight: '600',
-    color: COLORS.primary,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    marginTop: SPACING.l,
-    marginBottom: SPACING.m,
-  },
-  backButtonText: {
-    fontFamily: FONTS.primary,
-    fontSize: FONTS.regular_size,
+    fontSize: FONTS.base,
+    fontWeight: FONTS.semiBold,
     color: COLORS.primary,
   },
   
-  // Home Screen styles
-  header: {
-    backgroundColor: 'transparent',
-    paddingTop: Platform.OS === 'ios' ? SPACING.xl : SPACING.xxl,
-    paddingBottom: SPACING.m,
-    paddingHorizontal: SPACING.m,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 0,
-    elevation: 0,
+  // Back button
+  backButton: {
+    position: 'absolute',
+    top: SPACING.m,
+    left: SPACING.m,
     zIndex: 10,
+    padding: SPACING.xs,
   },
-  headerTitle: {
-    fontFamily: FONTS.primary,
-    fontSize: FONTS.heading3,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  logoutButton: {
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.m,
-    backgroundColor: COLORS.primary,
-    borderRadius: 20,
-    ...SHADOWS.small,
-  },
-  logoutText: {
-    fontFamily: FONTS.secondary,
-    fontSize: FONTS.small,
-    color: COLORS.white,
-    fontWeight: '500',
-  },
+  
+  // Home Screen styles
   homeContent: {
+    flexGrow: 1,
+    padding: SPACING.screenHorizontal,
+    paddingBottom: 70, // For tab bar space
+  },
+  
+  // Profile Section
+  profileSection: {
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radiusMedium,
+    overflow: 'hidden',
+    marginBottom: SPACING.m,
+    ...SHADOWS.medium,
+  },
+  profileHeader: {
+    flexDirection: 'row',
     padding: SPACING.m,
-    paddingTop: 0,
-  },
-  welcomeSection: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
     alignItems: 'center',
-    marginBottom: SPACING.l,
   },
-  welcomeText: {
+  profileInfo: {
+    flex: 1,
+    marginLeft: SPACING.m,
+  },
+  username: {
     fontFamily: FONTS.primary,
-    fontSize: FONTS.large,
-    fontWeight: '600',
+    fontSize: FONTS.xlarge,
+    fontWeight: FONTS.semiBold,
     color: COLORS.neutralDark,
-    marginTop: SPACING.s,
+    marginBottom: SPACING.xs,
   },
+  levelContainer: {
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: SIZES.radiusSmall,
+    paddingHorizontal: SPACING.s,
+    paddingVertical: SPACING.xxs,
+    alignSelf: 'flex-start',
+    marginBottom: SPACING.xs,
+  },
+  levelText: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.small,
+    fontWeight: FONTS.semiBold,
+    color: COLORS.white,
+  },
+  
+  // XP Bar
+  xpBarContainer: {
+    marginTop: SPACING.xs,
+  },
+  xpBarBackground: {
+    height: 8,
+    backgroundColor: COLORS.backgroundDark,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  xpBarFill: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+    borderRadius: 4,
+  },
+  xpText: {
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.tiny,
+    color: COLORS.neutralMedium,
+    marginTop: 2,
+  },
+  
+  // Stats Row
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.l,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: SPACING.m,
+    backgroundColor: COLORS.backgroundLight,
   },
   statItem: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.borderRadius,
-    padding: SPACING.m,
     alignItems: 'center',
-    marginHorizontal: SPACING.xs,
-    ...SHADOWS.light,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
+  },
+  statIconContainer: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: COLORS.backgroundLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+    ...SHADOWS.small,
   },
   statValue: {
     fontFamily: FONTS.primary,
-    fontSize: FONTS.heading3,
-    fontWeight: '600',
-    color: COLORS.primary,
+    fontSize: FONTS.large,
+    fontWeight: FONTS.bold,
+    color: COLORS.neutralDark,
   },
   statLabel: {
     fontFamily: FONTS.secondary,
     fontSize: FONTS.small,
     color: COLORS.neutralMedium,
-    marginTop: SPACING.xs,
   },
-  actionCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.borderRadius,
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: COLORS.border,
+  },
+  
+  // Main Feature Card (Meditation)
+  mainFeatureCard: {
+    marginVertical: SPACING.m,
+    borderRadius: SIZES.radiusMedium,
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  mainFeatureButton: {
+    backgroundColor: COLORS.primary,
     padding: SPACING.m,
-    marginBottom: SPACING.m,
-    ...SHADOWS.light,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
   },
-  actionTitle: {
+  mainFeatureContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mainFeatureIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.m,
+  },
+  mainFeatureTextContainer: {
+    flex: 1,
+  },
+  mainFeatureTitle: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.xlarge,
+    fontWeight: FONTS.semiBold,
+    color: COLORS.white,
+    marginBottom: 2,
+  },
+  mainFeatureSubtitle: {
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.small,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  
+  // Feature Tiles
+  featureTileRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.l,
+  },
+  featureTile: {
+    width: '30%',
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radiusMedium,
+    padding: SPACING.m,
+    alignItems: 'center',
+    ...SHADOWS.small,
+  },
+  featureTileIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.s,
+  },
+  featureTileText: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.small,
+    fontWeight: FONTS.medium,
+    color: COLORS.neutralDark,
+    textAlign: 'center',
+  },
+  
+  // Section Title
+  sectionTitle: {
     fontFamily: FONTS.primary,
     fontSize: FONTS.large,
-    fontWeight: '600',
+    fontWeight: FONTS.semiBold,
     color: COLORS.neutralDark,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.m,
   },
-  actionText: {
+  
+  // Meditation Type Cards
+  meditationTypeCard: {
+    borderRadius: SIZES.radiusMedium,
+    marginBottom: SPACING.m,
+    ...SHADOWS.small,
+  },
+  meditationTypeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.m,
+  },
+  meditationTypeIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.m,
+  },
+  meditationTypeTextContainer: {
+    flex: 1,
+  },
+  meditationTypeTitle: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.large,
+    fontWeight: FONTS.semiBold,
+    color: COLORS.white,
+    marginBottom: 2,
+  },
+  meditationTypeDescription: {
     fontFamily: FONTS.secondary,
-    fontSize: FONTS.regular_size,
-    color: COLORS.neutralMedium,
-    lineHeight: 22,
+    fontSize: FONTS.small,
+    color: 'rgba(255,255,255,0.8)',
   },
+  
+  // Tab Bar
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.white,
+    paddingVertical: SPACING.s,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    ...SHADOWS.medium,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xs,
+  },
+  tabLabel: {
+    fontFamily: FONTS.primary,
+    fontSize: FONTS.tiny,
+    marginTop: 2,
+    color: COLORS.neutralMedium,
+    fontWeight: FONTS.medium,
+  },
+  // Below are the styles for the premium app redesign
 });
