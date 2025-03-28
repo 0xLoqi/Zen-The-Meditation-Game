@@ -1,4 +1,4 @@
-// User profile definition
+// User Types
 export interface User {
   id: string;
   username: string;
@@ -14,7 +14,7 @@ export interface User {
   createdAt: Date;
 }
 
-// Daily mood check-in
+// Daily Check-in
 export interface DailyCheckIn {
   id: string;
   userId: string;
@@ -23,11 +23,11 @@ export interface DailyCheckIn {
   timestamp: Date;
 }
 
-// Meditation types and durations
+// Meditation Types
 export type MeditationType = 'Calm' | 'Focus' | 'Sleep';
 export type MeditationDuration = 5 | 10;
 
-// Meditation session record
+// Meditation Session
 export interface MeditationSession {
   id: string;
   userId: string;
@@ -38,7 +38,7 @@ export interface MeditationSession {
   timestamp: Date;
 }
 
-// Available outfit types for the Zenni character
+// Outfits
 export type OutfitId = 
   'default' | 
   'zen_master' | 
@@ -47,7 +47,6 @@ export type OutfitId =
   'nature_spirit' | 
   'meditation_guru';
 
-// Outfit definition
 export interface Outfit {
   id: OutfitId;
   name: string;
@@ -57,7 +56,7 @@ export interface Outfit {
   imagePath: string; // Path to the outfit's image asset
 }
 
-// Firebase authentication user
+// Firebase Auth User
 export interface FirebaseUser {
   uid: string;
   email: string | null;

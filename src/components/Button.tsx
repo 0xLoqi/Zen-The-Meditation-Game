@@ -122,14 +122,20 @@ const Button = ({
     let sizeStyle: TextStyle = {};
     switch (size) {
       case 'small':
-        sizeStyle = FONTS.button.small;
+        sizeStyle = {
+          ...FONTS.button.small,
+        };
         break;
       case 'large':
-        sizeStyle = FONTS.button.large;
+        sizeStyle = {
+          ...FONTS.button.large,
+        };
         break;
       case 'medium':
       default:
-        sizeStyle = FONTS.button.regular;
+        sizeStyle = {
+          ...FONTS.button.regular,
+        };
         break;
     }
     

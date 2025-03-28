@@ -1,52 +1,62 @@
 import React, { useState } from 'react';
 import {
-  SafeAreaView,
+  StyleSheet,
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
-  StatusBar,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
+  SafeAreaView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
-import { useAuthStore } from '../../store/authStore';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
-import Input from '../../components/Input';
+import { COLORS, FONTS, SPACING, SIZES } from '../../constants/theme';
 import Button from '../../components/Button';
-import { Ionicons } from '@expo/vector-icons';
-import { triggerHapticFeedback } from '../../utils/haptics';
+import Input from '../../components/Input';
+import { useAuthStore } from '../../store/authStore';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
-const LoginScreen = () => {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
+interface LoginScreenProps {
+  navigation: LoginScreenNavigationProp;
+}
+
+const LoginScreen = ({ navigation }: LoginScreenProps) => {
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [emailError, setEmailError] = useState<string>('');
+  const [passwordError, setPasswordError] = useState<string>('');
+  
   const { login, isLoading, error } = useAuthStore();
   
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  
   const validateEmail = (email: string): boolean => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isValid = regex.test(email);
-    setEmailError(isValid ? '' : 'Please enter a valid email');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(email);
+    
+    if (!isValid) {
+      setEmailError('Please enter a valid email address');
+    } else {
+      setEmailError('');
+    }
+    
     return isValid;
   };
   
   const validatePassword = (password: string): boolean => {
     const isValid = password.length >= 6;
-    setPasswordError(isValid ? '' : 'Password must be at least 6 characters');
+    
+    if (!isValid) {
+      setPasswordError('Password must be at least 6 characters');
+    } else {
+      setPasswordError('');
+    }
+    
     return isValid;
   };
   
   const handleLogin = async () => {
-    triggerHapticFeedback('selection');
-    
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
     
@@ -55,78 +65,80 @@ const LoginScreen = () => {
     }
   };
   
-  const handleSignup = () => {
-    triggerHapticFeedback('selection');
+  const navigateToSignup = () => {
     navigation.navigate('Signup');
   };
   
-  const handleForgotPassword = () => {
-    // Not implemented yet
-    triggerHapticFeedback('selection');
-    console.log('Forgot password');
-  };
-  
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
+        style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>Zen</Text>
-            <Text style={styles.tagline}>Find your inner peace</Text>
+            {/* Logo will go here */}
+            <View style={styles.logoPlaceholder}>
+              <Text style={styles.logoText}>Zen</Text>
+            </View>
           </View>
           
           <View style={styles.formContainer}>
-            <Input
-              label="Email"
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-              onBlur={() => validateEmail(email)}
-              error={emailError}
-              leftIcon={<Ionicons name="mail-outline" size={20} color={COLORS.neutralMedium} />}
-            />
+            <Text style={styles.headingText}>Welcome back</Text>
+            <Text style={styles.subheadingText}>
+              Log in to continue your meditation journey
+            </Text>
             
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              secureTextEntry
-              showPasswordToggle
-              value={password}
-              onChangeText={setPassword}
-              onBlur={() => validatePassword(password)}
-              error={passwordError}
-              leftIcon={<Ionicons name="lock-closed-outline" size={20} color={COLORS.neutralMedium} />}
-            />
+            <View style={styles.inputsContainer}>
+              <Input
+                label="Email"
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  if (emailError) validateEmail(text);
+                }}
+                error={emailError}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              
+              <Input
+                label="Password"
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (passwordError) validatePassword(text);
+                }}
+                error={passwordError}
+                secureTextEntry
+                showPasswordToggle
+              />
+            </View>
+            
+            {error && (
+              <Text style={styles.errorText}>{error}</Text>
+            )}
             
             <Button
-              title="Login"
+              title="Log In"
               onPress={handleLogin}
+              variant="primary"
+              size="large"
               isLoading={isLoading}
               style={styles.loginButton}
             />
-            
-            {error && <Text style={styles.errorText}>{error}</Text>}
           </View>
           
-          <TouchableOpacity
-            style={styles.forgotContainer}
-            onPress={handleForgotPassword}
-          >
-            <Text style={styles.forgotText}>Forgot Password?</Text>
-          </TouchableOpacity>
-          
-          <View style={styles.signupContainer}>
-            <Text style={styles.noAccountText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={handleSignup}>
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>Don't have an account?</Text>
+            <TouchableOpacity onPress={navigateToSignup}>
               <Text style={styles.signupText}>Sign Up</Text>
             </TouchableOpacity>
           </View>
@@ -137,70 +149,73 @@ const LoginScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
   },
-  keyboardAvoidingView: {
+  container: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: SPACING.l,
-    paddingTop: SPACING.xl,
-    paddingBottom: SPACING.m,
+    padding: SPACING.l,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: SPACING.xxl,
+    marginTop: SPACING.xl,
   },
-  logoText: {
-    ...FONTS.heading.h1,
-    fontSize: 48,
-    color: COLORS.primary,
-    marginBottom: SPACING.xs,
-    fontWeight: 'bold' as const,
-  },
-  tagline: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralMedium,
-  },
-  formContainer: {
-    marginBottom: SPACING.xl,
-  },
-  loginButton: {
-    marginTop: SPACING.m,
-  },
-  forgotContainer: {
-    alignItems: 'center',
-    marginTop: SPACING.m,
-  },
-  forgotText: {
-    ...FONTS.body.small,
-    color: COLORS.primary,
-  },
-  signupContainer: {
-    flexDirection: 'row',
+  logoPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 'auto',
-    paddingVertical: SPACING.m,
   },
-  noAccountText: {
+  logoText: {
+    ...FONTS.heading.large,
+    color: COLORS.white,
+  },
+  formContainer: {
+    marginTop: SPACING.xxl,
+  },
+  headingText: {
+    ...FONTS.heading.h1,
+    color: COLORS.neutralDark,
+    marginBottom: SPACING.s,
+  },
+  subheadingText: {
     ...FONTS.body.regular,
     color: COLORS.neutralMedium,
-    marginRight: SPACING.xs,
+    marginBottom: SPACING.xl,
   },
-  signupText: {
-    ...FONTS.body.regular,
-    color: COLORS.primary,
-    fontWeight: 'bold' as const,
+  inputsContainer: {
+    marginBottom: SPACING.l,
   },
   errorText: {
     ...FONTS.body.small,
     color: COLORS.error,
-    marginTop: SPACING.xs,
-    textAlign: 'center',
+    marginBottom: SPACING.m,
+  },
+  loginButton: {
+    marginTop: SPACING.l,
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: SPACING.xxl,
+    marginBottom: SPACING.l,
+  },
+  footerText: {
+    ...FONTS.body.regular,
+    color: COLORS.neutralMedium,
+  },
+  signupText: {
+    ...FONTS.body.regular,
+    color: COLORS.primary,
+    fontWeight: 'bold',
+    marginLeft: SPACING.xs,
   },
 });
 

@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import {
-  View,
-  TextInput,
-  Text,
-  TouchableOpacity,
   StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
   ViewStyle,
   TextStyle,
   TextInputProps,
 } from 'react-native';
-import { COLORS, FONTS, SIZES, SPACING } from '../constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { COLORS, FONTS, SPACING } from '../constants/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -30,7 +29,7 @@ const Input = ({
   error,
   leftIcon,
   rightIcon,
-  secureTextEntry,
+  secureTextEntry = false,
   containerStyle,
   labelStyle,
   inputStyle,
@@ -38,54 +37,55 @@ const Input = ({
   showPasswordToggle = false,
   ...rest
 }: InputProps) => {
-  const [passwordVisible, setPasswordVisible] = useState(false);
-
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  
   const togglePasswordVisibility = () => {
-    setPasswordVisible(!passwordVisible);
+    setIsPasswordVisible(!isPasswordVisible);
   };
-
-  const isPasswordField = secureTextEntry || showPasswordToggle;
-  const actualSecureTextEntry = isPasswordField ? !passwordVisible : false;
-
+  
+  const actualSecureTextEntry = secureTextEntry && !isPasswordVisible;
+  
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
+      {label && (
+        <Text style={[styles.label, labelStyle]}>
+          {label}
+        </Text>
+      )}
       
       <View style={[
         styles.inputContainer,
-        error ? styles.inputError : null,
+        error ? styles.inputContainerError : null,
       ]}>
-        {leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
+        {leftIcon && <View style={styles.leftIconContainer}>{leftIcon}</View>}
         
         <TextInput
-          style={[
-            styles.input,
-            leftIcon ? styles.inputWithLeftIcon : null,
-            (rightIcon || isPasswordField) ? styles.inputWithRightIcon : null,
-            inputStyle,
-          ]}
+          style={[styles.input, inputStyle]}
+          placeholderTextColor={COLORS.grey}
           secureTextEntry={actualSecureTextEntry}
-          placeholderTextColor={COLORS.neutralMedium}
           {...rest}
         />
         
-        {isPasswordField && showPasswordToggle && (
+        {showPasswordToggle && secureTextEntry ? (
           <TouchableOpacity
-            style={styles.iconContainer}
+            style={styles.rightIconContainer}
             onPress={togglePasswordVisibility}
+            activeOpacity={0.7}
           >
-            <Ionicons
-              name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
-              size={20}
-              color={COLORS.neutralMedium}
-            />
+            <Text style={styles.passwordToggleText}>
+              {isPasswordVisible ? 'Hide' : 'Show'}
+            </Text>
           </TouchableOpacity>
-        )}
-        
-        {rightIcon && <View style={styles.iconContainer}>{rightIcon}</View>}
+        ) : rightIcon ? (
+          <View style={styles.rightIconContainer}>{rightIcon}</View>
+        ) : null}
       </View>
       
-      {error && <Text style={[styles.errorText, errorStyle]}>{error}</Text>}
+      {error ? (
+        <Text style={[styles.errorText, errorStyle]}>
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 };
@@ -95,44 +95,44 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.m,
   },
   label: {
-    ...FONTS.body.regular,
     marginBottom: SPACING.xs,
     color: COLORS.neutralDark,
+    ...FONTS.body.regular,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.neutralLight,
-    borderRadius: SIZES.borderRadius.medium,
+    borderColor: COLORS.lightGrey,
+    borderRadius: 8,
     backgroundColor: COLORS.white,
   },
+  inputContainerError: {
+    borderColor: COLORS.error,
+  },
   input: {
-    ...FONTS.body.regular,
     flex: 1,
     color: COLORS.neutralDark,
     paddingVertical: SPACING.s,
     paddingHorizontal: SPACING.m,
     minHeight: 48,
+    ...FONTS.body.regular,
   },
-  inputWithLeftIcon: {
-    paddingLeft: SPACING.xs,
+  leftIconContainer: {
+    paddingLeft: SPACING.m,
   },
-  inputWithRightIcon: {
-    paddingRight: SPACING.xs,
-  },
-  iconContainer: {
-    paddingHorizontal: SPACING.s,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  inputError: {
-    borderColor: COLORS.error,
+  rightIconContainer: {
+    paddingRight: SPACING.m,
   },
   errorText: {
-    ...FONTS.body.small,
     color: COLORS.error,
     marginTop: SPACING.xs,
+    ...FONTS.body.small,
+  },
+  passwordToggleText: {
+    color: COLORS.primary,
+    ...FONTS.body.small,
+    fontWeight: '600' as const, // Make it bold-ish
   },
 });
 

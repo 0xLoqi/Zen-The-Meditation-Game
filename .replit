@@ -13,10 +13,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Zen Meditation App"
+args = "Zen Meditation App Web"
 
 [[workflows.workflow]]
-name = "Zen Meditation App"
+name = "Zen Meditation App Web"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -27,7 +27,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx expo start --port 5000 --web"
+args = "npx expo start --web --port 5000"
 waitForPort = 5000
 
 [deployment]

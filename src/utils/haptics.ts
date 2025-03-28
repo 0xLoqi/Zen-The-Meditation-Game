@@ -37,8 +37,7 @@ export const triggerHapticFeedback = async (type: HapticType = 'light'): Promise
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   } catch (error) {
-    // Silently fail if haptics not available
-    console.log('Haptic feedback not available');
+    console.log('Haptic feedback not available:', error);
   }
 };
 
@@ -48,12 +47,16 @@ export const triggerHapticFeedback = async (type: HapticType = 'light'): Promise
  * @param interval - Time between haptic feedback in milliseconds
  */
 export const triggerHapticSequence = async (types: HapticType[], interval: number = 150): Promise<void> => {
-  for (const type of types) {
-    await triggerHapticFeedback(type);
-    
-    if (types.indexOf(type) < types.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, interval));
+  try {
+    for (let i = 0; i < types.length; i++) {
+      await triggerHapticFeedback(types[i]);
+      
+      if (i < types.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, interval));
+      }
     }
+  } catch (error) {
+    console.log('Haptic sequence not available:', error);
   }
 };
 
@@ -63,11 +66,11 @@ export const triggerHapticSequence = async (types: HapticType[], interval: numbe
  */
 export const triggerBreathHaptic = (isInhaling: boolean): void => {
   if (isInhaling) {
-    // Increasing intensity for inhale
+    // Light feedback for inhale start
     triggerHapticFeedback('light');
   } else {
-    // Decreasing intensity for exhale
-    triggerHapticFeedback('light');
+    // Medium feedback for exhale start
+    triggerHapticFeedback('medium');
   }
 };
 
@@ -75,7 +78,7 @@ export const triggerBreathHaptic = (isInhaling: boolean): void => {
  * Trigger level up celebration haptic feedback
  */
 export const triggerLevelUpHaptic = async (): Promise<void> => {
-  await triggerHapticSequence(['medium', 'medium', 'success']);
+  await triggerHapticSequence(['light', 'medium', 'heavy', 'success']);
 };
 
 /**
@@ -84,8 +87,8 @@ export const triggerLevelUpHaptic = async (): Promise<void> => {
  */
 export const isHapticAvailable = async (): Promise<boolean> => {
   try {
-    // Try to trigger a light impact
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Try to trigger a silent haptic to check availability
+    await Haptics.selectionAsync();
     return true;
   } catch (error) {
     return false;
