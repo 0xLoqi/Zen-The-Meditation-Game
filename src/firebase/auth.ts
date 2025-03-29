@@ -5,23 +5,59 @@ export type FirebaseUser = {
   displayName: string | null;
 };
 
-// Store mock users in memory for testing
-let mockUsers: Record<string, {
+// Define the mock user type
+type MockUser = {
   uid: string;
   email: string;
   displayName: string;
   password: string;
-}> = {
-  'test@example.com': {
-    uid: 'test-user-123',
-    email: 'test@example.com',
-    displayName: 'Test User',
-    password: 'password123'
+};
+
+// Initialize mock users from localStorage or use default
+const getInitialMockUsers = (): Record<string, MockUser> => {
+  // Try to load existing users from localStorage
+  if (typeof window !== 'undefined') {
+    const storedUsers = localStorage.getItem('zen_mock_users');
+    if (storedUsers) {
+      try {
+        return JSON.parse(storedUsers);
+      } catch (e) {
+        console.error('Failed to parse stored users:', e);
+      }
+    }
   }
+  
+  // Default user if no stored users found
+  return {
+    'test@example.com': {
+      uid: 'test-user-123',
+      email: 'test@example.com',
+      displayName: 'Test User',
+      password: 'password123'
+    }
+  };
+};
+
+// Store mock users
+let mockUsers: Record<string, MockUser> = getInitialMockUsers();
+
+// Initialize current user from localStorage or null
+const getInitialCurrentUser = (): FirebaseUser | null => {
+  if (typeof window !== 'undefined') {
+    const storedUser = localStorage.getItem('zen_current_user');
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch (e) {
+        console.error('Failed to parse stored current user:', e);
+      }
+    }
+  }
+  return null;
 };
 
 // Store the current user in memory
-let currentUser: FirebaseUser | null = null;
+let currentUser: FirebaseUser | null = getInitialCurrentUser();
 
 // Keep track of auth state listeners
 const authListeners: ((user: FirebaseUser | null) => void)[] = [];
@@ -29,6 +65,23 @@ const authListeners: ((user: FirebaseUser | null) => void)[] = [];
 // Notify all listeners about auth state changes
 export const notifyAuthStateChanged = (user: FirebaseUser | null) => {
   currentUser = user;
+  
+  // Save current user to localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      if (user) {
+        localStorage.setItem('zen_current_user', JSON.stringify(user));
+        console.log('Current user saved to localStorage');
+      } else {
+        localStorage.removeItem('zen_current_user');
+        console.log('Current user removed from localStorage');
+      }
+    } catch (e) {
+      console.error('Failed to update localStorage with current user:', e);
+    }
+  }
+  
+  // Notify all listeners
   authListeners.forEach(listener => listener(user));
 };
 
@@ -84,6 +137,16 @@ export const signup = async (email: string, password: string, username: string):
   
   // Add to mock users store
   mockUsers[email] = newUser;
+  
+  // Save updated users to localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('zen_mock_users', JSON.stringify(mockUsers));
+      console.log('Mock users saved to localStorage');
+    } catch (e) {
+      console.error('Failed to save users to localStorage:', e);
+    }
+  }
   
   // Create the user object to return
   const userObject: FirebaseUser = {
