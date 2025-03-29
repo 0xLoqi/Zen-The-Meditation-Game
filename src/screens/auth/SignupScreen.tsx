@@ -210,7 +210,7 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FloatingLeaves count={20} style={styles.leavesBackground} />
+      <FloatingLeaves count={6} style={styles.leavesBackground} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidView}

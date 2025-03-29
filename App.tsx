@@ -962,7 +962,7 @@ export default function App() {
     return (
       <View style={styles.loadingContainer}>
         {/* Floating leaves background animation */}
-        <FloatingLeaves count={10} />
+        <FloatingLeaves count={6} />
         
         {/* Center content */}
         <Animatable.View 

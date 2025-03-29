@@ -21,14 +21,14 @@ interface Leaf {
   startX: number;
   startY: number;
   size: number;
-  animation: 'float-left' | 'float-right' | 'float-up' | 'float-down';
+  animation: 'float-down-left' | 'float-down-right' | 'float-down-center' | 'float-down-zigzag';
   duration: number;
   delay: number;
 }
 
-// Define floating animations with more dramatic movements
+// Define gentle flowing animations primarily downward
 Animatable.initializeRegistryWithDefinitions({
-  'float-left': {
+  'float-down-left': {
     from: {
       transform: [
         { translateX: 0 },
@@ -38,13 +38,13 @@ Animatable.initializeRegistryWithDefinitions({
     },
     to: {
       transform: [
-        { translateX: -200 },  // More horizontal movement
-        { translateY: 50 },    // More vertical movement
-        { rotate: '-30deg' }   // More rotation
+        { translateX: -40 },    // Slight leftward drift
+        { translateY: 300 },    // Long downward flow
+        { rotate: '-5deg' }     // Subtle rotation
       ]
     },
   },
-  'float-right': {
+  'float-down-right': {
     from: {
       transform: [
         { translateX: 0 },
@@ -54,13 +54,13 @@ Animatable.initializeRegistryWithDefinitions({
     },
     to: {
       transform: [
-        { translateX: 200 },   // More horizontal movement
-        { translateY: 70 },    // More vertical movement
-        { rotate: '30deg' }    // More rotation
+        { translateX: 40 },     // Slight rightward drift
+        { translateY: 280 },    // Long downward flow
+        { rotate: '5deg' }      // Subtle rotation
       ]
     },
   },
-  'float-up': {
+  'float-down-center': {
     from: {
       transform: [
         { translateX: 0 },
@@ -70,13 +70,13 @@ Animatable.initializeRegistryWithDefinitions({
     },
     to: {
       transform: [
-        { translateX: 40 },    // More horizontal movement
-        { translateY: -200 },  // More vertical movement
-        { rotate: '25deg' }    // More rotation
+        { translateX: 0 },      // No horizontal movement
+        { translateY: 320 },    // Long downward flow
+        { rotate: '0deg' }      // No rotation
       ]
     },
   },
-  'float-down': {
+  'float-down-zigzag': {
     from: {
       transform: [
         { translateX: 0 },
@@ -86,9 +86,9 @@ Animatable.initializeRegistryWithDefinitions({
     },
     to: {
       transform: [
-        { translateX: -40 },   // More horizontal movement
-        { translateY: 200 },   // More vertical movement
-        { rotate: '-25deg' }   // More rotation
+        { translateX: 30 },     // Slight zigzag
+        { translateY: 300 },    // Long downward flow
+        { rotate: '10deg' }     // Slight rotation
       ]
     },
   },
@@ -99,7 +99,7 @@ interface FloatingLeavesProps {
   style?: any;
 }
 
-const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 15, style }) => {
+const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 8, style }) => {
   const [leaves, setLeaves] = useState<Leaf[]>([]);
 
   useEffect(() => {
@@ -109,19 +109,19 @@ const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 15, style }) =>
     for (let i = 0; i < count; i++) {
       const randomLeafIndex = Math.floor(Math.random() * leafImages.length);
       
-      // Define animations
-      const animations = ['float-left', 'float-right', 'float-up', 'float-down'];
-      const randomAnimation = animations[Math.floor(Math.random() * animations.length)] as Leaf['animation'];
+      // Define animations - all downward flowing
+      const animations = ['float-down-left', 'float-down-right', 'float-down-center', 'float-down-zigzag'];
+      const randomAnimation = animations[Math.floor(Math.random() * animations.length)] as any;
       
       newLeaves.push({
         id: i,
         image: leafImages[randomLeafIndex],
-        startX: Math.random() * width,
-        startY: Math.random() * height,
-        size: 60 + Math.random() * 60, // Size between 60-120 (much larger)
+        startX: Math.random() * width, 
+        startY: -100 - (Math.random() * 200), // Start above the screen
+        size: 40 + Math.random() * 30, // Size between 40-70 (more moderate)
         animation: randomAnimation,
-        duration: 10000 + Math.random() * 8000, // Duration between 10-18 seconds (faster)
-        delay: Math.random() * 3000, // Random delay up to 3 seconds (less waiting)
+        duration: 15000 + Math.random() * 10000, // Duration between 15-25 seconds (slower, gentler)
+        delay: Math.random() * 10000, // Random delay up to 10 seconds (more sparing appearance)
       });
     }
     
@@ -135,8 +135,8 @@ const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 15, style }) =>
           key={leaf.id}
           animation={leaf.animation}
           iterationCount="infinite"
-          direction="alternate"
-          easing="ease-in-out"
+          direction="normal"
+          easing="linear"
           duration={leaf.duration}
           delay={leaf.delay}
           style={[
