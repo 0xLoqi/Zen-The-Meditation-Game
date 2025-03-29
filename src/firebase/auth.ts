@@ -1,14 +1,14 @@
 import { 
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  updateProfile,
-  User as FirebaseAuthUser,
+  updateProfile
 } from 'firebase/auth';
-import { collection, doc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, firestore } from './config';
 
+// Firebase user type definition
 export type FirebaseUser = {
   uid: string;
   email: string | null;
@@ -22,14 +22,14 @@ export type FirebaseUser = {
  */
 export const checkUsernameUnique = async (username: string): Promise<boolean> => {
   try {
-    const usersCollection = collection(firestore, 'users');
-    const q = query(usersCollection, where('username', '==', username));
+    const usersRef = collection(firestore, 'users');
+    const q = query(usersRef, where('username', '==', username));
     const querySnapshot = await getDocs(q);
     
     return querySnapshot.empty;
   } catch (error) {
-    console.error('Error checking username:', error);
-    throw new Error('Failed to check username availability');
+    console.error('Error checking username uniqueness:', error);
+    throw error;
   }
 };
 
@@ -42,41 +42,47 @@ export const checkUsernameUnique = async (username: string): Promise<boolean> =>
  */
 export const signup = async (email: string, password: string, username: string): Promise<FirebaseUser> => {
   try {
+    // Check if username is available
+    const isUsernameAvailable = await checkUsernameUnique(username);
+    if (!isUsernameAvailable) {
+      throw new Error('Username is already taken');
+    }
+
     // Create the user account
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const { user } = userCredential;
-    
+
     // Set the display name
     await updateProfile(user, { displayName: username });
-    
-    // Create the user document in Firestore
+
+    // Create user document in Firestore
     const userDoc = doc(firestore, 'users', user.uid);
     await setDoc(userDoc, {
-      id: user.uid,
-      username,
-      email,
+      uid: user.uid,
+      email: user.email,
+      username: username,
+      displayName: username,
       level: 1,
       xp: 0,
       tokens: 0,
       streak: 0,
-      lastMeditationDate: null,
+      joinedAt: new Date(),
+      lastLoginAt: new Date(),
+      outfits: ['default'],
       equippedOutfit: 'default',
-      unlockedOutfits: ['default'],
-      referralCode: generateReferralCode(user.uid),
-      createdAt: new Date(),
+      completedMeditations: [],
+      purchasedItems: ['default'],
     });
-    
+
+    // Return user object
     return {
       uid: user.uid,
       email: user.email,
-      displayName: user.displayName,
+      displayName: username,
     };
-  } catch (error: any) {
-    console.error('Signup error:', error);
-    if (error.code === 'auth/email-already-in-use') {
-      throw new Error('Email already in use');
-    }
-    throw new Error('Failed to create account');
+  } catch (error) {
+    console.error('Error signing up:', error);
+    throw error;
   }
 };
 
@@ -90,18 +96,20 @@ export const login = async (email: string, password: string): Promise<FirebaseUs
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const { user } = userCredential;
-    
+
+    // Update last login timestamp
+    const userDoc = doc(firestore, 'users', user.uid);
+    await setDoc(userDoc, { lastLoginAt: new Date() }, { merge: true });
+
+    // Return user object
     return {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
     };
-  } catch (error: any) {
-    console.error('Login error:', error);
-    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-      throw new Error('Invalid email or password');
-    }
-    throw new Error('Failed to sign in');
+  } catch (error) {
+    console.error('Error logging in:', error);
+    throw error;
   }
 };
 
@@ -112,8 +120,8 @@ export const signOut = async (): Promise<void> => {
   try {
     await firebaseSignOut(auth);
   } catch (error) {
-    console.error('Sign out error:', error);
-    throw new Error('Failed to sign out');
+    console.error('Error signing out:', error);
+    throw error;
   }
 };
 
@@ -123,14 +131,17 @@ export const signOut = async (): Promise<void> => {
  * @returns Unsubscribe function
  */
 export const listenToAuthState = (callback: (user: FirebaseUser | null) => void): (() => void) => {
-  return onAuthStateChanged(auth, (user: FirebaseAuthUser | null) => {
+  // Set up auth state listener
+  return onAuthStateChanged(auth, (user) => {
     if (user) {
+      // User is signed in
       callback({
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
       });
     } else {
+      // User is signed out
       callback(null);
     }
   });
@@ -141,7 +152,8 @@ export const listenToAuthState = (callback: (user: FirebaseUser | null) => void)
  * @param userId - User ID to base the code on
  * @returns A unique referral code
  */
-const generateReferralCode = (userId: string): string => {
-  // Take the first 8 characters of the user ID and make them uppercase
-  return `ZEN-${userId.substring(0, 8).toUpperCase()}`;
+export const generateReferralCode = (userId: string): string => {
+  // Take the first 8 characters of the user ID and add a prefix
+  const shortId = userId.substring(0, 8);
+  return `ZEN-${shortId}`;
 };

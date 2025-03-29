@@ -3,26 +3,27 @@ import {
   View,
   Text,
   StyleSheet,
-  ImageBackground,
   TouchableOpacity,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   Animated,
-  Easing,
+  Image,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
-import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
+import { COLORS, FONTS, SPACING } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 
 import Button from '../../components/Button';
 import Input from '../../components/Input';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
+import FloatingLeaves from '../../components/FloatingLeaves';
+import MiniZenni from '../../components/MiniZenni';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -30,90 +31,97 @@ interface LoginScreenProps {
   navigation: LoginScreenNavigationProp;
 }
 
-const LoginScreen = ({ navigation }: LoginScreenProps) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
+  // State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading, error } = useAuthStore();
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   // Animation refs
-  const logoRef = useRef<any>(null);
-  const formRef = useRef<any>(null);
-  const titleRef = useRef<any>(null);
-  const brandRef = useRef<any>(null);
-  const subtitleRef = useRef<any>(null);
-  
-  // Animation for pulse effect
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  
+  const logoRef = useRef<Animatable.View & View>(null);
+  const titleRef = useRef<Animatable.View & View>(null);
+  const formRef = useRef<Animatable.View & View>(null);
+
+  // Auth state
+  const { 
+    login, 
+    isLoading, 
+    error, 
+    signInWithGoogle, 
+    googleAuthLoading, 
+    googleAuthError 
+  } = useAuthStore();
+
+  // Animation state
+  const floatAnim = useRef(new Animated.Value(0)).current;
+
+  // Set up floating animation
   useEffect(() => {
-    // Start pulsing animation
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 2000,
-          useNativeDriver: true,
-          easing: Easing.inOut(Easing.ease)
-        }),
-        Animated.timing(pulseAnim, {
+        Animated.timing(floatAnim, {
           toValue: 1,
           duration: 2000,
           useNativeDriver: true,
-          easing: Easing.inOut(Easing.ease)
-        })
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
       ])
     ).start();
-    
-    // Run entrance animations with sequence
-    if (logoRef.current) {
-      logoRef.current.animate(
-        { 0: { opacity: 0, scale: 0.5 }, 1: { opacity: 1, scale: 1 } },
-        500
-      );
-    }
-    
-    setTimeout(() => {
-      titleRef.current?.fadeInUp(400);
-    }, 300);
-    
-    setTimeout(() => {
-      brandRef.current?.fadeInUp(500);
-    }, 500);
-    
-    setTimeout(() => {
-      subtitleRef.current?.fadeInUp(600);
-    }, 700);
-    
-    setTimeout(() => {
-      formRef.current?.fadeIn(800);
-    }, 900);
-  }, []);
+  }, [floatAnim]);
 
+  // Handle login button press
   const handleLogin = async () => {
     if (!email || !password) {
-      // Shake animation on error
-      formRef.current?.shake(800);
-      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
     
     try {
       await login(email, password);
     } catch (error) {
-      // Error is handled in the store
-      formRef.current?.shake(800);
+      console.log('Login error:', error);
     }
   };
 
-  const handleSignupPress = () => {
-    // Add a slight bounce before navigating
-    formRef.current?.bounceOut(500).then(() => {
-      navigation.navigate('Signup');
-    });
+  // Handle Google sign-in
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.log('Google sign in error:', error);
+    }
   };
+
+  // Handle signup navigation
+  const handleSignupPress = () => {
+    // Fun exit animation before navigating
+    if (formRef.current && logoRef.current && titleRef.current) {
+      formRef.current.fadeOutDown(300).then(() => {
+        if (logoRef.current && titleRef.current) {
+          logoRef.current.fadeOutUp(300);
+          titleRef.current.fadeOutUp(300);
+          setTimeout(() => {
+            navigation.navigate('Signup');
+          }, 300);
+        }
+      });
+    } else {
+      navigation.navigate('Signup');
+    }
+  };
+
+  // Interpolate floating animation
+  const translateY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -10]
+  });
 
   return (
     <SafeAreaView style={styles.container}>
+      <FloatingLeaves count={8} style={styles.leavesBackground} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidView}
@@ -122,69 +130,55 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
-            <Animatable.View 
-              ref={logoRef} 
-              style={styles.logoContainer}
-              useNativeDriver
-            >
-              <Animated.View 
-                style={[
-                  styles.logoImageWrapper,
-                  { transform: [{ scale: pulseAnim }] }
-                ]}
-              >
-                <ImageBackground 
-                  source={require('../../../assets/zenni.png')} 
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                />
-              </Animated.View>
-            </Animatable.View>
-            
-            <Animatable.Text 
-              ref={titleRef}
-              style={styles.title}
-              useNativeDriver
-            >
-              Welcome to
-            </Animatable.Text>
-            
-            <Animatable.Text
-              ref={brandRef}
-              style={styles.brandTitle}
-              useNativeDriver
-            >
-              Zen
-            </Animatable.Text>
-            
-            <Animatable.Text
-              ref={subtitleRef}
-              style={styles.subtitle}
-              useNativeDriver
-            >
-              Your mindful meditation journey starts here
-            </Animatable.Text>
-          </View>
-
-          <Animatable.View 
-            ref={formRef}
-            style={styles.formContainer}
-            useNativeDriver
+          <Animatable.View
+            ref={logoRef}
             animation="fadeIn"
             duration={800}
-            delay={900}
+            delay={300}
+            useNativeDriver
+            style={styles.header}
+          >
+            <Animated.View style={{ transform: [{ translateY }] }}>
+              <MiniZenni 
+                outfitId="default" 
+                size="large" 
+                animationState="idle"
+                autoPlay 
+                loop
+              />
+            </Animated.View>
+          </Animatable.View>
+
+          <Animatable.View
+            ref={titleRef}
+            animation="fadeIn"
+            duration={800}
+            delay={500}
+            useNativeDriver
+            style={styles.titleContainer}
+          >
+            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.subtitle}>Continue your mindfulness journey</Text>
+          </Animatable.View>
+
+          <Animatable.View
+            ref={formRef}
+            animation="fadeInUp"
+            duration={800}
+            delay={600}
+            useNativeDriver
           >
             <Input
               label="Email"
-              placeholder="your.email@example.com"
+              placeholder="Enter your email"
               value={email}
               onChangeText={setEmail}
-              keyboardType="email-address"
               autoCapitalize="none"
+              keyboardType="email-address"
               leftIcon={
-                <Ionicons name="mail-outline" size={20} color={COLORS.textLight} />
+                <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
               }
+              containerStyle={styles.inputContainer}
             />
 
             <Input
@@ -192,36 +186,35 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
               placeholder="Enter your password"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
-              showPasswordToggle
+              secureTextEntry={!showPassword}
               leftIcon={
-                <Ionicons name="lock-closed-outline" size={20} color={COLORS.textLight} />
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} />
               }
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color={COLORS.neutralDark}
+                  />
+                </TouchableOpacity>
+              }
+              containerStyle={styles.inputContainer}
             />
 
-            {error && (
-              <Animatable.Text 
-                style={styles.errorText}
-                animation="shake"
-                useNativeDriver
-              >
-                {error}
-              </Animatable.Text>
-            )}
+            <TouchableOpacity style={styles.forgotPasswordContainer}>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
 
-            <Animatable.View
-              animation="pulse"
-              easing="ease-out"
-              iterationCount="infinite"
-              useNativeDriver
-            >
-              <Button
-                title="Sign In"
-                onPress={handleLogin}
-                isLoading={isLoading}
-                style={styles.loginButton}
-              />
-            </Animatable.View>
+            {error && <Text style={styles.errorText}>{error}</Text>}
+
+            <Button
+              title="Login"
+              onPress={handleLogin}
+              isLoading={isLoading}
+              disabled={isLoading || !email || !password}
+              style={styles.loginButton}
+            />
 
             <View style={styles.dividerContainer}>
               <View style={styles.divider} />
@@ -229,22 +222,20 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
               <View style={styles.divider} />
             </View>
 
-            <Animatable.View
-              animation="pulse"
-              easing="ease-out"
-              iterationCount={1}
-              useNativeDriver
-            >
-              <TouchableOpacity
-                style={styles.signupContainer}
-                onPress={handleSignupPress}
-              >
-                <Text style={styles.signupText}>
-                  Don't have an account?{' '}
-                  <Text style={styles.signupLink}>Sign Up</Text>
+            <GoogleSignInButton
+              onPress={handleGoogleSignIn}
+              isLoading={googleAuthLoading}
+              style={styles.googleSignInButton}
+            />
+
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>
+                Don't have an account?{' '}
+                <Text style={styles.signupLink} onPress={handleSignupPress}>
+                  Sign Up
                 </Text>
-              </TouchableOpacity>
-            </Animatable.View>
+              </Text>
+            </View>
           </Animatable.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -267,58 +258,56 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginTop: SPACING.xlarge,
-    marginBottom: SPACING.xlarge,
+    marginTop: SPACING.xxlarge,
+    marginBottom: SPACING.xxlarge,
   },
-  logoContainer: {
+  leavesBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  titleContainer: {
     alignItems: 'center',
-    marginBottom: SPACING.large,
-  },
-  logoImageWrapper: {
-    width: 150,
-    height: 150,
-    borderRadius: 75, 
-    overflow: 'hidden',
-    ...SHADOWS.medium,
-  },
-  logoImage: {
-    width: '100%',
-    height: '100%',
+    marginBottom: SPACING.xxlarge,
   },
   title: {
-    fontFamily: FONTS.primary,
-    fontWeight: FONTS.bold as '700',
-    fontSize: FONTS.xlarge,
-    color: COLORS.text,
-    marginBottom: SPACING.tiny,
-  },
-  brandTitle: {
-    fontFamily: FONTS.primary,
-    fontWeight: FONTS.bold as '700',
-    fontSize: FONTS.huge,
+    fontSize: 32,
+    fontFamily: FONTS.bold,
     color: COLORS.primary,
     marginBottom: SPACING.small,
+    textAlign: 'center',
   },
   subtitle: {
-    fontFamily: FONTS.primary,
-    fontWeight: FONTS.regular as '400',
-    fontSize: FONTS.base,
-    color: COLORS.textSecondary,
+    fontSize: 16,
+    fontFamily: FONTS.regular,
+    color: COLORS.neutralDark,
     textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: SPACING.medium,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
     marginBottom: SPACING.large,
   },
-  formContainer: {
-    width: '100%',
-    marginBottom: SPACING.large,
+  forgotPasswordText: {
+    fontSize: 14,
+    fontFamily: FONTS.medium,
+    color: COLORS.primary,
   },
   errorText: {
-    fontFamily: FONTS.primary,
+    fontFamily: FONTS.regular,
     fontSize: FONTS.small,
     color: COLORS.error,
     marginBottom: SPACING.medium,
   },
   loginButton: {
     marginTop: SPACING.large,
+  },
+  googleSignInButton: {
+    marginVertical: SPACING.medium,
   },
   dividerContainer: {
     flexDirection: 'row',

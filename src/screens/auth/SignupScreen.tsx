@@ -8,21 +8,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
-  ImageBackground,
   Animated,
-  Easing,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
-import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
+import { COLORS, FONTS, SPACING } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 
 import Button from '../../components/Button';
 import Input from '../../components/Input';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
+import FloatingLeaves from '../../components/FloatingLeaves';
+import MiniZenni from '../../components/MiniZenni';
 
 type SignupScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Signup'>;
 
@@ -30,139 +30,145 @@ interface SignupScreenProps {
   navigation: SignupScreenNavigationProp;
 }
 
-const SignupScreen = ({ navigation }: SignupScreenProps) => {
-  const [username, setUsername] = useState('');
+const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
+  // State
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
-  const { signup, isLoading, error, checkUsernameUnique } = useAuthStore();
-  const [usernameError, setUsernameError] = useState<string | null>(null);
-  
+  const [showPassword, setShowPassword] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
   // Animation refs
-  const logoRef = useRef<any>(null);
-  const titleRef = useRef<any>(null);
-  const subtitleRef = useRef<any>(null);
-  const formRef = useRef<any>(null);
-  const backButtonRef = useRef<any>(null);
-  
-  // Animation for floating effect
+  const backButtonRef = useRef<Animatable.View & View>(null);
+  const logoRef = useRef<Animatable.View & View>(null);
+  const titleRef = useRef<Animatable.View & View>(null);
+  const subtitleRef = useRef<Animatable.View & View>(null);
+  const formRef = useRef<Animatable.View & View>(null);
+
+  // Animation state
   const floatAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
-  
-  useEffect(() => {
-    // Start floating animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-          easing: Easing.inOut(Easing.sin)
-        }),
-        Animated.timing(floatAnim, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: true,
-          easing: Easing.inOut(Easing.sin)
-        })
-      ])
-    ).start();
-    
-    // Start subtle rotation animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(rotateAnim, {
-          toValue: 1,
-          duration: 4000,
-          useNativeDriver: true,
-          easing: Easing.inOut(Easing.sin)
-        }),
-        Animated.timing(rotateAnim, {
-          toValue: 0,
-          duration: 4000,
-          useNativeDriver: true,
-          easing: Easing.inOut(Easing.sin)
-        })
-      ])
-    ).start();
-    
-    // Delayed entrance animations
-    backButtonRef.current?.fadeIn(400);
-    
-    setTimeout(() => {
-      logoRef.current?.zoomIn(500);
-    }, 100);
-    
-    setTimeout(() => {
-      titleRef.current?.fadeInDown(500);
-    }, 400);
-    
-    setTimeout(() => {
-      subtitleRef.current?.fadeInDown(500);
-    }, 600);
-    
-    setTimeout(() => {
-      formRef.current?.fadeInUp(600);
-    }, 800);
-  }, []);
 
+  // Auth state
+  const { 
+    signup, 
+    isLoading, 
+    error, 
+    checkUsernameUnique, 
+    signInWithGoogle, 
+    googleAuthLoading 
+  } = useAuthStore();
+
+  // Set up floating animation
+  useEffect(() => {
+    // Floating animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Subtle rotation animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [floatAnim, rotateAnim]);
+
+  // Validate username
   const validateUsername = async () => {
+    if (!username) {
+      setUsernameError('Username is required');
+      return false;
+    }
+
     if (username.length < 3) {
-      formRef.current?.shake(800);
       setUsernameError('Username must be at least 3 characters');
       return false;
     }
-    
+
     try {
-      const isUnique = await checkUsernameUnique(username);
-      if (!isUnique) {
-        formRef.current?.shake(800);
+      const isAvailable = await checkUsernameUnique(username);
+      if (!isAvailable) {
         setUsernameError('Username is already taken');
         return false;
       }
-      
-      setUsernameError(null);
+      setUsernameError('');
       return true;
     } catch (error) {
-      formRef.current?.shake(800);
       setUsernameError('Error checking username');
       return false;
     }
   };
 
-  const handleSignup = async () => {
-    if (!username || !email || !password || !confirmPassword) {
-      formRef.current?.shake(800);
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
+  // Validate password
+  const validatePassword = () => {
+    if (!password) {
+      setPasswordError('Password is required');
+      return false;
     }
-    
-    if (password !== confirmPassword) {
-      formRef.current?.shake(800);
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-    
+
     if (password.length < 6) {
-      formRef.current?.shake(800);
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
+      setPasswordError('Password must be at least 6 characters');
+      return false;
     }
-    
+
+    if (password !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return false;
+    }
+
+    setPasswordError('');
+    return true;
+  };
+
+  // Handle signup button press
+  const handleSignup = async () => {
     const isUsernameValid = await validateUsername();
-    if (!isUsernameValid) {
+    const isPasswordValid = validatePassword();
+
+    if (!email || !isUsernameValid || !isPasswordValid) {
       return;
     }
-    
+
     try {
       await signup(email, password, username);
     } catch (error) {
-      // Error is handled in the store
-      formRef.current?.shake(800);
+      console.log('Signup error:', error);
     }
   };
 
+  // Handle Google sign-in
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.log('Google sign in error:', error);
+    }
+  };
+
+  // Handle login navigation
   const handleLoginPress = () => {
     // Fun exit animation before navigating
     formRef.current?.fadeOutDown(300).then(() => {
@@ -189,6 +195,7 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <FloatingLeaves count={8} style={styles.leavesBackground} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidView}
@@ -215,88 +222,105 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
             </TouchableOpacity>
           </Animatable.View>
 
-          <View style={styles.header}>
-            <Animatable.View 
-              ref={logoRef}
-              style={styles.logoContainer}
-              useNativeDriver
+          <Animatable.View
+            ref={logoRef}
+            animation="fadeIn"
+            duration={800}
+            delay={200}
+            useNativeDriver
+            style={styles.logoContainer}
+          >
+            <Animated.View
+              style={{
+                transform: [
+                  { translateY },
+                  { rotateZ }
+                ]
+              }}
             >
-              <Animated.View 
-                style={[
-                  styles.logoImageWrapper,
-                  { 
-                    transform: [
-                      { translateY },
-                      { rotateZ }
-                    ] 
-                  }
-                ]}
-              >
-                <ImageBackground 
-                  source={require('../../../assets/minizenni.png')} 
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                />
-              </Animated.View>
-            </Animatable.View>
-            
-            <Animatable.Text
-              ref={titleRef} 
-              style={styles.title}
-              useNativeDriver
-            >
-              Join Zen
-            </Animatable.Text>
-            
-            <Animatable.Text
-              ref={subtitleRef}
-              style={styles.subtitle}
-              useNativeDriver
-            >
-              Create an account to start your meditation journey
-            </Animatable.Text>
-          </View>
+              <MiniZenni 
+                outfitId="default" 
+                size="large" 
+                animationState="idle"
+                autoPlay 
+                loop
+              />
+            </Animated.View>
+          </Animatable.View>
+
+          <Animatable.View
+            ref={titleRef}
+            animation="fadeIn"
+            duration={800}
+            delay={400}
+            useNativeDriver
+          >
+            <Text style={styles.title}>Create Account</Text>
+          </Animatable.View>
+
+          <Animatable.View
+            ref={subtitleRef}
+            animation="fadeIn"
+            duration={800}
+            delay={500}
+            useNativeDriver
+          >
+            <Text style={styles.subtitle}>Start your mindfulness journey</Text>
+          </Animatable.View>
 
           <Animatable.View
             ref={formRef}
-            style={styles.formContainer}
+            animation="fadeInUp"
+            duration={800}
+            delay={600}
             useNativeDriver
           >
+            <Input
+              label="Email"
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              leftIcon={
+                <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
+              }
+              containerStyle={styles.inputContainer}
+            />
+
             <Input
               label="Username"
               placeholder="Choose a username"
               value={username}
               onChangeText={setUsername}
               onBlur={validateUsername}
-              error={usernameError || undefined}
-              autoCapitalize="none"
+              error={usernameError}
               leftIcon={
-                <Ionicons name="person-outline" size={20} color={COLORS.textLight} />
+                <Ionicons name="person-outline" size={20} color={COLORS.primary} />
               }
-            />
-
-            <Input
-              label="Email"
-              placeholder="your.email@example.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              leftIcon={
-                <Ionicons name="mail-outline" size={20} color={COLORS.textLight} />
-              }
+              containerStyle={styles.inputContainer}
             />
 
             <Input
               label="Password"
-              placeholder="Choose a password"
+              placeholder="Create a password"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
-              showPasswordToggle
+              secureTextEntry={!showPassword}
+              error={passwordError}
               leftIcon={
-                <Ionicons name="lock-closed-outline" size={20} color={COLORS.textLight} />
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} />
               }
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color={COLORS.neutralDark}
+                  />
+                </TouchableOpacity>
+              }
+              containerStyle={styles.inputContainer}
             />
 
             <Input
@@ -304,64 +328,52 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
               placeholder="Confirm your password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              secureTextEntry
-              showPasswordToggle
+              secureTextEntry={!showPassword}
+              onBlur={validatePassword}
               leftIcon={
-                <Ionicons name="lock-closed-outline" size={20} color={COLORS.textLight} />
+                <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.primary} />
               }
+              containerStyle={styles.inputContainer}
             />
 
-            {error && (
-              <Animatable.Text 
-                style={styles.errorText}
-                animation="flash"
-                useNativeDriver
-              >
-                {error}
-              </Animatable.Text>
-            )}
+            {error && <Text style={styles.errorText}>{error}</Text>}
 
-            <Animatable.View
-              animation="pulse"
-              easing="ease-out"
-              iterationCount="infinite"
-              useNativeDriver
-              duration={3000}
-            >
-              <Button
-                title="Create Account"
-                onPress={handleSignup}
-                isLoading={isLoading}
-                style={styles.signupButton}
-              />
-            </Animatable.View>
+            <Button
+              title="Sign Up"
+              onPress={handleSignup}
+              isLoading={isLoading}
+              disabled={
+                isLoading ||
+                !email ||
+                !username ||
+                !password ||
+                !confirmPassword ||
+                !!usernameError ||
+                !!passwordError
+              }
+              style={styles.signupButton}
+            />
 
-            <Animatable.View 
-              style={styles.dividerContainer}
-              animation="fadeIn"
-              delay={900}
-              useNativeDriver
-            >
+            <View style={styles.dividerContainer}>
               <View style={styles.divider} />
               <Text style={styles.dividerText}>OR</Text>
               <View style={styles.divider} />
-            </Animatable.View>
+            </View>
 
-            <Animatable.View
-              animation="bounceIn"
-              delay={1100}
-              useNativeDriver
-            >
-              <TouchableOpacity
-                style={styles.loginContainer}
-                onPress={handleLoginPress}
-              >
-                <Text style={styles.loginText}>
-                  Already have an account?{' '}
-                  <Text style={styles.loginLink}>Sign In</Text>
+            <GoogleSignInButton
+              onPress={handleGoogleSignIn}
+              isLoading={googleAuthLoading}
+              style={styles.googleSignInButton}
+            />
+
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>
+                Already have an account?{' '}
+                <Text style={styles.loginLink} onPress={handleLoginPress}>
+                  Log In
                 </Text>
-              </TouchableOpacity>
-            </Animatable.View>
+              </Text>
+            </View>
           </Animatable.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -382,51 +394,56 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.large,
     paddingVertical: SPACING.large,
   },
-  backButton: {
-    marginTop: SPACING.medium,
-    alignSelf: 'flex-start',
+  leavesBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  header: {
-    alignItems: 'center',
-    marginTop: SPACING.large,
+  backButton: {
     marginBottom: SPACING.large,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   logoContainer: {
     alignItems: 'center',
     marginBottom: SPACING.large,
   },
-  logoImageWrapper: {
-    width: 120,
-    height: 120,
-    borderRadius: 60, 
-    overflow: 'hidden',
-    ...SHADOWS.medium,
-  },
-  logoImage: {
-    width: '100%',
-    height: '100%',
-  },
   title: {
-    fontFamily: FONTS.primary,
-    fontWeight: FONTS.bold as '700',
-    fontSize: FONTS.heading1,
+    fontSize: 32,
+    fontFamily: FONTS.bold,
     color: COLORS.primary,
+    textAlign: 'center',
     marginBottom: SPACING.small,
   },
   subtitle: {
-    fontFamily: FONTS.primary,
-    fontWeight: FONTS.regular as '400',
-    fontSize: FONTS.base,
-    color: COLORS.textSecondary,
+    fontSize: 16,
+    fontFamily: FONTS.regular,
+    color: COLORS.neutralDark,
     textAlign: 'center',
-    marginBottom: SPACING.large,
+    marginBottom: SPACING.xxlarge,
   },
-  formContainer: {
-    width: '100%',
-    marginBottom: SPACING.large,
+  inputContainer: {
+    marginBottom: SPACING.medium,
   },
   errorText: {
-    fontFamily: FONTS.primary,
+    fontFamily: FONTS.regular,
     fontSize: FONTS.small,
     color: COLORS.error,
     marginBottom: SPACING.medium,
@@ -434,10 +451,13 @@ const styles = StyleSheet.create({
   signupButton: {
     marginTop: SPACING.large,
   },
+  googleSignInButton: {
+    marginVertical: SPACING.medium,
+  },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: SPACING.xl,
+    marginVertical: SPACING.xxlarge,
     paddingHorizontal: SPACING.large,
   },
   divider: {

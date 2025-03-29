@@ -23,6 +23,7 @@ import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from './src/constants/theme';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Animatable from 'react-native-animatable';
+import FloatingLeaves from './src/components/FloatingLeaves';
 
 // Get device dimensions
 const { width, height } = Dimensions.get('window');
@@ -897,6 +898,7 @@ const MainNavigator = () => {
 // Import Firebase auth functions
 import { listenToAuthState } from './src/firebase/auth';
 import { useAuthStore } from './src/store/authStore';
+import { app, auth, firestore } from './src/firebase/config';
 
 // Main App Component
 export default function App() {
@@ -914,22 +916,76 @@ export default function App() {
   }));
 
   useEffect(() => {
+    console.log('App - Starting Firebase authentication check');
+    
+    // Check for Firebase configuration
+    try {
+      console.log('App - Firebase environment variables: ', {
+        apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ? '[set]' : '[not set]',
+        authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ? '[set]' : '[not set]',
+        projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ? '[set]' : '[not set]'
+      });
+      
+      // Firebase is already initialized from the imports
+      console.log('App - Firebase initialized through imports');
+      
+    } catch (error) {
+      console.error('App - Error initializing Firebase:', error);
+    }
+    
     // Initialize Firebase auth 
-    const unsubscribe = checkAuth();
+    console.log('App - Initializing Firebase auth');
+    let unsubscribe: (() => void) | undefined;
+    try {
+      unsubscribe = checkAuth();
+      console.log('App - Auth initialization complete, unsubscribe function received');
+    } catch (error) {
+      console.error('App - Error initializing auth:', error);
+    }
     
     // Set initializing to false after a brief delay to allow animations
     setTimeout(() => {
+      console.log('App - Setting isInitializing to false');
       setIsInitializing(false);
     }, 2000);
     
     // Clean up auth listener
-    return unsubscribe;
+    return () => {
+      console.log('App - Cleaning up auth listener');
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
   }, []);
 
   if (isInitializing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        {/* Floating leaves background animation */}
+        <FloatingLeaves count={10} />
+        
+        {/* Center content */}
+        <Animatable.View 
+          animation="pulse" 
+          iterationCount="infinite" 
+          duration={3000}
+          style={styles.loadingContent}
+        >
+          <Image 
+            source={require('./assets/images/zenni.png')} 
+            style={styles.loadingLogo}
+            resizeMode="contain"
+          />
+          <ActivityIndicator size="large" color={COLORS.primary} style={styles.loadingIndicator} />
+        </Animatable.View>
+        
+        {/* "Zen" text at bottom */}
+        <Animatable.Text 
+          animation="fadeIn" 
+          style={styles.zenText}
+        >
+          Zen
+        </Animatable.Text>
       </View>
     );
   }
@@ -976,6 +1032,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLORS.background,
+    position: 'relative',
+  },
+  loadingContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingLogo: {
+    width: 150,
+    height: 150,
+    marginBottom: SPACING.m,
+  },
+  loadingIndicator: {
+    marginTop: SPACING.m,
+  },
+  zenText: {
+    fontFamily: FONTS.primary,
+    fontSize: 40,
+    fontWeight: FONTS.bold,
+    color: COLORS.primary,
+    position: 'absolute',
+    bottom: SPACING.xxxl,
+    textAlign: 'center',
+    opacity: 0.8,
   },
   
   // Zenni Image Styles

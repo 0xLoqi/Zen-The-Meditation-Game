@@ -1,99 +1,121 @@
 import { create } from 'zustand';
-import { FirebaseUser } from '../types';
-import { 
-  login as firebaseLogin, 
-  signup as firebaseSignup, 
-  signOut as firebaseSignOut, 
-  checkUsernameUnique as firebaseCheckUsernameUnique,
-  listenToAuthState
-} from '../firebase/auth';
-import * as Animatable from 'react-native-animatable';
+import { FirebaseUser, checkUsernameUnique, signup, login, signOut, listenToAuthState } from '../firebase/auth';
+import { useGoogleAuth } from '../firebase/googleAuth';
 
 interface AuthState {
   user: FirebaseUser | null;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  checkAuth: () => void;
+  googleAuthLoading: boolean;
+  googleAuthError: string | null;
+  checkAuth: () => (() => void); // Returns the unsubscribe function
   signup: (email: string, password: string, username: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   checkUsernameUnique: (username: string) => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  isLoading: true, // Start with loading true to check auth state
+  isLoading: false,
   error: null,
   isAuthenticated: false,
+  googleAuthLoading: false,
+  googleAuthError: null,
 
   checkAuth: () => {
-    set({ isLoading: true });
-    
-    // Set up auth state listener
+    // Listen to auth state changes
     const unsubscribe = listenToAuthState((user) => {
-      if (user) {
-        set({ 
-          user,
-          isAuthenticated: true,
-          isLoading: false
-        });
-      } else {
-        set({ 
-          user: null,
-          isAuthenticated: false,
-          isLoading: false
-        });
-      }
+      set({ 
+        user, 
+        isAuthenticated: !!user, 
+        isLoading: false,
+        error: null
+      });
     });
-    
-    // Return unsubscribe function for cleanup
+
     return unsubscribe;
   },
 
   signup: async (email: string, password: string, username: string) => {
+    set({ isLoading: true, error: null });
     try {
-      set({ isLoading: true, error: null });
-      const isUnique = await firebaseCheckUsernameUnique(username);
-      
-      if (!isUnique) {
-        set({ isLoading: false, error: 'Username is already taken' });
-        return;
-      }
-
-      const user = await firebaseSignup(email, password, username);
+      const user = await signup(email, password, username);
       set({ user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      set({ isLoading: false, error: (error as Error).message });
+    } catch (error: any) {
+      set({ 
+        error: error.message || 'Error signing up', 
+        isLoading: false 
+      });
+      throw error;
     }
   },
 
   login: async (email: string, password: string) => {
+    set({ isLoading: true, error: null });
     try {
-      set({ isLoading: true, error: null });
-      const user = await firebaseLogin(email, password);
+      const user = await login(email, password);
       set({ user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      set({ isLoading: false, error: (error as Error).message });
+    } catch (error: any) {
+      set({ 
+        error: error.message || 'Error logging in', 
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  signInWithGoogle: async () => {
+    set({ googleAuthLoading: true, googleAuthError: null });
+    
+    try {
+      // We're using the custom hook directly to leverage Firebase Auth providers
+      const { signInWithGoogle } = useGoogleAuth();
+      
+      const result = await signInWithGoogle();
+      
+      // The actual auth state update is handled by the listenToAuthState effect
+      // Since Firebase Auth will emit an event when the user signs in with Google
+      set({ googleAuthLoading: false });
+      
+      if (!result) {
+        throw new Error('Google sign in failed');
+      }
+    } catch (error: any) {
+      set({ 
+        googleAuthError: error.message || 'Error signing in with Google', 
+        googleAuthLoading: false 
+      });
+      throw error;
     }
   },
 
   signOut: async () => {
+    set({ isLoading: true, error: null });
     try {
-      set({ isLoading: true });
-      await firebaseSignOut();
-      set({ user: null, isAuthenticated: false, isLoading: false });
-    } catch (error) {
-      set({ isLoading: false, error: (error as Error).message });
+      await signOut();
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        isLoading: false 
+      });
+    } catch (error: any) {
+      set({ 
+        error: error.message || 'Error signing out', 
+        isLoading: false 
+      });
+      throw error;
     }
   },
 
   checkUsernameUnique: async (username: string) => {
     try {
-      return await firebaseCheckUsernameUnique(username);
-    } catch (error) {
-      set({ error: (error as Error).message });
-      return false;
+      return await checkUsernameUnique(username);
+    } catch (error: any) {
+      set({ error: error.message || 'Error checking username' });
+      throw error;
     }
-  }
+  },
 }));
