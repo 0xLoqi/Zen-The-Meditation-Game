@@ -9,20 +9,22 @@ export interface FirebaseUser {
 
 export interface User {
   uid: string;
+  id?: string; // Adding for compatibility with existing code
   username: string;
   email: string | null;
   xp: number;
   level: number;
   tokens: number;
   streak: number;
-  lastMeditationDate: string | null;
+  lastMeditationDate: string | Date | null;
   outfits: OutfitId[];
   equippedOutfit: OutfitId;
-  createdAt: string;
+  createdAt: string | Date;
+  referralCode?: string; // Adding for compatibility
 }
 
 // Meditation Types
-export type MeditationType = 'focus' | 'calm' | 'loving-kindness' | 'gratitude' | 'energizing';
+export type MeditationType = 'focus' | 'calm' | 'loving-kindness' | 'gratitude' | 'energizing' | 'Focus' | 'Sleep';
 export type MeditationDuration = 1 | 3 | 5 | 10 | 15 | 20 | 30;
 
 export interface MeditationResult {
@@ -34,9 +36,12 @@ export interface MeditationResult {
 
 // Check-in Types
 export interface DailyCheckIn {
-  date: string;
+  id?: string; // Adding for compatibility with existing code
+  userId?: string; // Adding for compatibility
+  date: string | Date;
   rating: number;
   reflection?: string;
+  timestamp?: Date; // Adding for compatibility
 }
 
 // Outfit System

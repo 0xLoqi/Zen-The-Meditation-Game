@@ -1,52 +1,34 @@
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  query, 
-  where, 
-  getDocs, 
-  Timestamp 
-} from 'firebase/firestore';
-import { auth, firestore } from './config';
 import { User, DailyCheckIn, OutfitId } from '../types';
+import { generateReferralCode } from './auth';
+
+// Mock user data for development
+const mockUser: User = {
+  uid: 'mock-user-123',
+  username: 'ZenMaster',
+  email: 'user@example.com',
+  level: 5,
+  xp: 350,
+  tokens: 120,
+  streak: 7,
+  lastMeditationDate: new Date(),
+  outfits: ['default', 'zen_master', 'nature_lover'],
+  equippedOutfit: 'default',
+  createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+  referralCode: 'ZEN-12345678'
+};
+
+// Mock check-in data
+let mockCheckIn: DailyCheckIn | null = null;
 
 /**
  * Get user data from Firestore
  * @returns User data object or null if not found
  */
 export const getUserData = async (): Promise<User | null> => {
-  try {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('No authenticated user');
-    }
-    
-    const userDoc = doc(firestore, 'users', currentUser.uid);
-    const userSnapshot = await getDoc(userDoc);
-    
-    if (!userSnapshot.exists()) {
-      throw new Error('User document not found');
-    }
-    
-    const userData = userSnapshot.data();
-    
-    // Convert Timestamp objects to Date objects
-    const lastMeditationDate = userData.lastMeditationDate 
-      ? userData.lastMeditationDate.toDate() 
-      : null;
-    const createdAt = userData.createdAt.toDate();
-    
-    return {
-      ...userData,
-      lastMeditationDate,
-      createdAt
-    } as User;
-  } catch (error) {
-    console.error('Error getting user data:', error);
-    return null;
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return mockUser;
 };
 
 /**
@@ -55,31 +37,20 @@ export const getUserData = async (): Promise<User | null> => {
  * @param reflection - Optional reflection text
  */
 export const submitDailyCheckIn = async (rating: number, reflection?: string): Promise<void> => {
-  try {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('No authenticated user');
-    }
-    
-    const checkInCollection = collection(firestore, 'checkIns');
-    const newCheckInDoc = doc(checkInCollection);
-    
-    const checkInData: DailyCheckIn = {
-      id: newCheckInDoc.id,
-      userId: currentUser.uid,
-      rating,
-      reflection: reflection || '',
-      timestamp: new Date(),
-    };
-    
-    await setDoc(newCheckInDoc, {
-      ...checkInData,
-      timestamp: Timestamp.fromDate(checkInData.timestamp),
-    });
-  } catch (error) {
-    console.error('Error submitting check-in:', error);
-    throw new Error('Failed to submit check-in');
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 700));
+  
+  // Create a new check-in
+  mockCheckIn = {
+    id: `check-in-${Date.now()}`,
+    userId: mockUser.uid,
+    date: new Date().toISOString(),
+    rating,
+    reflection: reflection || '',
+    timestamp: new Date()
+  };
+  
+  console.log('Check-in submitted:', mockCheckIn);
 };
 
 /**
@@ -87,46 +58,10 @@ export const submitDailyCheckIn = async (rating: number, reflection?: string): P
  * @returns Today's check-in or null if none exists
  */
 export const getTodayCheckIn = async (): Promise<DailyCheckIn | null> => {
-  try {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('No authenticated user');
-    }
-    
-    // Calculate the start of today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Get the end of today
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    // Query for check-ins within today
-    const checkInsCollection = collection(firestore, 'checkIns');
-    const q = query(
-      checkInsCollection,
-      where('userId', '==', currentUser.uid),
-      where('timestamp', '>=', Timestamp.fromDate(today)),
-      where('timestamp', '<', Timestamp.fromDate(tomorrow))
-    );
-    
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.empty) {
-      return null;
-    }
-    
-    // Should only be one check-in per day, so get the first one
-    const checkInData = querySnapshot.docs[0].data();
-    
-    return {
-      ...checkInData,
-      timestamp: checkInData.timestamp.toDate(),
-    } as DailyCheckIn;
-  } catch (error) {
-    console.error('Error getting today check-in:', error);
-    return null;
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  return mockCheckIn;
 };
 
 /**
@@ -134,20 +69,11 @@ export const getTodayCheckIn = async (): Promise<DailyCheckIn | null> => {
  * @param outfitId - ID of the outfit to equip
  */
 export const equipOutfit = async (outfitId: OutfitId): Promise<void> => {
-  try {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('No authenticated user');
-    }
-    
-    const userDoc = doc(firestore, 'users', currentUser.uid);
-    await updateDoc(userDoc, {
-      equippedOutfit: outfitId,
-    });
-  } catch (error) {
-    console.error('Error equipping outfit:', error);
-    throw new Error('Failed to equip outfit');
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 400));
+  
+  mockUser.equippedOutfit = outfitId;
+  console.log(`Equipped outfit: ${outfitId}`);
 };
 
 /**
@@ -155,13 +81,10 @@ export const equipOutfit = async (outfitId: OutfitId): Promise<void> => {
  * @returns Number of days in streak
  */
 export const getUserStreak = async (): Promise<number> => {
-  try {
-    const userData = await getUserData();
-    return userData?.streak || 0;
-  } catch (error) {
-    console.error('Error getting user streak:', error);
-    return 0;
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  return mockUser.streak;
 };
 
 /**
@@ -169,13 +92,10 @@ export const getUserStreak = async (): Promise<number> => {
  * @returns User's XP
  */
 export const getUserXP = async (): Promise<number> => {
-  try {
-    const userData = await getUserData();
-    return userData?.xp || 0;
-  } catch (error) {
-    console.error('Error getting user XP:', error);
-    return 0;
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  return mockUser.xp;
 };
 
 /**
@@ -183,13 +103,10 @@ export const getUserXP = async (): Promise<number> => {
  * @returns User's tokens
  */
 export const getUserTokens = async (): Promise<number> => {
-  try {
-    const userData = await getUserData();
-    return userData?.tokens || 0;
-  } catch (error) {
-    console.error('Error getting user tokens:', error);
-    return 0;
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  return mockUser.tokens;
 };
 
 /**
@@ -197,13 +114,10 @@ export const getUserTokens = async (): Promise<number> => {
  * @returns User's level
  */
 export const getUserLevel = async (): Promise<number> => {
-  try {
-    const userData = await getUserData();
-    return userData?.level || 1;
-  } catch (error) {
-    console.error('Error getting user level:', error);
-    return 1;
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  return mockUser.level;
 };
 
 /**
@@ -211,11 +125,16 @@ export const getUserLevel = async (): Promise<number> => {
  * @returns User's referral code
  */
 export const getReferralCode = async (): Promise<string> => {
-  try {
-    const userData = await getUserData();
-    return userData?.referralCode || '';
-  } catch (error) {
-    console.error('Error getting referral code:', error);
-    return '';
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  if (mockUser.referralCode) {
+    return mockUser.referralCode;
   }
+  
+  // Generate a new code if none exists
+  const newCode = generateReferralCode(mockUser.uid);
+  mockUser.referralCode = newCode;
+  
+  return newCode;
 };

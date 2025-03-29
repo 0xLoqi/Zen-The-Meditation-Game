@@ -1,24 +1,17 @@
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  query, 
-  where, 
-  getDocs, 
-  Timestamp 
-} from 'firebase/firestore';
-import { auth, firestore } from './config';
 import { MeditationType, MeditationDuration } from '../types';
 import { getUserData } from './user';
 
-interface MeditationResult {
+// Mock user data is imported from the user module
+
+export interface MeditationResult {
   xpGained: number;
   tokensEarned: number;
   streakUpdated: number;
   leveledUp: boolean;
 }
+
+// Keep track of the user's meditation sessions
+const mockMeditationSessions: any[] = [];
 
 /**
  * Submit a completed meditation session
@@ -34,101 +27,88 @@ export const submitMeditationSession = async (
   breathScore: number,
   didUseBreathTracking: boolean
 ): Promise<MeditationResult> => {
-  try {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('No authenticated user');
-    }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Get the current user data
+  const userData = await getUserData();
+  if (!userData) {
+    throw new Error('User data not found');
+  }
+  
+  // Calculate rewards
+  const result = calculateSessionRewards(
+    type,
+    duration,
+    breathScore,
+    userData.streak
+  );
+  
+  // Create a session record
+  const newSession = {
+    id: `session-${Date.now()}`,
+    userId: userData.uid,
+    type,
+    duration,
+    breathScore,
+    didUseBreathTracking,
+    timestamp: new Date(),
+  };
+  
+  // Add to our mock sessions
+  mockMeditationSessions.push(newSession);
+  
+  // Check if we need to update streak
+  const now = new Date();
+  let newStreak = userData.streak;
+  
+  // If there's a last meditation date and it's not today, check if we need to increment streak
+  if (userData.lastMeditationDate) {
+    const lastMeditationDate = new Date(userData.lastMeditationDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    // Create a session document
-    const sessionsCollection = collection(firestore, 'meditationSessions');
-    const newSessionDoc = doc(sessionsCollection);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
     
-    // Get the current user data
-    const userData = await getUserData();
-    if (!userData) {
-      throw new Error('User data not found');
-    }
+    const lastMedDate = new Date(lastMeditationDate);
+    lastMedDate.setHours(0, 0, 0, 0);
     
-    // Calculate rewards
-    const result = calculateSessionRewards(
-      type,
-      duration,
-      breathScore,
-      userData.streak
-    );
-    
-    // Save the session
-    await setDoc(newSessionDoc, {
-      id: newSessionDoc.id,
-      userId: currentUser.uid,
-      type,
-      duration,
-      breathScore,
-      didUseBreathTracking,
-      timestamp: Timestamp.fromDate(new Date()),
-    });
-    
-    // Update user stats
-    const userDoc = doc(firestore, 'users', currentUser.uid);
-    
-    // Check if we need to update streak
-    const now = new Date();
-    let newStreak = userData.streak;
-    
-    // If there's a last meditation date and it's not today, check if we need to increment streak
-    if (userData.lastMeditationDate) {
-      const lastMeditationDate = new Date(userData.lastMeditationDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      const lastMedDate = new Date(lastMeditationDate);
-      lastMedDate.setHours(0, 0, 0, 0);
-      
-      // If the last meditation was yesterday, increment streak
-      if (lastMedDate.getTime() === yesterday.getTime()) {
-        newStreak = userData.streak + 1;
-      } 
-      // If the last meditation was before yesterday, reset streak to 1
-      else if (lastMedDate.getTime() < yesterday.getTime()) {
-        newStreak = 1;
-      }
-    } else {
-      // First meditation ever, start streak at 1
+    // If the last meditation was yesterday, increment streak
+    if (lastMedDate.getTime() === yesterday.getTime()) {
+      newStreak = userData.streak + 1;
+    } 
+    // If the last meditation was before yesterday, reset streak to 1
+    else if (lastMedDate.getTime() < yesterday.getTime()) {
       newStreak = 1;
     }
-    
-    // Calculate new XP and check for level up
-    const newXP = userData.xp + result.xpGained;
-    const xpForNextLevel = getXPForNextLevel(userData.level);
-    const leveledUp = newXP >= xpForNextLevel;
-    const newLevel = leveledUp ? userData.level + 1 : userData.level;
-    
-    // Calculate new tokens
-    const newTokens = userData.tokens + result.tokensEarned;
-    
-    // Update the user document
-    await updateDoc(userDoc, {
-      xp: newXP,
-      level: newLevel,
-      tokens: newTokens,
-      streak: newStreak,
-      lastMeditationDate: Timestamp.fromDate(now),
-    });
-    
-    return {
-      xpGained: result.xpGained,
-      tokensEarned: result.tokensEarned,
-      streakUpdated: newStreak,
-      leveledUp,
-    };
-  } catch (error) {
-    console.error('Error submitting meditation session:', error);
-    throw new Error('Failed to submit meditation session');
+  } else {
+    // First meditation ever, start streak at 1
+    newStreak = 1;
   }
+  
+  // Calculate new XP and check for level up
+  const newXP = userData.xp + result.xpGained;
+  const xpForNextLevel = getXPForNextLevel(userData.level);
+  const leveledUp = newXP >= xpForNextLevel;
+  const newLevel = leveledUp ? userData.level + 1 : userData.level;
+  
+  // Calculate new tokens
+  const newTokens = userData.tokens + result.tokensEarned;
+  
+  // Update the mock user data
+  userData.xp = newXP;
+  userData.level = newLevel;
+  userData.tokens = newTokens;
+  userData.streak = newStreak;
+  userData.lastMeditationDate = now;
+  
+  return {
+    xpGained: result.xpGained,
+    tokensEarned: result.tokensEarned,
+    streakUpdated: newStreak,
+    leveledUp,
+  };
 };
 
 /**
@@ -149,9 +129,9 @@ export const calculateSessionRewards = (
   let baseXP = duration * 5;
   
   // Different types might give different rewards
-  if (type === 'Focus') {
+  if (type === 'focus') {
     baseXP += 5;
-  } else if (type === 'Sleep') {
+  } else if (type === 'calm') {
     baseXP += 3;
   }
   

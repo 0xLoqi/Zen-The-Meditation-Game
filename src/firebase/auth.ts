@@ -1,18 +1,35 @@
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  updateProfile
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { auth, firestore } from './config';
-
 // Firebase user type definition
 export type FirebaseUser = {
   uid: string;
   email: string | null;
   displayName: string | null;
+};
+
+// Store mock users in memory for testing
+let mockUsers: Record<string, {
+  uid: string;
+  email: string;
+  displayName: string;
+  password: string;
+}> = {
+  'test@example.com': {
+    uid: 'test-user-123',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    password: 'password123'
+  }
+};
+
+// Store the current user in memory
+let currentUser: FirebaseUser | null = null;
+
+// Keep track of auth state listeners
+const authListeners: ((user: FirebaseUser | null) => void)[] = [];
+
+// Notify all listeners about auth state changes
+export const notifyAuthStateChanged = (user: FirebaseUser | null) => {
+  currentUser = user;
+  authListeners.forEach(listener => listener(user));
 };
 
 /**
@@ -21,16 +38,17 @@ export type FirebaseUser = {
  * @returns True if username is available
  */
 export const checkUsernameUnique = async (username: string): Promise<boolean> => {
-  try {
-    const usersRef = collection(firestore, 'users');
-    const q = query(usersRef, where('username', '==', username));
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.empty;
-  } catch (error) {
-    console.error('Error checking username uniqueness:', error);
-    throw error;
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Check if username exists in our mock users
+  for (const userEmail in mockUsers) {
+    if (mockUsers[userEmail].displayName.toLowerCase() === username.toLowerCase()) {
+      return false;
+    }
   }
+  
+  return true;
 };
 
 /**
@@ -41,49 +59,43 @@ export const checkUsernameUnique = async (username: string): Promise<boolean> =>
  * @returns Firebase user object
  */
 export const signup = async (email: string, password: string, username: string): Promise<FirebaseUser> => {
-  try {
-    // Check if username is available
-    const isUsernameAvailable = await checkUsernameUnique(username);
-    if (!isUsernameAvailable) {
-      throw new Error('Username is already taken');
-    }
-
-    // Create the user account
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const { user } = userCredential;
-
-    // Set the display name
-    await updateProfile(user, { displayName: username });
-
-    // Create user document in Firestore
-    const userDoc = doc(firestore, 'users', user.uid);
-    await setDoc(userDoc, {
-      uid: user.uid,
-      email: user.email,
-      username: username,
-      displayName: username,
-      level: 1,
-      xp: 0,
-      tokens: 0,
-      streak: 0,
-      joinedAt: new Date(),
-      lastLoginAt: new Date(),
-      outfits: ['default'],
-      equippedOutfit: 'default',
-      completedMeditations: [],
-      purchasedItems: ['default'],
-    });
-
-    // Return user object
-    return {
-      uid: user.uid,
-      email: user.email,
-      displayName: username,
-    };
-  } catch (error) {
-    console.error('Error signing up:', error);
-    throw error;
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Check if email already exists
+  if (mockUsers[email]) {
+    throw new Error('Email already in use');
   }
+  
+  // Check if username is available
+  const isUsernameAvailable = await checkUsernameUnique(username);
+  if (!isUsernameAvailable) {
+    throw new Error('Username is already taken');
+  }
+  
+  // Create new user
+  const userId = `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const newUser = {
+    uid: userId,
+    email: email,
+    displayName: username,
+    password: password
+  };
+  
+  // Add to mock users store
+  mockUsers[email] = newUser;
+  
+  // Create the user object to return
+  const userObject: FirebaseUser = {
+    uid: newUser.uid,
+    email: newUser.email,
+    displayName: newUser.displayName,
+  };
+  
+  // Update auth state
+  notifyAuthStateChanged(userObject);
+  
+  return userObject;
 };
 
 /**
@@ -93,36 +105,42 @@ export const signup = async (email: string, password: string, username: string):
  * @returns Firebase user object
  */
 export const login = async (email: string, password: string): Promise<FirebaseUser> => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const { user } = userCredential;
-
-    // Update last login timestamp
-    const userDoc = doc(firestore, 'users', user.uid);
-    await setDoc(userDoc, { lastLoginAt: new Date() }, { merge: true });
-
-    // Return user object
-    return {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-    };
-  } catch (error) {
-    console.error('Error logging in:', error);
-    throw error;
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Check if user exists
+  const user = mockUsers[email];
+  if (!user) {
+    throw new Error('User not found');
   }
+  
+  // Check password
+  if (user.password !== password) {
+    throw new Error('Invalid password');
+  }
+  
+  // Create the user object to return
+  const userObject: FirebaseUser = {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+  };
+  
+  // Update auth state
+  notifyAuthStateChanged(userObject);
+  
+  return userObject;
 };
 
 /**
  * Sign out the current user
  */
 export const signOut = async (): Promise<void> => {
-  try {
-    await firebaseSignOut(auth);
-  } catch (error) {
-    console.error('Error signing out:', error);
-    throw error;
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Update auth state to null (signed out)
+  notifyAuthStateChanged(null);
 };
 
 /**
@@ -131,20 +149,19 @@ export const signOut = async (): Promise<void> => {
  * @returns Unsubscribe function
  */
 export const listenToAuthState = (callback: (user: FirebaseUser | null) => void): (() => void) => {
-  // Set up auth state listener
-  return onAuthStateChanged(auth, (user) => {
-    if (user) {
-      // User is signed in
-      callback({
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-      });
-    } else {
-      // User is signed out
-      callback(null);
+  // Add the callback to our listeners
+  authListeners.push(callback);
+  
+  // Initial callback with current state
+  callback(currentUser);
+  
+  // Return an unsubscribe function
+  return () => {
+    const index = authListeners.indexOf(callback);
+    if (index !== -1) {
+      authListeners.splice(index, 1);
     }
-  });
+  };
 };
 
 /**

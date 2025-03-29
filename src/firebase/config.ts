@@ -1,31 +1,37 @@
-// Import the necessary Firebase modules
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import Constants from 'expo-constants';
+// This is a mock Firebase configuration file
+// We're not actually using Firebase here, but providing mock objects
 
-// Firebase configuration object with environment variables
-const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
+// Create a simple mock Firebase app
+const app = {
+  name: 'zen-meditation-app-mock',
+  options: {},
 };
 
-// Initialize Firebase only if no app exists
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+// Create a mock auth object
+const auth = {
+  currentUser: null,
+  onAuthStateChanged: (callback: any) => {
+    // Return an unsubscribe function
+    return () => {};
+  },
+};
 
-// Get authentication instance
-const auth = getAuth(app);
+// Create a mock firestore object
+const firestore = {
+  collection: (name: string) => ({
+    doc: (id: string) => ({
+      get: async () => ({
+        exists: false,
+        data: () => ({}),
+      }),
+      set: async () => ({}),
+      update: async () => ({}),
+    }),
+  }),
+};
 
-// Get Firestore instance
-const db = getFirestore(app);
+// Export Firebase mock objects
+export { app, auth, firestore };
 
-// Export Firebase app, auth and firestore (db)
-export { app, auth, db as firestore };
-
-// Log to show Firebase has been initialized
-console.log('Firebase initialized successfully');
+// Log to show our mock Firebase has been initialized
+console.log('Mock Firebase initialized successfully');

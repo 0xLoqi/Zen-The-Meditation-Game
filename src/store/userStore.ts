@@ -58,6 +58,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       const newCheckIn: DailyCheckIn = {
         id: `checkin-${Date.now()}`,
         userId: get().userData?.id || 'unknown',
+        date: new Date().toISOString(), // Add the required date field
         rating,
         reflection,
         timestamp: new Date(),
