@@ -99,15 +99,24 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const handleSignupPress = () => {
     // Fun exit animation before navigating
     if (formRef.current && logoRef.current && titleRef.current) {
-      formRef.current.fadeOutDown(300).then(() => {
-        if (logoRef.current && titleRef.current) {
-          logoRef.current.fadeOutUp(300);
-          titleRef.current.fadeOutUp(300);
-          setTimeout(() => {
+      try {
+        const formPromise = formRef.current.fadeOutDown?.(300) || Promise.resolve();
+        const logoPromise = logoRef.current.fadeOutUp?.(300) || Promise.resolve();
+        const titlePromise = titleRef.current.fadeOutUp?.(300) || Promise.resolve();
+        
+        Promise.all([formPromise, logoPromise, titlePromise])
+          .then(() => {
+            setTimeout(() => {
+              navigation.navigate('Signup');
+            }, 300);
+          })
+          .catch(() => {
             navigation.navigate('Signup');
-          }, 300);
-        }
-      });
+          });
+      } catch (error) {
+        // Fallback in case animation fails
+        navigation.navigate('Signup');
+      }
     } else {
       navigation.navigate('Signup');
     }

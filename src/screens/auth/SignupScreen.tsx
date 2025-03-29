@@ -171,14 +171,29 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
   // Handle login navigation
   const handleLoginPress = () => {
     // Fun exit animation before navigating
-    formRef.current?.fadeOutDown(300).then(() => {
-      logoRef.current?.fadeOutUp(300);
-      titleRef.current?.fadeOutUp(300);
-      subtitleRef.current?.fadeOutUp(300);
-      setTimeout(() => {
+    if (formRef.current && logoRef.current && titleRef.current && subtitleRef.current) {
+      try {
+        const formPromise = formRef.current.fadeOutDown?.(300) || Promise.resolve();
+        const logoPromise = logoRef.current.fadeOutUp?.(300) || Promise.resolve();
+        const titlePromise = titleRef.current.fadeOutUp?.(300) || Promise.resolve();
+        const subtitlePromise = subtitleRef.current.fadeOutUp?.(300) || Promise.resolve();
+        
+        Promise.all([formPromise, logoPromise, titlePromise, subtitlePromise])
+          .then(() => {
+            setTimeout(() => {
+              navigation.navigate('Login');
+            }, 300);
+          })
+          .catch(() => {
+            navigation.navigate('Login');
+          });
+      } catch (error) {
+        // Fallback in case animation fails
         navigation.navigate('Login');
-      }, 300);
-    });
+      }
+    } else {
+      navigation.navigate('Login');
+    }
   };
 
   // Interpolate floating animation
@@ -213,9 +228,21 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => {
-                backButtonRef.current?.fadeOut(300).then(() => {
+                if (backButtonRef.current) {
+                  try {
+                    backButtonRef.current.fadeOut?.(300)
+                      .then(() => {
+                        navigation.goBack();
+                      })
+                      .catch(() => {
+                        navigation.goBack();
+                      });
+                  } catch (error) {
+                    navigation.goBack();
+                  }
+                } else {
                   navigation.goBack();
-                });
+                }
               }}
             >
               <Ionicons name="arrow-back" size={24} color={COLORS.text} />
