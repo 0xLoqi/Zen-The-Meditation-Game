@@ -225,108 +225,110 @@ const LoginScreen = ({ navigation }: any) => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Animated.View 
-          style={[
-            styles.formContainer, 
-            { 
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Text style={styles.screenTitle}>Welcome Back</Text>
-          
-          <View style={styles.inputWrapper}>
-            <Ionicons 
-              name="mail-outline" 
-              size={24} 
-              color={COLORS.primaryDark} 
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={COLORS.neutralMedium}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
-          
-          <View style={styles.inputWrapper}>
-            <Ionicons 
-              name="lock-closed-outline" 
-              size={24} 
-              color={COLORS.primaryDark} 
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder="Password"
-              placeholderTextColor={COLORS.neutralMedium}
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity 
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.passwordToggle}
-            >
-              <Ionicons 
-                name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                size={24} 
-                color={COLORS.neutralMedium} 
-              />
-            </TouchableOpacity>
-          </View>
-          
-          <TouchableOpacity 
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={isLoading}
-            activeOpacity={0.7}
+        <View style={styles.centeredContainer}>
+          <Animated.View 
+            style={[
+              styles.zenniImageContainer, 
+              { 
+                opacity: zenAnim,
+                transform: [
+                  { translateY: slideAnim },
+                  { scale: pulseAnim }
+                ]
+              }
+            ]}
           >
-            {isLoading ? (
-              <ActivityIndicator color={COLORS.white} />
-            ) : (
-              <Text style={styles.buttonText}>Login</Text>
-            )}
-          </TouchableOpacity>
+            <Image 
+              source={zenni} 
+              style={styles.zenniImage}
+              resizeMode="contain"
+            />
+          </Animated.View>
           
-          <View style={styles.footerTextContainer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+          <Animated.View 
+            style={[
+              styles.formContainer, 
+              { 
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
+            <Text style={styles.screenTitle}>Welcome Back</Text>
+            
+            <View style={styles.inputWrapper}>
+              <Ionicons 
+                name="mail-outline" 
+                size={24} 
+                color={COLORS.primaryDark} 
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor={COLORS.neutralMedium}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
+            </View>
+            
+            <View style={styles.inputWrapper}>
+              <Ionicons 
+                name="lock-closed-outline" 
+                size={24} 
+                color={COLORS.primaryDark} 
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Password"
+                placeholderTextColor={COLORS.neutralMedium}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity 
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.passwordToggle}
+              >
+                <Ionicons 
+                  name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                  size={24} 
+                  color={COLORS.neutralMedium} 
+                />
+              </TouchableOpacity>
+            </View>
+            
             <TouchableOpacity 
-              onPress={() => {
-                if (Platform.OS !== 'web') {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                navigation.navigate('Signup');
-              }}
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={isLoading}
+              activeOpacity={0.7}
             >
-              <Text style={styles.footerLink}>Sign Up</Text>
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                <Text style={styles.buttonText}>Login</Text>
+              )}
             </TouchableOpacity>
-          </View>
-        </Animated.View>
-        
-        <Animated.View 
-          style={[
-            styles.zenniBottomContainer, 
-            { 
-              opacity: zenAnim,
-              transform: [
-                { translateY: Animated.multiply(slideAnim, -0.5) },
-                { scale: pulseAnim }
-              ]
-            }
-          ]}
-        >
-          <Image 
-            source={zenni} 
-            style={styles.zenniImage}
-            resizeMode="contain"
-          />
-        </Animated.View>
+            
+            <View style={styles.footerTextContainer}>
+              <Text style={styles.footerText}>Don't have an account? </Text>
+              <TouchableOpacity 
+                onPress={() => {
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                  navigation.navigate('Signup');
+                }}
+              >
+                <Text style={styles.footerLink}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -414,31 +416,32 @@ const SignupScreen = ({ navigation }: any) => {
           <Ionicons name="chevron-back" size={26} color={COLORS.neutralDark} />
         </TouchableOpacity>
         
-        <Animated.View 
-          style={[
-            styles.zenniImageContainerSmall, 
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Image 
-            source={zenni} 
-            style={styles.zenniImageSmall}
-            resizeMode="contain"
-          />
-        </Animated.View>
-        
-        <Animated.View 
-          style={[
-            styles.formContainer, 
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
+        <View style={styles.centeredContainer}>
+          <Animated.View 
+            style={[
+              styles.zenniImageContainerSmall, 
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
+            <Image 
+              source={zenni} 
+              style={styles.zenniImageSmall}
+              resizeMode="contain"
+            />
+          </Animated.View>
+          
+          <Animated.View 
+            style={[
+              styles.formContainer, 
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
           <Text style={styles.screenTitle}>Create Account</Text>
           <Text style={styles.screenSubtitle}>Start your mindfulness journey with Zen</Text>
           
@@ -558,6 +561,7 @@ const SignupScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
         </Animated.View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -1001,8 +1005,12 @@ const styles = StyleSheet.create({
   },
   
   // Auth screens shared styles
+  centeredContainer: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+  },
   formContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'stretch',
     paddingVertical: SPACING.l,
