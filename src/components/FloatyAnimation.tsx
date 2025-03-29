@@ -1,6 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { ViewStyle } from 'react-native';
-import { Animated, Easing } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 
 interface FloatyAnimationProps {
@@ -20,11 +19,6 @@ const FloatyAnimation: React.FC<FloatyAnimationProps> = ({
   intensity = 'gentle',
   animation = 'float',
 }) => {
-  const translateY = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(1)).current;
-  const rotate = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-
   // Define animation intensities
   const getIntensityValue = () => {
     switch(intensity) {
@@ -35,237 +29,36 @@ const FloatyAnimation: React.FC<FloatyAnimationProps> = ({
     }
   };
 
-  useEffect(() => {
-    const intensity = getIntensityValue();
-    
-    // Wait for delay, then fade in
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-      delay,
-      easing: Easing.out(Easing.cubic)
-    }).start();
-    
-    // Set up the appropriate animation based on type
-    let floatAnimation;
-    
+  // Map animation types to Animatable animations
+  const getAnimation = () => {
     switch(animation) {
       case 'float':
-        floatAnimation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(translateY, {
-              toValue: -intensity,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            }),
-            Animated.timing(translateY, {
-              toValue: 0,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            })
-          ])
-        );
-        break;
-      
+        return 'float';
       case 'pulse':
-        floatAnimation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(scale, {
-              toValue: 1 + (intensity * 0.01),
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            }),
-            Animated.timing(scale, {
-              toValue: 1,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            })
-          ])
-        );
-        break;
-      
+        return 'pulse';
       case 'float-rotate':
-        // Combined animation
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(translateY, {
-              toValue: -intensity,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            }),
-            Animated.timing(translateY, {
-              toValue: 0,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            })
-          ])
-        ).start();
-        
-        floatAnimation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(rotate, {
-              toValue: 1,
-              duration: duration * 1.5,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            }),
-            Animated.timing(rotate, {
-              toValue: 0,
-              duration: duration * 1.5,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            })
-          ])
-        );
-        break;
-      
+        return 'float-rotate';
       case 'fade-float':
-        // Combined animation
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(translateY, {
-              toValue: -intensity,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            }),
-            Animated.timing(translateY, {
-              toValue: 0,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            })
-          ])
-        ).start();
-        
-        floatAnimation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(opacity, {
-              toValue: 0.7,
-              duration: duration / 2,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            }),
-            Animated.timing(opacity, {
-              toValue: 1,
-              duration: duration / 2,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            })
-          ])
-        );
-        break;
-      
+        return 'fade-float';
       case 'bounce-float':
-        // Combined animation
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(translateY, {
-              toValue: -intensity,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            }),
-            Animated.timing(translateY, {
-              toValue: 0,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            })
-          ])
-        ).start();
-        
-        floatAnimation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(scale, {
-              toValue: 1 + (intensity * 0.02),
-              duration: duration / 2,
-              useNativeDriver: true,
-              easing: Easing.out(Easing.bounce)
-            }),
-            Animated.timing(scale, {
-              toValue: 1,
-              duration: duration / 2,
-              useNativeDriver: true,
-              easing: Easing.in(Easing.bounce)
-            })
-          ])
-        );
-        break;
-        
+        return 'bounce-float';
       default:
-        floatAnimation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(translateY, {
-              toValue: -intensity,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            }),
-            Animated.timing(translateY, {
-              toValue: 0,
-              duration,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.sin)
-            })
-          ])
-        );
+        return 'float';
     }
-    
-    // Start the animation after delay
-    setTimeout(() => {
-      floatAnimation.start();
-    }, delay);
-    
-    return () => {
-      floatAnimation.stop();
-    };
-  }, []);
-  
-  // Map rotation to degrees
-  const rotateInterpolate = rotate.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['-3deg', '3deg'],
-  });
-  
-  // Create transform array based on animation type
-  const getTransform = () => {
-    const baseTransform = [];
-    
-    if (animation === 'float' || animation === 'fade-float' || animation === 'float-rotate' || animation === 'bounce-float') {
-      baseTransform.push({ translateY });
-    }
-    
-    if (animation === 'pulse' || animation === 'bounce-float') {
-      baseTransform.push({ scale });
-    }
-    
-    if (animation === 'float-rotate') {
-      baseTransform.push({ rotate: rotateInterpolate });
-    }
-    
-    return baseTransform;
   };
 
   return (
-    <Animated.View
-      style={[
-        style,
-        { 
-          opacity,
-          transform: getTransform()
-        }
-      ]}
+    <Animatable.View
+      animation={getAnimation()}
+      duration={duration}
+      delay={delay}
+      iterationCount="infinite"
+      direction="alternate"
+      easing="ease-in-out"
+      style={style}
     >
       {children}
-    </Animated.View>
+    </Animatable.View>
   );
 };
 

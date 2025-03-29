@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // Firebase user type definition
 export type FirebaseUser = {
   uid: string;
@@ -13,18 +15,15 @@ type MockUser = {
   password: string;
 };
 
-// Initialize mock users from localStorage or use default
-const getInitialMockUsers = (): Record<string, MockUser> => {
-  // Try to load existing users from localStorage
-  if (typeof window !== 'undefined') {
-    const storedUsers = localStorage.getItem('zen_mock_users');
+// Initialize mock users from AsyncStorage or use default
+const getInitialMockUsers = async (): Promise<Record<string, MockUser>> => {
+  try {
+    const storedUsers = await AsyncStorage.getItem('zen_mock_users');
     if (storedUsers) {
-      try {
-        return JSON.parse(storedUsers);
-      } catch (e) {
-        console.error('Failed to parse stored users:', e);
-      }
+      return JSON.parse(storedUsers);
     }
+  } catch (e) {
+    console.error('Failed to parse stored users:', e);
   }
   
   // Default user if no stored users found
@@ -39,46 +38,51 @@ const getInitialMockUsers = (): Record<string, MockUser> => {
 };
 
 // Store mock users
-let mockUsers: Record<string, MockUser> = getInitialMockUsers();
+let mockUsers: Record<string, MockUser> = {};
+// Initialize mockUsers
+getInitialMockUsers().then(users => {
+  mockUsers = users;
+});
 
-// Initialize current user from localStorage or null
-const getInitialCurrentUser = (): FirebaseUser | null => {
-  if (typeof window !== 'undefined') {
-    const storedUser = localStorage.getItem('zen_current_user');
+// Initialize current user from AsyncStorage or null
+const getInitialCurrentUser = async (): Promise<FirebaseUser | null> => {
+  try {
+    const storedUser = await AsyncStorage.getItem('zen_current_user');
     if (storedUser) {
-      try {
-        return JSON.parse(storedUser);
-      } catch (e) {
-        console.error('Failed to parse stored current user:', e);
-      }
+      return JSON.parse(storedUser);
     }
+  } catch (e) {
+    console.error('Failed to parse stored current user:', e);
   }
   return null;
 };
 
 // Store the current user in memory
-let currentUser: FirebaseUser | null = getInitialCurrentUser();
+let currentUser: FirebaseUser | null = null;
+// Initialize currentUser
+getInitialCurrentUser().then(user => {
+  currentUser = user;
+  notifyAuthStateChanged(user);
+});
 
 // Keep track of auth state listeners
 const authListeners: ((user: FirebaseUser | null) => void)[] = [];
 
 // Notify all listeners about auth state changes
-export const notifyAuthStateChanged = (user: FirebaseUser | null) => {
+export const notifyAuthStateChanged = async (user: FirebaseUser | null) => {
   currentUser = user;
   
-  // Save current user to localStorage
-  if (typeof window !== 'undefined') {
-    try {
-      if (user) {
-        localStorage.setItem('zen_current_user', JSON.stringify(user));
-        console.log('Current user saved to localStorage');
-      } else {
-        localStorage.removeItem('zen_current_user');
-        console.log('Current user removed from localStorage');
-      }
-    } catch (e) {
-      console.error('Failed to update localStorage with current user:', e);
+  // Save current user to AsyncStorage
+  try {
+    if (user) {
+      await AsyncStorage.setItem('zen_current_user', JSON.stringify(user));
+      console.log('Current user saved to AsyncStorage');
+    } else {
+      await AsyncStorage.removeItem('zen_current_user');
+      console.log('Current user removed from AsyncStorage');
     }
+  } catch (e) {
+    console.error('Failed to update AsyncStorage with current user:', e);
   }
   
   // Notify all listeners
@@ -138,14 +142,12 @@ export const signup = async (email: string, password: string, username: string):
   // Add to mock users store
   mockUsers[email] = newUser;
   
-  // Save updated users to localStorage
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('zen_mock_users', JSON.stringify(mockUsers));
-      console.log('Mock users saved to localStorage');
-    } catch (e) {
-      console.error('Failed to save users to localStorage:', e);
-    }
+  // Save updated users to AsyncStorage
+  try {
+    await AsyncStorage.setItem('zen_mock_users', JSON.stringify(mockUsers));
+    console.log('Mock users saved to AsyncStorage');
+  } catch (e) {
+    console.error('Failed to save users to AsyncStorage:', e);
   }
   
   // Create the user object to return
