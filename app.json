@@ -4,13 +4,13 @@
     "slug": "zen-meditation",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F5F5"
+      "backgroundColor": "#FFF8E1"
     },
     "ios": {
       "supportsTablet": true,
@@ -18,13 +18,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F5F5F5"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#FFF8E1"
       },
       "package": "com.zenmeditation.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [],
     "extra": {

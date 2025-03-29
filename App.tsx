@@ -27,8 +27,9 @@ import * as Haptics from 'expo-haptics';
 const { width, height } = Dimensions.get('window');
 
 // Import images
-const zenni = require('./attached_assets/zenni.png');
-const miniZenni = require('./attached_assets/minizenni.png');
+const zenni = require('./assets/images/zenni.png');
+const miniZenni = require('./assets/images/minizenni.png');
+const appIcon = require('./assets/images/icon.png');
 
 // Create stack navigators for auth and main flows
 const AuthStack = createStackNavigator();
@@ -71,24 +72,44 @@ const mockAuth = {
 const SplashScreen = ({ navigation }: any) => {
   const fadeAnim = useState(new Animated.Value(0))[0];
   const scaleAnim = useState(new Animated.Value(0.8))[0];
+  const pulseAnim = useState(new Animated.Value(1))[0];
   
   useEffect(() => {
+    // Initial animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1200,
+        duration: 1000,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic)
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 1200,
+        duration: 1000,
         useNativeDriver: true,
-        easing: Easing.out(Easing.back())
+        easing: Easing.out(Easing.back(1.5))
       })
     ]).start();
     
-    // Simulate loading assets or checking auth state
+    // Pulsing animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 1200,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin)
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin)
+        })
+      ])
+    ).start();
+    
+    // Navigate after a delay
     setTimeout(() => {
       navigation.replace('Login');
     }, 2500);
@@ -101,18 +122,18 @@ const SplashScreen = ({ navigation }: any) => {
           styles.logoContainer, 
           { 
             opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }]
+            transform: [
+              { scale: scaleAnim },
+              { scale: pulseAnim }
+            ]
           }
         ]}
       >
         <Image 
-          source={zenni} 
+          source={appIcon} 
           style={styles.zenniLogo}
           resizeMode="contain"
         />
-      </Animated.View>
-      <Animated.View style={{opacity: fadeAnim}}>
-        <ActivityIndicator size="large" color={COLORS.accent} />
       </Animated.View>
     </View>
   );
@@ -127,8 +148,11 @@ const LoginScreen = ({ navigation }: any) => {
   
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
+  const zenAnim = useState(new Animated.Value(0))[0];
+  const pulseAnim = useState(new Animated.Value(1))[0];
 
   useEffect(() => {
+    // Initial animation for form and content
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -141,8 +165,32 @@ const LoginScreen = ({ navigation }: any) => {
         duration: 800,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic)
+      }),
+      Animated.timing(zenAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.elastic(1.2))
       })
     ]).start();
+    
+    // Subtle breathing effect for Zenni
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 3000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin)
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin)
+        })
+      ])
+    ).start();
   }, []);
 
   const handleLogin = async () => {
@@ -179,22 +227,6 @@ const LoginScreen = ({ navigation }: any) => {
       >
         <Animated.View 
           style={[
-            styles.zenniImageContainer, 
-            { 
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Image 
-            source={zenni} 
-            style={styles.zenniImage}
-            resizeMode="contain"
-          />
-        </Animated.View>
-        
-        <Animated.View 
-          style={[
             styles.formContainer, 
             { 
               opacity: fadeAnim,
@@ -203,7 +235,6 @@ const LoginScreen = ({ navigation }: any) => {
           ]}
         >
           <Text style={styles.screenTitle}>Welcome Back</Text>
-          <Text style={styles.screenSubtitle}>Sign in to continue your meditation journey</Text>
           
           <View style={styles.inputWrapper}>
             <Ionicons 
@@ -214,7 +245,7 @@ const LoginScreen = ({ navigation }: any) => {
             />
             <TextInput
               style={styles.input}
-              placeholder="Enter your email"
+              placeholder="Email"
               placeholderTextColor={COLORS.neutralMedium}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -232,7 +263,7 @@ const LoginScreen = ({ navigation }: any) => {
             />
             <TextInput
               style={[styles.input, { flex: 1 }]}
-              placeholder="Enter your password"
+              placeholder="Password"
               placeholderTextColor={COLORS.neutralMedium}
               secureTextEntry={!showPassword}
               value={password}
@@ -276,6 +307,25 @@ const LoginScreen = ({ navigation }: any) => {
               <Text style={styles.footerLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
+        </Animated.View>
+        
+        <Animated.View 
+          style={[
+            styles.zenniBottomContainer, 
+            { 
+              opacity: zenAnim,
+              transform: [
+                { translateY: Animated.multiply(slideAnim, -0.5) },
+                { scale: pulseAnim }
+              ]
+            }
+          ]}
+        >
+          <Image 
+            source={zenni} 
+            style={styles.zenniImage}
+            resizeMode="contain"
+          />
         </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -929,6 +979,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.s,
+  },
+  zenniBottomContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.xl,
+    position: 'relative',
   },
   zenniImageSmall: {
     width: 120,
