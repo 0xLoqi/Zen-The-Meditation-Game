@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,12 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Animated,
+  Easing,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import * as Animatable from 'react-native-animatable';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
@@ -31,9 +34,65 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, isLoading, error } = useAuthStore();
+  
+  // Animation refs
+  const logoRef = useRef<any>(null);
+  const formRef = useRef<any>(null);
+  const titleRef = useRef<any>(null);
+  const brandRef = useRef<any>(null);
+  const subtitleRef = useRef<any>(null);
+  
+  // Animation for pulse effect
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  
+  useEffect(() => {
+    // Start pulsing animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 2000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease)
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease)
+        })
+      ])
+    ).start();
+    
+    // Run entrance animations with sequence
+    if (logoRef.current) {
+      logoRef.current.animate(
+        { 0: { opacity: 0, scale: 0.5 }, 1: { opacity: 1, scale: 1 } },
+        500
+      );
+    }
+    
+    setTimeout(() => {
+      titleRef.current?.fadeInUp(400);
+    }, 300);
+    
+    setTimeout(() => {
+      brandRef.current?.fadeInUp(500);
+    }, 500);
+    
+    setTimeout(() => {
+      subtitleRef.current?.fadeInUp(600);
+    }, 700);
+    
+    setTimeout(() => {
+      formRef.current?.fadeIn(800);
+    }, 900);
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
+      // Shake animation on error
+      formRef.current?.shake(800);
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -42,11 +101,15 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
       await login(email, password);
     } catch (error) {
       // Error is handled in the store
+      formRef.current?.shake(800);
     }
   };
 
   const handleSignupPress = () => {
-    navigation.navigate('Signup');
+    // Add a slight bounce before navigating
+    formRef.current?.bounceOut(500).then(() => {
+      navigation.navigate('Signup');
+    });
   };
 
   return (
@@ -60,24 +123,58 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              {/* Use the Zenni character as logo */}
-              <View style={styles.logoImageWrapper}>
+            <Animatable.View 
+              ref={logoRef} 
+              style={styles.logoContainer}
+              useNativeDriver
+            >
+              <Animated.View 
+                style={[
+                  styles.logoImageWrapper,
+                  { transform: [{ scale: pulseAnim }] }
+                ]}
+              >
                 <ImageBackground 
                   source={require('../../../assets/zenni.png')} 
                   style={styles.logoImage}
                   resizeMode="contain"
                 />
-              </View>
-            </View>
-            <Text style={styles.title}>Welcome to</Text>
-            <Text style={styles.brandTitle}>Zen</Text>
-            <Text style={styles.subtitle}>
+              </Animated.View>
+            </Animatable.View>
+            
+            <Animatable.Text 
+              ref={titleRef}
+              style={styles.title}
+              useNativeDriver
+            >
+              Welcome to
+            </Animatable.Text>
+            
+            <Animatable.Text
+              ref={brandRef}
+              style={styles.brandTitle}
+              useNativeDriver
+            >
+              Zen
+            </Animatable.Text>
+            
+            <Animatable.Text
+              ref={subtitleRef}
+              style={styles.subtitle}
+              useNativeDriver
+            >
               Your mindful meditation journey starts here
-            </Text>
+            </Animatable.Text>
           </View>
 
-          <View style={styles.formContainer}>
+          <Animatable.View 
+            ref={formRef}
+            style={styles.formContainer}
+            useNativeDriver
+            animation="fadeIn"
+            duration={800}
+            delay={900}
+          >
             <Input
               label="Email"
               placeholder="your.email@example.com"
@@ -102,14 +199,29 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
               }
             />
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
+            {error && (
+              <Animatable.Text 
+                style={styles.errorText}
+                animation="shake"
+                useNativeDriver
+              >
+                {error}
+              </Animatable.Text>
+            )}
 
-            <Button
-              title="Sign In"
-              onPress={handleLogin}
-              isLoading={isLoading}
-              style={styles.loginButton}
-            />
+            <Animatable.View
+              animation="pulse"
+              easing="ease-out"
+              iterationCount="infinite"
+              useNativeDriver
+            >
+              <Button
+                title="Sign In"
+                onPress={handleLogin}
+                isLoading={isLoading}
+                style={styles.loginButton}
+              />
+            </Animatable.View>
 
             <View style={styles.dividerContainer}>
               <View style={styles.divider} />
@@ -117,16 +229,23 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
               <View style={styles.divider} />
             </View>
 
-            <TouchableOpacity
-              style={styles.signupContainer}
-              onPress={handleSignupPress}
+            <Animatable.View
+              animation="pulse"
+              easing="ease-out"
+              iterationCount={1}
+              useNativeDriver
             >
-              <Text style={styles.signupText}>
-                Don't have an account?{' '}
-                <Text style={styles.signupLink}>Sign Up</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.signupContainer}
+                onPress={handleSignupPress}
+              >
+                <Text style={styles.signupText}>
+                  Don't have an account?{' '}
+                  <Text style={styles.signupLink}>Sign Up</Text>
+                </Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          </Animatable.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
@@ -22,6 +22,7 @@ import {
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from './src/constants/theme';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as Animatable from 'react-native-animatable';
 
 // Get device dimensions
 const { width, height } = Dimensions.get('window');

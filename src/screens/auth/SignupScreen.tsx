@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,12 @@ import {
   ScrollView,
   Alert,
   ImageBackground,
+  Animated,
+  Easing,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import * as Animatable from 'react-native-animatable';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
@@ -35,9 +38,78 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
   
   const { signup, isLoading, error, checkUsernameUnique } = useAuthStore();
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  
+  // Animation refs
+  const logoRef = useRef<any>(null);
+  const titleRef = useRef<any>(null);
+  const subtitleRef = useRef<any>(null);
+  const formRef = useRef<any>(null);
+  const backButtonRef = useRef<any>(null);
+  
+  // Animation for floating effect
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  
+  useEffect(() => {
+    // Start floating animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin)
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin)
+        })
+      ])
+    ).start();
+    
+    // Start subtle rotation animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 4000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin)
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 4000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin)
+        })
+      ])
+    ).start();
+    
+    // Delayed entrance animations
+    backButtonRef.current?.fadeIn(400);
+    
+    setTimeout(() => {
+      logoRef.current?.zoomIn(500);
+    }, 100);
+    
+    setTimeout(() => {
+      titleRef.current?.fadeInDown(500);
+    }, 400);
+    
+    setTimeout(() => {
+      subtitleRef.current?.fadeInDown(500);
+    }, 600);
+    
+    setTimeout(() => {
+      formRef.current?.fadeInUp(600);
+    }, 800);
+  }, []);
 
   const validateUsername = async () => {
     if (username.length < 3) {
+      formRef.current?.shake(800);
       setUsernameError('Username must be at least 3 characters');
       return false;
     }
@@ -45,6 +117,7 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
     try {
       const isUnique = await checkUsernameUnique(username);
       if (!isUnique) {
+        formRef.current?.shake(800);
         setUsernameError('Username is already taken');
         return false;
       }
@@ -52,6 +125,7 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
       setUsernameError(null);
       return true;
     } catch (error) {
+      formRef.current?.shake(800);
       setUsernameError('Error checking username');
       return false;
     }
@@ -59,16 +133,19 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
 
   const handleSignup = async () => {
     if (!username || !email || !password || !confirmPassword) {
+      formRef.current?.shake(800);
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
     
     if (password !== confirmPassword) {
+      formRef.current?.shake(800);
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
     
     if (password.length < 6) {
+      formRef.current?.shake(800);
       Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
@@ -82,12 +159,33 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
       await signup(email, password, username);
     } catch (error) {
       // Error is handled in the store
+      formRef.current?.shake(800);
     }
   };
 
   const handleLoginPress = () => {
-    navigation.navigate('Login');
+    // Fun exit animation before navigating
+    formRef.current?.fadeOutDown(300).then(() => {
+      logoRef.current?.fadeOutUp(300);
+      titleRef.current?.fadeOutUp(300);
+      subtitleRef.current?.fadeOutUp(300);
+      setTimeout(() => {
+        navigation.navigate('Login');
+      }, 300);
+    });
   };
+
+  // Interpolate floating animation
+  const translateY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -10]
+  });
+  
+  // Interpolate rotation animation (subtle)
+  const rotateZ = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['-5deg', '5deg']
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -99,31 +197,71 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+          <Animatable.View
+            ref={backButtonRef}
+            animation="fadeIn"
+            duration={500}
+            useNativeDriver
           >
-            <Ionicons name="arrow-back" size={24} color={COLORS.text} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => {
+                backButtonRef.current?.fadeOut(300).then(() => {
+                  navigation.goBack();
+                });
+              }}
+            >
+              <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+            </TouchableOpacity>
+          </Animatable.View>
 
           <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              {/* Use the MiniZenni character as logo */}
-              <View style={styles.logoImageWrapper}>
+            <Animatable.View 
+              ref={logoRef}
+              style={styles.logoContainer}
+              useNativeDriver
+            >
+              <Animated.View 
+                style={[
+                  styles.logoImageWrapper,
+                  { 
+                    transform: [
+                      { translateY },
+                      { rotateZ }
+                    ] 
+                  }
+                ]}
+              >
                 <ImageBackground 
                   source={require('../../../assets/minizenni.png')} 
                   style={styles.logoImage}
                   resizeMode="contain"
                 />
-              </View>
-            </View>
-            <Text style={styles.title}>Join Zen</Text>
-            <Text style={styles.subtitle}>
+              </Animated.View>
+            </Animatable.View>
+            
+            <Animatable.Text
+              ref={titleRef} 
+              style={styles.title}
+              useNativeDriver
+            >
+              Join Zen
+            </Animatable.Text>
+            
+            <Animatable.Text
+              ref={subtitleRef}
+              style={styles.subtitle}
+              useNativeDriver
+            >
               Create an account to start your meditation journey
-            </Text>
+            </Animatable.Text>
           </View>
 
-          <View style={styles.formContainer}>
+          <Animatable.View
+            ref={formRef}
+            style={styles.formContainer}
+            useNativeDriver
+          >
             <Input
               label="Username"
               placeholder="Choose a username"
@@ -173,31 +311,58 @@ const SignupScreen = ({ navigation }: SignupScreenProps) => {
               }
             />
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
+            {error && (
+              <Animatable.Text 
+                style={styles.errorText}
+                animation="flash"
+                useNativeDriver
+              >
+                {error}
+              </Animatable.Text>
+            )}
 
-            <Button
-              title="Create Account"
-              onPress={handleSignup}
-              isLoading={isLoading}
-              style={styles.signupButton}
-            />
+            <Animatable.View
+              animation="pulse"
+              easing="ease-out"
+              iterationCount="infinite"
+              useNativeDriver
+              duration={3000}
+            >
+              <Button
+                title="Create Account"
+                onPress={handleSignup}
+                isLoading={isLoading}
+                style={styles.signupButton}
+              />
+            </Animatable.View>
 
-            <View style={styles.dividerContainer}>
+            <Animatable.View 
+              style={styles.dividerContainer}
+              animation="fadeIn"
+              delay={900}
+              useNativeDriver
+            >
               <View style={styles.divider} />
               <Text style={styles.dividerText}>OR</Text>
               <View style={styles.divider} />
-            </View>
+            </Animatable.View>
 
-            <TouchableOpacity
-              style={styles.loginContainer}
-              onPress={handleLoginPress}
+            <Animatable.View
+              animation="bounceIn"
+              delay={1100}
+              useNativeDriver
             >
-              <Text style={styles.loginText}>
-                Already have an account?{' '}
-                <Text style={styles.loginLink}>Sign In</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.loginContainer}
+                onPress={handleLoginPress}
+              >
+                <Text style={styles.loginText}>
+                  Already have an account?{' '}
+                  <Text style={styles.loginLink}>Sign In</Text>
+                </Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          </Animatable.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
