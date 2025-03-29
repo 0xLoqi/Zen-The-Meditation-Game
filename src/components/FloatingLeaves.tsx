@@ -26,7 +26,7 @@ interface Leaf {
   delay: number;
 }
 
-// Define floating animations
+// Define floating animations with more dramatic movements
 Animatable.initializeRegistryWithDefinitions({
   'float-left': {
     from: {
@@ -38,9 +38,9 @@ Animatable.initializeRegistryWithDefinitions({
     },
     to: {
       transform: [
-        { translateX: -100 },
-        { translateY: 20 },
-        { rotate: '-15deg' }
+        { translateX: -200 },  // More horizontal movement
+        { translateY: 50 },    // More vertical movement
+        { rotate: '-30deg' }   // More rotation
       ]
     },
   },
@@ -54,9 +54,9 @@ Animatable.initializeRegistryWithDefinitions({
     },
     to: {
       transform: [
-        { translateX: 100 },
-        { translateY: 30 },
-        { rotate: '15deg' }
+        { translateX: 200 },   // More horizontal movement
+        { translateY: 70 },    // More vertical movement
+        { rotate: '30deg' }    // More rotation
       ]
     },
   },
@@ -70,9 +70,9 @@ Animatable.initializeRegistryWithDefinitions({
     },
     to: {
       transform: [
-        { translateX: 20 },
-        { translateY: -100 },
-        { rotate: '10deg' }
+        { translateX: 40 },    // More horizontal movement
+        { translateY: -200 },  // More vertical movement
+        { rotate: '25deg' }    // More rotation
       ]
     },
   },
@@ -86,9 +86,9 @@ Animatable.initializeRegistryWithDefinitions({
     },
     to: {
       transform: [
-        { translateX: -15 },
-        { translateY: 100 },
-        { rotate: '-10deg' }
+        { translateX: -40 },   // More horizontal movement
+        { translateY: 200 },   // More vertical movement
+        { rotate: '-25deg' }   // More rotation
       ]
     },
   },
@@ -99,7 +99,7 @@ interface FloatingLeavesProps {
   style?: any;
 }
 
-const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 8, style }) => {
+const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 15, style }) => {
   const [leaves, setLeaves] = useState<Leaf[]>([]);
 
   useEffect(() => {
@@ -118,10 +118,10 @@ const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 8, style }) => 
         image: leafImages[randomLeafIndex],
         startX: Math.random() * width,
         startY: Math.random() * height,
-        size: 30 + Math.random() * 40, // Size between 30-70
+        size: 60 + Math.random() * 60, // Size between 60-120 (much larger)
         animation: randomAnimation,
-        duration: 15000 + Math.random() * 10000, // Duration between 15-25 seconds
-        delay: Math.random() * 5000, // Random delay up to 5 seconds
+        duration: 10000 + Math.random() * 8000, // Duration between 10-18 seconds (faster)
+        delay: Math.random() * 3000, // Random delay up to 3 seconds (less waiting)
       });
     }
     
@@ -152,7 +152,7 @@ const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 8, style }) => 
             style={{
               width: leaf.size,
               height: leaf.size,
-              opacity: 0.7,
+              opacity: 0.9, // Increased opacity for better visibility
             }}
             resizeMode="contain"
           />
@@ -167,7 +167,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     height: '100%',
-    zIndex: -1, // Behind other content
+    zIndex: 1, // Changed to positive value to ensure visibility
+    pointerEvents: 'none', // Makes sure clicks pass through to elements below
   },
   leafContainer: {
     position: 'absolute',
