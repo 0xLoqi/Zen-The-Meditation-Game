@@ -195,6 +195,11 @@ const LoginScreen = ({ navigation }: any) => {
     ).start();
   }, []);
 
+  // Get the login function from the auth store
+  const { login } = useAuthStore(state => ({
+    login: state.login
+  }));
+  
   const handleLogin = async () => {
     if (!email || !password) {
       if (Platform.OS !== 'web') {
@@ -206,12 +211,14 @@ const LoginScreen = ({ navigation }: any) => {
 
     setIsLoading(true);
     try {
-      await mockAuth.login(email, password);
+      await login(email, password);
       // After successful login, navigation will be handled by the auth state change
-    } catch (error) {
+      console.log('Login successful');
+    } catch (error: any) {
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
+      console.error('Login error:', error);
       alert('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -366,6 +373,11 @@ const SignupScreen = ({ navigation }: any) => {
     ]).start();
   }, []);
 
+  // Get the signup function from the auth store
+  const { signup } = useAuthStore(state => ({
+    signup: state.signup
+  }));
+  
   const handleSignup = async () => {
     if (!email || !username || !password || !confirmPassword) {
       if (Platform.OS !== 'web') {
@@ -385,12 +397,14 @@ const SignupScreen = ({ navigation }: any) => {
 
     setIsLoading(true);
     try {
-      await mockAuth.signup(email, username, password);
+      await signup(email, password, username);
       // After successful signup, navigation will be handled by the auth state change
-    } catch (error) {
+      console.log('Signup successful');
+    } catch (error: any) {
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
+      console.error('Signup error:', error);
       alert('Signup failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -632,11 +646,22 @@ const HomeScreen = ({ navigation }: any) => {
     alert('Guru Mode would open here');
   };
 
+  // Get the signOut function from the auth store
+  const { signOut } = useAuthStore(state => ({
+    signOut: state.signOut
+  }));
+  
   const handleLogout = async () => {
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    await mockAuth.logout();
+    try {
+      await signOut();
+      console.log('Logout successful');
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Logout failed. Please try again.');
+    }
   };
 
   return (
