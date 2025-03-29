@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import { FirebaseUser } from '../types';
-import { login as apiLogin, signup as apiSignup, signOut as apiSignOut, checkUsernameUnique as apiCheckUsernameUnique } from '../api/auth';
+import { 
+  login as firebaseLogin, 
+  signup as firebaseSignup, 
+  signOut as firebaseSignOut, 
+  checkUsernameUnique as firebaseCheckUsernameUnique,
+  listenToAuthState
+} from '../firebase/auth';
+import * as Animatable from 'react-native-animatable';
 
 interface AuthState {
   user: FirebaseUser | null;
@@ -16,37 +23,45 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  isLoading: false,
+  isLoading: true, // Start with loading true to check auth state
   error: null,
   isAuthenticated: false,
 
   checkAuth: () => {
-    // Simulating auth state in a demo
-    const mockUser: FirebaseUser = {
-      uid: '123456789',
-      email: 'demo@example.com',
-      displayName: 'DemoUser',
-    };
+    set({ isLoading: true });
     
-    // For demo purposes, we're setting authenticated to false to show login screen
-    set({ 
-      user: null,
-      isAuthenticated: false,
-      isLoading: false
+    // Set up auth state listener
+    const unsubscribe = listenToAuthState((user) => {
+      if (user) {
+        set({ 
+          user,
+          isAuthenticated: true,
+          isLoading: false
+        });
+      } else {
+        set({ 
+          user: null,
+          isAuthenticated: false,
+          isLoading: false
+        });
+      }
     });
+    
+    // Return unsubscribe function for cleanup
+    return unsubscribe;
   },
 
   signup: async (email: string, password: string, username: string) => {
     try {
       set({ isLoading: true, error: null });
-      const isUnique = await apiCheckUsernameUnique(username);
+      const isUnique = await firebaseCheckUsernameUnique(username);
       
       if (!isUnique) {
         set({ isLoading: false, error: 'Username is already taken' });
         return;
       }
 
-      const user = await apiSignup(email, password, username);
+      const user = await firebaseSignup(email, password, username);
       set({ user, isAuthenticated: true, isLoading: false });
     } catch (error) {
       set({ isLoading: false, error: (error as Error).message });
@@ -56,7 +71,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email: string, password: string) => {
     try {
       set({ isLoading: true, error: null });
-      const user = await apiLogin(email, password);
+      const user = await firebaseLogin(email, password);
       set({ user, isAuthenticated: true, isLoading: false });
     } catch (error) {
       set({ isLoading: false, error: (error as Error).message });
@@ -66,7 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     try {
       set({ isLoading: true });
-      await apiSignOut();
+      await firebaseSignOut();
       set({ user: null, isAuthenticated: false, isLoading: false });
     } catch (error) {
       set({ isLoading: false, error: (error as Error).message });
@@ -75,7 +90,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkUsernameUnique: async (username: string) => {
     try {
-      return await apiCheckUsernameUnique(username);
+      return await firebaseCheckUsernameUnique(username);
     } catch (error) {
       set({ error: (error as Error).message });
       return false;

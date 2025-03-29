@@ -894,27 +894,36 @@ const MainNavigator = () => {
   );
 };
 
+// Import Firebase auth functions
+import { listenToAuthState } from './src/firebase/auth';
+import { useAuthStore } from './src/store/authStore';
+
 // Main App Component
 export default function App() {
   const [isInitializing, setIsInitializing] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Get auth state from store
+  const { 
+    isAuthenticated, 
+    checkAuth, 
+    isLoading: isAuthLoading 
+  } = useAuthStore(state => ({
+    isAuthenticated: state.isAuthenticated,
+    checkAuth: state.checkAuth,
+    isLoading: state.isLoading
+  }));
 
   useEffect(() => {
-    // Simulate authentication state check
-    const checkAuth = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsAuthenticated(mockAuth.isAuthenticated);
+    // Initialize Firebase auth 
+    const unsubscribe = checkAuth();
+    
+    // Set initializing to false after a brief delay to allow animations
+    setTimeout(() => {
       setIsInitializing(false);
-    };
-
-    checkAuth();
-
-    // Set up an interval to check auth state every second (for demo purposes)
-    const interval = setInterval(() => {
-      setIsAuthenticated(mockAuth.isAuthenticated);
-    }, 1000);
-
-    return () => clearInterval(interval);
+    }, 2000);
+    
+    // Clean up auth listener
+    return unsubscribe;
   }, []);
 
   if (isInitializing) {

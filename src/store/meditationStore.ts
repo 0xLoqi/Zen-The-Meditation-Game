@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { MeditationType, MeditationDuration } from '../types';
-import * as meditationApi from '../api/meditation';
+import * as meditationService from '../firebase/meditation';
 import { getMicroLesson } from '../constants/microLessons';
+import * as Animatable from 'react-native-animatable';
+import { useUserStore } from './userStore';
 
 interface MeditationState {
   isLoading: boolean;
@@ -21,28 +23,6 @@ interface MeditationState {
   submitMeditationSession: (breathScore: number, didUseBreathTracking: boolean) => Promise<void>;
   resetMeditationSession: () => void;
 }
-
-// Helper functions for calculating rewards
-const calculateXP = (duration: MeditationDuration, breathScore: number): number => {
-  // Base XP based on duration
-  const baseXP = duration === 5 ? 25 : 50;
-  
-  // Bonus XP based on breath score (up to 100% bonus)
-  const breathBonus = Math.floor(baseXP * (breathScore / 100));
-  
-  return baseXP + breathBonus;
-};
-
-const calculateTokens = (duration: MeditationDuration, breathScore: number): number => {
-  // Tokens are usually fewer than XP
-  // Base tokens based on duration
-  const baseTokens = duration === 5 ? 5 : 10;
-  
-  // Bonus tokens based on breath score (up to 50% bonus)
-  const breathBonus = Math.floor(baseTokens * (breathScore / 200));
-  
-  return baseTokens + breathBonus;
-};
 
 export const useMeditationStore = create<MeditationState>((set, get) => ({
   isLoading: false,
@@ -77,7 +57,7 @@ export const useMeditationStore = create<MeditationState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       
-      const result = await meditationApi.submitMeditationSession(
+      const result = await meditationService.submitMeditationSession(
         selectedType,
         selectedDuration,
         breathScore,
@@ -94,6 +74,10 @@ export const useMeditationStore = create<MeditationState>((set, get) => ({
         didUseBreathTracking,
         sessionCompleted: true,
       });
+      
+      // Update user data after meditation session
+      const getUserData = useUserStore.getState().getUserData;
+      getUserData();
     } catch (error: any) {
       set({
         isLoading: false,
