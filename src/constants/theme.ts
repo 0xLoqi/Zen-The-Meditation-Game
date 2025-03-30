@@ -1,3 +1,5 @@
+import { getShadowStyle } from '../utils/styles';
+
 export const COLORS = {
   // Earth Tones - Based on Zenni Character
   primary: '#CD8500', // Saffron - Main brand color, buttons, active states 
@@ -162,40 +164,29 @@ export const SIZES = {
 };
 
 export const SHADOWS = {
-  small: {
-    shadowColor: COLORS.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  medium: {
-    shadowColor: COLORS.text,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  large: {
-    shadowColor: COLORS.text,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  // Intensity levels for shadow
-  light: {
-    shadowColor: COLORS.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  dark: {
-    shadowColor: COLORS.text,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 10,
-  },
+  small: getShadowStyle({
+    offset: { width: 0, height: 2 },
+    opacity: 0.1,
+    radius: 4,
+  }),
+  medium: getShadowStyle({
+    offset: { width: 0, height: 4 },
+    opacity: 0.15,
+    radius: 8,
+  }),
+  large: getShadowStyle({
+    offset: { width: 0, height: 8 },
+    opacity: 0.2,
+    radius: 12,
+  }),
+  subtle: getShadowStyle({
+    offset: { width: 0, height: 2 },
+    opacity: 0.05,
+    radius: 3,
+  }),
+  prominent: getShadowStyle({
+    offset: { width: 0, height: 6 },
+    opacity: 0.3,
+    radius: 10,
+  }),
 };

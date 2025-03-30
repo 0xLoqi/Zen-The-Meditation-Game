@@ -10,7 +10,8 @@ import {
   Platform
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING } from '../constants/theme';
+import { COLORS, FONTS, SPACING, SIZES } from '../constants/theme';
+import { getShadowStyle } from '../utils/styles';
 
 interface GoogleSignInButtonProps {
   onPress: () => void;
@@ -48,21 +49,18 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: COLORS.white,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: SIZES.borderRadius.medium,
+    padding: SPACING.m,
+    marginVertical: SPACING.s,
+    ...getShadowStyle({
+      offset: { width: 0, height: 2 },
+      opacity: 0.1,
+      radius: 4,
+    }),
   },
   buttonContent: {
     flexDirection: 'row',

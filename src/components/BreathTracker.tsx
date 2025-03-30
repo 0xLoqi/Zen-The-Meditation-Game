@@ -6,6 +6,7 @@ import {
   Easing,
   ViewStyle,
   Text,
+  Platform,
 } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../constants/theme';
 import { triggerBreathHaptic } from '../utils/haptics';
@@ -46,7 +47,7 @@ const BreathTracker = ({
       Animated.timing(animatedValue, {
         toValue: 0,
         duration: 0,
-        useNativeDriver: true
+        useNativeDriver: Platform.OS !== 'web'
       }).stop();
       userBreathPatternRef.current = [];
       setBreathCount(0);
@@ -57,7 +58,7 @@ const BreathTracker = ({
       Animated.timing(animatedValue, {
         toValue: 0,
         duration: 0,
-        useNativeDriver: true
+        useNativeDriver: Platform.OS !== 'web'
       }).stop();
     };
   }, [isActive]);
@@ -97,7 +98,7 @@ const BreathTracker = ({
       toValue: 1,
       duration: INHALE_DURATION,
       easing: Easing.cubic,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web'
     }).start(({ finished }) => {
       if (finished && isActive) {
         // Exhale animation
@@ -109,7 +110,7 @@ const BreathTracker = ({
           toValue: 0,
           duration: EXHALE_DURATION,
           easing: Easing.cubic,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web'
         }).start(({ finished }) => {
           if (finished && isActive) {
             cycleRef.current += 1;

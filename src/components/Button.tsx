@@ -42,26 +42,30 @@ const Button = ({
       justifyContent: 'center',
       alignItems: 'center',
       flexDirection: 'row',
+      minHeight: SIZES.buttonMediumHeight,
     };
     
     let sizeStyle: ViewStyle = {};
     switch (size) {
       case 'small':
         sizeStyle = {
-          height: SIZES.buttonSmallHeight,
+          minHeight: SIZES.buttonSmallHeight,
           paddingHorizontal: SPACING.medium,
+          paddingVertical: SPACING.small,
         };
         break;
       case 'large':
         sizeStyle = {
-          height: SIZES.buttonLargeHeight,
+          minHeight: SIZES.buttonLargeHeight,
           paddingHorizontal: SPACING.large,
+          paddingVertical: SPACING.medium,
         };
         break;
       default:
         sizeStyle = {
-          height: SIZES.buttonMediumHeight,
+          minHeight: SIZES.buttonMediumHeight,
           paddingHorizontal: SPACING.medium,
+          paddingVertical: SPACING.small,
         };
     }
     
@@ -102,6 +106,8 @@ const Button = ({
     const baseStyle: TextStyle = {
       fontFamily: FONTS.primary,
       fontWeight: FONTS.medium,
+      lineHeight: 24,
+      textAlignVertical: 'center',
     };
     
     let sizeStyle: TextStyle = {};
@@ -109,16 +115,19 @@ const Button = ({
       case 'small':
         sizeStyle = {
           fontSize: FONTS.small,
+          lineHeight: 20,
         };
         break;
       case 'large':
         sizeStyle = {
           fontSize: FONTS.large,
+          lineHeight: 28,
         };
         break;
       default:
         sizeStyle = {
           fontSize: FONTS.regular,
+          lineHeight: 24,
         };
     }
     

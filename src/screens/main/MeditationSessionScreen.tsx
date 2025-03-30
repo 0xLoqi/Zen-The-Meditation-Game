@@ -243,7 +243,7 @@ const MeditationSessionScreen = () => {
           >
             <MaterialCommunityIcons
               name="play"
-              size={SIZES.icon.medium}
+              size={SIZES.iconMedium}
               color={COLORS.white}
             />
           </TouchableOpacity>
@@ -254,7 +254,7 @@ const MeditationSessionScreen = () => {
           >
             <MaterialCommunityIcons
               name="pause"
-              size={SIZES.icon.medium}
+              size={SIZES.iconMedium}
               color={COLORS.white}
             />
           </TouchableOpacity>

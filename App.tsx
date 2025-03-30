@@ -24,6 +24,7 @@ import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-ico
 import * as Haptics from 'expo-haptics';
 import * as Animatable from 'react-native-animatable';
 import FloatingLeaves from './src/components/FloatingLeaves';
+import MainNavigator from './src/navigation/MainNavigator';
 
 // Get device dimensions
 const { width, height } = Dimensions.get('window');
@@ -33,9 +34,8 @@ const zenni = require('./assets/images/zenni.png');
 const miniZenni = require('./assets/images/minizenni.png');
 const appIcon = require('./assets/images/icon.png');
 
-// Create stack navigators for auth and main flows
+// Create stack navigators for auth flow
 const AuthStack = createStackNavigator();
-const MainStack = createStackNavigator();
 
 // Types
 import { MeditationType, MeditationDuration, OutfitId } from './src/types/index';
@@ -263,7 +263,6 @@ const LoginScreen = ({ navigation }: any) => {
               }
             ]}
           >
-            <Text style={styles.screenTitle}>Welcome Back</Text>
             
             <View style={styles.inputWrapper}>
               <Ionicons 
@@ -324,7 +323,6 @@ const LoginScreen = ({ navigation }: any) => {
             </TouchableOpacity>
             
             <View style={styles.footerTextContainer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
               <TouchableOpacity 
                 onPress={() => {
                   if (Platform.OS !== 'web') {
@@ -583,324 +581,6 @@ const SignupScreen = ({ navigation }: any) => {
   );
 };
 
-// Home Screen Component (redesigned)
-const HomeScreen = ({ navigation }: any) => {
-  // Mock data for demo
-  const userData = {
-    streak: 7,
-    xp: 350,
-    level: 3,
-    tokens: 120,
-    equippedOutfit: 'default' as OutfitId,
-    username: 'ZenUser'
-  };
-  
-  const requiredXP = 400; // XP needed for next level
-  const xpPercentage = (userData.xp / requiredXP) * 100;
-  
-  const fadeAnim = useState(new Animated.Value(0))[0];
-  const slideAnim = useState(new Animated.Value(20))[0];
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.cubic)
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.cubic)
-      })
-    ]).start();
-  }, []);
-
-  const openMeditationSelection = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    alert('Meditation Selection would open here');
-  };
-  
-  const openDailyCheckIn = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    alert('Daily Check-in would open here');
-  };
-  
-  const openWardrobe = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    alert('Wardrobe would open here');
-  };
-  
-  const openGuruMode = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    alert('Guru Mode would open here');
-  };
-
-  // Get the signOut function from the auth store
-  const { signOut } = useAuthStore(state => ({
-    signOut: state.signOut
-  }));
-  
-  const handleLogout = async () => {
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
-    try {
-      await signOut();
-      console.log('Logout successful');
-    } catch (error) {
-      console.error('Logout error:', error);
-      alert('Logout failed. Please try again.');
-    }
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.homeContent}>
-        {/* User Profile and Stats Section */}
-        <Animated.View 
-          style={[
-            styles.profileSection,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <View style={styles.profileHeader}>
-            <View style={styles.miniZenniContainer}>
-              <Image 
-                source={miniZenni} 
-                style={styles.miniZenniImage}
-                resizeMode="contain"
-              />
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.username}>{userData.username}</Text>
-              <View style={styles.levelContainer}>
-                <Text style={styles.levelText}>Level {userData.level}</Text>
-              </View>
-              
-              {/* XP Bar */}
-              <View style={styles.xpBarContainer}>
-                <View style={styles.xpBarBackground}>
-                  <View 
-                    style={[
-                      styles.xpBarFill, 
-                      { width: `${xpPercentage}%` }
-                    ]} 
-                  />
-                </View>
-                <Text style={styles.xpText}>{userData.xp}/{requiredXP} XP</Text>
-              </View>
-            </View>
-          </View>
-          
-          {/* Stats Row */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="flame" size={18} color={COLORS.accent} />
-              </View>
-              <Text style={styles.statValue}>{userData.streak}</Text>
-              <Text style={styles.statLabel}>Day Streak</Text>
-            </View>
-            
-            <View style={styles.statDivider} />
-            
-            <View style={styles.statItem}>
-              <View style={styles.statIconContainer}>
-                <MaterialCommunityIcons name="meditation" size={18} color={COLORS.primary} />
-              </View>
-              <Text style={styles.statValue}>{userData.xp}</Text>
-              <Text style={styles.statLabel}>Total XP</Text>
-            </View>
-            
-            <View style={styles.statDivider} />
-            
-            <View style={styles.statItem}>
-              <View style={styles.statIconContainer}>
-                <FontAwesome5 name="coins" size={16} color={COLORS.accent} />
-              </View>
-              <Text style={styles.statValue}>{userData.tokens}</Text>
-              <Text style={styles.statLabel}>Tokens</Text>
-            </View>
-          </View>
-        </Animated.View>
-        
-        {/* Meditation Card */}
-        <Animated.View
-          style={[
-            styles.mainFeatureCard,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <TouchableOpacity 
-            style={styles.mainFeatureButton}
-            onPress={openMeditationSelection}
-            activeOpacity={0.8}
-          >
-            <View style={styles.mainFeatureContent}>
-              <View style={styles.mainFeatureIconContainer}>
-                <MaterialCommunityIcons name="meditation" size={36} color={COLORS.white} />
-              </View>
-              <View style={styles.mainFeatureTextContainer}>
-                <Text style={styles.mainFeatureTitle}>Start Meditation</Text>
-                <Text style={styles.mainFeatureSubtitle}>Choose type and duration</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={28} color={COLORS.white} />
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
-        
-        {/* Feature Tiles */}
-        <Animated.View 
-          style={[
-            styles.featureTileRow,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <TouchableOpacity 
-            style={styles.featureTile} 
-            onPress={openDailyCheckIn}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.featureTileIcon, { backgroundColor: COLORS.primaryLight }]}>
-              <Ionicons name="calendar" size={26} color={COLORS.white} />
-            </View>
-            <Text style={styles.featureTileText}>Daily{'\n'}Check-in</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.featureTile} 
-            onPress={openWardrobe}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.featureTileIcon, { backgroundColor: COLORS.accentLight }]}>
-              <Ionicons name="shirt-outline" size={26} color={COLORS.white} />
-            </View>
-            <Text style={styles.featureTileText}>Zenni{'\n'}Wardrobe</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.featureTile} 
-            onPress={openGuruMode}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.featureTileIcon, { backgroundColor: COLORS.tertiaryLight }]}>
-              <Ionicons name="sparkles" size={26} color={COLORS.white} />
-            </View>
-            <Text style={styles.featureTileText}>Guru{'\n'}Mode</Text>
-          </TouchableOpacity>
-        </Animated.View>
-        
-        {/* Meditation Types Cards */}
-        <Animated.View
-          style={[
-            { marginTop: SPACING.xl, marginBottom: SPACING.m },
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Text style={styles.sectionTitle}>Meditation Types</Text>
-          
-          <TouchableOpacity 
-            style={[styles.meditationTypeCard, { backgroundColor: COLORS.calmColor }]}
-            onPress={() => openMeditationSelection()}
-            activeOpacity={0.8}
-          >
-            <View style={styles.meditationTypeContent}>
-              <View style={styles.meditationTypeIconContainer}>
-                <Ionicons name="water-outline" size={28} color={COLORS.white} />
-              </View>
-              <View style={styles.meditationTypeTextContainer}>
-                <Text style={styles.meditationTypeTitle}>Calm Meditation</Text>
-                <Text style={styles.meditationTypeDescription}>Reduce anxiety and find inner peace</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.meditationTypeCard, { backgroundColor: COLORS.focusColor }]}
-            onPress={() => openMeditationSelection()}
-            activeOpacity={0.8}
-          >
-            <View style={styles.meditationTypeContent}>
-              <View style={styles.meditationTypeIconContainer}>
-                <Ionicons name="bulb-outline" size={28} color={COLORS.white} />
-              </View>
-              <View style={styles.meditationTypeTextContainer}>
-                <Text style={styles.meditationTypeTitle}>Focus Meditation</Text>
-                <Text style={styles.meditationTypeDescription}>Improve concentration and clarity</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.meditationTypeCard, { backgroundColor: COLORS.sleepColor }]}
-            onPress={() => openMeditationSelection()}
-            activeOpacity={0.8}
-          >
-            <View style={styles.meditationTypeContent}>
-              <View style={styles.meditationTypeIconContainer}>
-                <Ionicons name="moon-outline" size={28} color={COLORS.white} />
-              </View>
-              <View style={styles.meditationTypeTextContainer}>
-                <Text style={styles.meditationTypeTitle}>Sleep Meditation</Text>
-                <Text style={styles.meditationTypeDescription}>Improve sleep quality and relaxation</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
-      </ScrollView>
-      
-      {/* Tab Bar - Simplified for demo */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabItem} activeOpacity={0.7}>
-          <Ionicons name="home" size={26} color={COLORS.primary} />
-          <Text style={[styles.tabLabel, { color: COLORS.primary }]}>Home</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.tabItem} 
-          activeOpacity={0.7}
-          onPress={openMeditationSelection}
-        >
-          <MaterialCommunityIcons name="meditation" size={26} color={COLORS.neutralMedium} />
-          <Text style={styles.tabLabel}>Meditate</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.tabItem} 
-          activeOpacity={0.7}
-          onPress={openWardrobe}
-        >
-          <Ionicons name="person" size={26} color={COLORS.neutralMedium} />
-          <Text style={styles.tabLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-};
-
 // Navigation configurations
 const AuthNavigator = () => {
   return (
@@ -909,14 +589,6 @@ const AuthNavigator = () => {
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Signup" component={SignupScreen} />
     </AuthStack.Navigator>
-  );
-};
-
-const MainNavigator = () => {
-  return (
-    <MainStack.Navigator screenOptions={{ headerShown: false }}>
-      <MainStack.Screen name="Home" component={HomeScreen} />
-    </MainStack.Navigator>
   );
 };
 
@@ -994,6 +666,7 @@ export default function App() {
           animation="pulse" 
           iterationCount="infinite" 
           duration={3000}
+          useNativeDriver={Platform.OS !== 'web'}
           style={styles.loadingContent}
         >
           <Image 
@@ -1006,7 +679,8 @@ export default function App() {
         
         {/* "Zen" text at bottom */}
         <Animatable.Text 
-          animation="fadeIn" 
+          animation="fadeIn"
+          useNativeDriver={Platform.OS !== 'web'}
           style={styles.zenText}
         >
           Zen

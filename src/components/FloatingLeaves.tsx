@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Image, StyleSheet, Dimensions, ImageSourcePropType } from 'react-native';
+import { View, Image, StyleSheet, Dimensions, ImageSourcePropType, Platform } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 
 // Get screen dimensions for positioning
@@ -29,66 +29,98 @@ interface Leaf {
 // Define gentle flowing animations primarily downward
 Animatable.initializeRegistryWithDefinitions({
   'float-down-left': {
-    from: {
+    0: {
+      opacity: 0,
       transform: [
         { translateX: 0 },
         { translateY: 0 },
         { rotate: '0deg' }
       ]
     },
-    to: {
+    0.1: {
+      opacity: 1,
+    },
+    0.9: {
+      opacity: 1,
+    },
+    1: {
+      opacity: 0,
       transform: [
-        { translateX: -40 },    // Slight leftward drift
-        { translateY: 300 },    // Long downward flow
-        { rotate: '-5deg' }     // Subtle rotation
+        { translateX: -40 },
+        { translateY: 300 },
+        { rotate: '-5deg' }
       ]
     },
   },
   'float-down-right': {
-    from: {
+    0: {
+      opacity: 0,
       transform: [
         { translateX: 0 },
         { translateY: 0 },
         { rotate: '0deg' }
       ]
     },
-    to: {
+    0.1: {
+      opacity: 1,
+    },
+    0.9: {
+      opacity: 1,
+    },
+    1: {
+      opacity: 0,
       transform: [
-        { translateX: 40 },     // Slight rightward drift
-        { translateY: 280 },    // Long downward flow
-        { rotate: '5deg' }      // Subtle rotation
+        { translateX: 40 },
+        { translateY: 280 },
+        { rotate: '5deg' }
       ]
     },
   },
   'float-down-center': {
-    from: {
+    0: {
+      opacity: 0,
       transform: [
         { translateX: 0 },
         { translateY: 0 },
         { rotate: '0deg' }
       ]
     },
-    to: {
+    0.1: {
+      opacity: 1,
+    },
+    0.9: {
+      opacity: 1,
+    },
+    1: {
+      opacity: 0,
       transform: [
-        { translateX: 0 },      // No horizontal movement
-        { translateY: 320 },    // Long downward flow
-        { rotate: '0deg' }      // No rotation
+        { translateX: 0 },
+        { translateY: 320 },
+        { rotate: '0deg' }
       ]
     },
   },
   'float-down-zigzag': {
-    from: {
+    0: {
+      opacity: 0,
       transform: [
         { translateX: 0 },
         { translateY: 0 },
         { rotate: '0deg' }
       ]
     },
-    to: {
+    0.1: {
+      opacity: 1,
+    },
+    0.9: {
+      opacity: 1,
+    },
+    1: {
+      opacity: 0,
       transform: [
-        { translateX: 30 },     // Slight zigzag
-        { translateY: 300 },    // Long downward flow
-        { rotate: '10deg' }     // Slight rotation
+        { translateX: 30 },
+        { translateY: 300 },
+        { rotate: '10deg' }
       ]
     },
   },
@@ -139,6 +171,7 @@ const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 8, style }) => 
           easing="linear"
           duration={leaf.duration}
           delay={leaf.delay}
+          useNativeDriver={Platform.OS !== 'web'}
           style={[
             styles.leafContainer,
             {
@@ -152,7 +185,7 @@ const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 8, style }) => 
             style={{
               width: leaf.size,
               height: leaf.size,
-              opacity: 0.9, // Increased opacity for better visibility
+              opacity: 0.9,
             }}
             resizeMode="contain"
           />
@@ -167,8 +200,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     height: '100%',
-    zIndex: 1, // Changed to positive value to ensure visibility
-    pointerEvents: 'none', // Makes sure clicks pass through to elements below
+    zIndex: 1,
+    pointerEvents: 'none',
   },
   leafContainer: {
     position: 'absolute',

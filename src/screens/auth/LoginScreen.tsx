@@ -10,6 +10,7 @@ import {
   ScrollView,
   Animated,
   Image,
+  Easing,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,24 +55,53 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   // Animation state
   const floatAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const zenAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Set up floating animation
   useEffect(() => {
+    // Initial animation for form and content
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: Platform.OS !== 'web',
+        easing: Easing.out(Easing.cubic)
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: Platform.OS !== 'web',
+        easing: Easing.out(Easing.cubic)
+      }),
+      Animated.timing(zenAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: Platform.OS !== 'web',
+        easing: Easing.out(Easing.elastic(1.2))
+      })
+    ]).start();
+    
+    // Subtle breathing effect for Zenni
     Animated.loop(
       Animated.sequence([
-        Animated.timing(floatAnim, {
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 3000,
+          useNativeDriver: Platform.OS !== 'web',
+          easing: Easing.inOut(Easing.sin)
+        }),
+        Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnim, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
+          duration: 3000,
+          useNativeDriver: Platform.OS !== 'web',
+          easing: Easing.inOut(Easing.sin)
+        })
       ])
     ).start();
-  }, [floatAnim]);
+  }, []);
 
   // Handle login button press
   const handleLogin = async () => {
@@ -139,12 +169,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <Animatable.View
+          <Animatable.View 
             ref={logoRef}
             animation="fadeIn"
             duration={800}
             delay={300}
-            useNativeDriver
+            useNativeDriver={Platform.OS !== 'web'}
             style={styles.header}
           >
             <Animated.View style={{ transform: [{ translateY }] }}>
@@ -163,7 +193,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             animation="fadeIn"
             duration={800}
             delay={500}
-            useNativeDriver
+            useNativeDriver={Platform.OS !== 'web'}
             style={styles.titleContainer}
           >
             <Text style={styles.title}>Welcome Back</Text>
@@ -172,10 +202,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
           <Animatable.View
             ref={formRef}
-            animation="fadeInUp"
+            animation="fadeIn"
             duration={800}
-            delay={600}
-            useNativeDriver
+            delay={700}
+            useNativeDriver={Platform.OS !== 'web'}
+            style={styles.formContainer}
           >
             <Input
               label="Email"
@@ -223,6 +254,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               isLoading={isLoading}
               disabled={isLoading || !email || !password}
               style={styles.loginButton}
+              size="large"
+              textStyle={{ fontSize: 16, fontWeight: '600' }}
             />
 
             <View style={styles.dividerContainer}>
@@ -314,6 +347,8 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     marginTop: SPACING.large,
+    height: 48,
+    paddingVertical: SPACING.small,
   },
   googleSignInButton: {
     marginVertical: SPACING.medium,
@@ -347,6 +382,9 @@ const styles = StyleSheet.create({
   signupLink: {
     color: COLORS.primary,
     fontWeight: FONTS.bold as '700',
+  },
+  formContainer: {
+    // Add appropriate styles for the form container
   },
 });
 
