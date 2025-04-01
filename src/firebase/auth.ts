@@ -112,10 +112,9 @@ export const checkUsernameUnique = async (username: string): Promise<boolean> =>
  * Sign up a new user
  * @param email - User email
  * @param password - User password
- * @param username - User's chosen username
  * @returns Firebase user object
  */
-export const signup = async (email: string, password: string, username: string): Promise<FirebaseUser> => {
+export const signup = async (email: string, password: string): Promise<FirebaseUser> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
@@ -124,18 +123,15 @@ export const signup = async (email: string, password: string, username: string):
     throw new Error('Email already in use');
   }
   
-  // Check if username is available
-  const isUsernameAvailable = await checkUsernameUnique(username);
-  if (!isUsernameAvailable) {
-    throw new Error('Username is already taken');
-  }
+  // Generate temporary username
+  const tempUsername = `user${Date.now()}${Math.floor(Math.random() * 1000)}`;
   
   // Create new user
   const userId = `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const newUser = {
     uid: userId,
     email: email,
-    displayName: username,
+    displayName: tempUsername,
     password: password
   };
   

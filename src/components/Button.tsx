@@ -8,7 +8,7 @@ import {
   TextStyle,
   TouchableOpacityProps
 } from 'react-native';
-import { COLORS, SIZES, SPACING, FONTS } from '../constants/theme';
+import { COLORS, SIZES, SPACING, FONTS, SHADOWS } from '../constants/theme';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -43,6 +43,7 @@ const Button = ({
       alignItems: 'center',
       flexDirection: 'row',
       minHeight: SIZES.buttonMediumHeight,
+      ...SHADOWS.medium,
     };
     
     let sizeStyle: ViewStyle = {};
@@ -74,11 +75,13 @@ const Button = ({
       case 'primary':
         variantStyle = {
           backgroundColor: disabled ? COLORS.disabled : COLORS.primary,
+          ...SHADOWS.medium,
         };
         break;
       case 'secondary':
         variantStyle = {
           backgroundColor: disabled ? COLORS.disabled : COLORS.secondary,
+          ...SHADOWS.small,
         };
         break;
       case 'outlined':
@@ -105,28 +108,29 @@ const Button = ({
   const getTextStyle = (): TextStyle => {
     const baseStyle: TextStyle = {
       fontFamily: FONTS.primary,
-      fontWeight: FONTS.medium,
+      fontWeight: FONTS.semiBold,
       lineHeight: 24,
       textAlignVertical: 'center',
+      fontSize: 16,
     };
     
     let sizeStyle: TextStyle = {};
     switch (size) {
       case 'small':
         sizeStyle = {
-          fontSize: FONTS.small,
+          fontSize: 14,
           lineHeight: 20,
         };
         break;
       case 'large':
         sizeStyle = {
-          fontSize: FONTS.large,
+          fontSize: 18,
           lineHeight: 28,
         };
         break;
       default:
         sizeStyle = {
-          fontSize: FONTS.regular,
+          fontSize: 16,
           lineHeight: 24,
         };
     }
@@ -137,12 +141,14 @@ const Button = ({
       case 'secondary':
         variantStyle = {
           color: disabled ? COLORS.disabledText : COLORS.textInverse,
+          fontWeight: FONTS.bold as '700',
         };
         break;
       case 'outlined':
       case 'text':
         variantStyle = {
           color: disabled ? COLORS.disabledText : COLORS.primary,
+          fontWeight: FONTS.semiBold as '600',
         };
         break;
     }

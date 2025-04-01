@@ -131,7 +131,7 @@ interface FloatingLeavesProps {
   style?: any;
 }
 
-const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 8, style }) => {
+const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 30, style }) => {
   const [leaves, setLeaves] = useState<Leaf[]>([]);
 
   useEffect(() => {
@@ -145,15 +145,18 @@ const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 8, style }) => 
       const animations = ['float-down-left', 'float-down-right', 'float-down-center', 'float-down-zigzag'];
       const randomAnimation = animations[Math.floor(Math.random() * animations.length)] as any;
       
+      // Distribute initial positions throughout the screen height
+      const initialY = -100 - (Math.random() * height * 1.5);
+      
       newLeaves.push({
         id: i,
         image: leafImages[randomLeafIndex],
         startX: Math.random() * width, 
-        startY: -100 - (Math.random() * 200), // Start above the screen
-        size: 40 + Math.random() * 30, // Size between 40-70 (more moderate)
+        startY: initialY, // Distribute leaves throughout screen height initially
+        size: 20 + Math.random() * 20, // Size between 20-40 (smaller)
         animation: randomAnimation,
-        duration: 15000 + Math.random() * 10000, // Duration between 15-25 seconds (slower, gentler)
-        delay: Math.random() * 10000, // Random delay up to 10 seconds (more sparing appearance)
+        duration: 15000 + Math.random() * 10000, // Duration between 15-25 seconds
+        delay: Math.random() * 5000, // Shorter initial delay, max 5 seconds
       });
     }
     
@@ -185,7 +188,7 @@ const FloatingLeaves: React.FC<FloatingLeavesProps> = ({ count = 8, style }) => 
             style={{
               width: leaf.size,
               height: leaf.size,
-              opacity: 0.9,
+              opacity: 0.4,
             }}
             resizeMode="contain"
           />
@@ -199,8 +202,9 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     width: '100%',
-    height: '100%',
-    zIndex: 1,
+    height: '200%', // Make container taller to ensure leaves have room to animate
+    top: -height * 0.5, // Position container higher up
+    zIndex: -1,
     pointerEvents: 'none',
   },
   leafContainer: {

@@ -53,29 +53,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: SIZES.borderRadius.medium,
+    borderRadius: 24,
     padding: SPACING.m,
     marginVertical: SPACING.s,
+    height: 48,
     ...getShadowStyle({
-      offset: { width: 0, height: 2 },
-      opacity: 0.1,
-      radius: 4,
+      offset: { width: 0, height: 1 },
+      opacity: 0.2,
+      radius: 1,
     }),
   },
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: SPACING.s,
   },
   buttonText: {
-    color: COLORS.text,
+    color: '#3c4043',
     fontSize: 16,
-    fontFamily: FONTS.primary,
-    fontWeight: FONTS.medium as '500',
+    fontFamily: Platform.select({
+      ios: '-apple-system',
+      android: 'Roboto',
+      default: 'System'
+    }),
+    fontWeight: '500',
     textAlign: 'center',
+    letterSpacing: 0.25,
   },
   icon: {
-    marginRight: SPACING.small,
+    width: 18,
+    height: 18,
   }
 });
 

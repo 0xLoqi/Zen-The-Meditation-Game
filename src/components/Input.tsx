@@ -1,155 +1,81 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
-  TextInput,
   Text,
+  TextInput,
   StyleSheet,
-  TouchableOpacity,
   ViewStyle,
   TextStyle,
   TextInputProps,
+  Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SIZES, SPACING, FONTS } from '../constants/theme';
+import { COLORS, FONTS, SPACING } from '../constants/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  secureTextEntry?: boolean;
   containerStyle?: ViewStyle;
-  labelStyle?: TextStyle;
-  inputStyle?: TextStyle;
-  errorStyle?: TextStyle;
-  showPasswordToggle?: boolean;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
 }
 
 const Input = ({
   label,
   error,
-  leftIcon,
-  rightIcon,
-  secureTextEntry = false,
   containerStyle,
-  labelStyle,
-  inputStyle,
-  errorStyle,
-  showPasswordToggle = false,
-  ...rest
+  style,
+  textStyle,
+  ...props
 }: InputProps) => {
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  
-  const togglePasswordVisibility = () => {
-    setIsPasswordVisible(!isPasswordVisible);
-  };
-  
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && (
-        <Text style={[styles.label, labelStyle]}>{label}</Text>
-      )}
-      
-      <View style={[
-        styles.inputContainer,
-        error ? styles.inputContainerError : null,
-      ]}>
-        {leftIcon && (
-          <View style={styles.iconContainer}>
-            {leftIcon}
-          </View>
-        )}
-        
-        <TextInput
-          style={[
-            styles.input,
-            leftIcon ? styles.inputWithLeftIcon : null,
-            (rightIcon || (secureTextEntry && showPasswordToggle)) ? styles.inputWithRightIcon : null,
-            inputStyle,
-          ]}
-          placeholderTextColor={COLORS.textLight}
-          secureTextEntry={secureTextEntry && !isPasswordVisible}
-          {...rest}
-        />
-        
-        {rightIcon && !showPasswordToggle && (
-          <View style={styles.iconContainer}>
-            {rightIcon}
-          </View>
-        )}
-        
-        {secureTextEntry && showPasswordToggle && (
-          <TouchableOpacity 
-            style={styles.iconContainer}
-            onPress={togglePasswordVisibility}
-          >
-            <Ionicons 
-              name={isPasswordVisible ? 'eye-off' : 'eye'} 
-              size={SIZES.iconSmall} 
-              color={COLORS.textLight}
-            />
-          </TouchableOpacity>
-        )}
-      </View>
-      
-      {error && (
-        <Text style={[styles.errorText, errorStyle]}>{error}</Text>
-      )}
+      {label && <Text style={styles.label}>{label}</Text>}
+      <TextInput
+        style={[
+          styles.input,
+          style,
+          textStyle && { color: textStyle.color },
+          error && styles.inputError,
+        ]}
+        placeholderTextColor={COLORS.neutralMedium}
+        {...props}
+      />
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: SPACING.medium,
+    width: '100%',
+    marginBottom: SPACING.small,
   },
   label: {
-    fontFamily: FONTS.primary,
-    fontWeight: FONTS.medium,
-    fontSize: FONTS.small,
-    color: COLORS.text,
-    marginBottom: SPACING.tiny,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: SIZES.radiusMedium,
-    backgroundColor: COLORS.background,
-    minHeight: SIZES.inputHeight,
-  },
-  inputContainerError: {
-    borderColor: COLORS.error,
-  },
-  iconContainer: {
-    paddingHorizontal: SPACING.small,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    ...FONTS.body.medium,
+    color: COLORS.neutralDark,
+    marginBottom: SPACING.xsmall,
+    fontSize: 16,
   },
   input: {
-    flex: 1,
-    fontFamily: FONTS.primary,
-    fontWeight: FONTS.regular,
-    fontSize: FONTS.regular,
-    color: COLORS.text,
-    paddingHorizontal: SPACING.small,
-    paddingVertical: SPACING.small,
-    minHeight: SIZES.inputHeight,
+    width: '100%',
+    height: 50,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    paddingHorizontal: SPACING.medium,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+    color: COLORS.neutralDark,
+    fontSize: 16,
+    ...FONTS.body.regular,
   },
-  inputWithLeftIcon: {
-    paddingLeft: 0,
-  },
-  inputWithRightIcon: {
-    paddingRight: 0,
+  inputError: {
+    borderWidth: 1,
+    borderColor: COLORS.error,
   },
   errorText: {
-    fontFamily: FONTS.primary,
-    fontWeight: FONTS.regular,
-    fontSize: FONTS.small,
+    ...FONTS.body.small,
     color: COLORS.error,
-    marginTop: SPACING.tiny,
+    marginTop: SPACING.xsmall,
+    fontSize: 12,
   },
 });
 
