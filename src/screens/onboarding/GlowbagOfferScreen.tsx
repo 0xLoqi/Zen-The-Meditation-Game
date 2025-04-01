@@ -11,6 +11,9 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '../../store/authStore';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../navigation/types';
 import { COLORS, SPACING, SHADOWS } from '../../constants/theme';
 import Button from '../../components/Button';
 import PatternBackground from '../../components/PatternBackground';
@@ -31,6 +34,7 @@ const isValidEmail = (email: string) => {
 
 const GlowbagOfferScreen = () => {
   const navigation = useNavigation();
+  const { continueAsGuest } = useAuthStore();
   const [email, setEmail] = useState('');
   const [isEmailValid, setIsEmailValid] = useState(true);
 
@@ -85,11 +89,17 @@ const GlowbagOfferScreen = () => {
       setIsEmailValid(false);
       return;
     }
-    navigation.navigate('Main');
+    // If they entered an email, go to bag opening animation
+    if (email) {
+      navigation.replace('GlowbagOpening');
+    } else {
+      // If no email, continue as guest
+      continueAsGuest();
+    }
   };
 
   const handleSkip = () => {
-    navigation.navigate('Main');
+    continueAsGuest();
   };
 
   return (
@@ -113,7 +123,7 @@ const GlowbagOfferScreen = () => {
             </View>
 
             <Text style={styles.title}>
-              ✨ A rare Glowbag shimmers...
+              A rare Glowbag shimmers...
             </Text>
 
             <View style={styles.glowbagContainer}>
@@ -143,7 +153,7 @@ const GlowbagOfferScreen = () => {
             </View>
 
             <Text style={styles.description}>
-              Share your email to save your progress
+              Share your email so your mini can grab it!
             </Text>
 
             <View style={styles.inputContainer}>

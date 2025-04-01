@@ -5,8 +5,10 @@ import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 import { useAuthStore } from '../store/authStore';
 
+const Stack = createStackNavigator();
+
 const AppNavigator = () => {
-  const { isAuthenticated, checkAuth } = useAuthStore();
+  const { checkAuth } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
@@ -14,7 +16,10 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainNavigator /> : <AuthNavigator />}
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Auth" component={AuthNavigator} />
+        <Stack.Screen name="Main" component={MainNavigator} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };

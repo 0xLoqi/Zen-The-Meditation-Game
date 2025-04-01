@@ -15,6 +15,7 @@ interface AuthState {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   checkUsernameUnique: (username: string) => Promise<boolean>;
+  continueAsGuest: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -117,5 +118,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ error: error.message || 'Error checking username' });
       throw error;
     }
+  },
+
+  continueAsGuest: () => {
+    const guestUser: FirebaseUser = {
+      uid: `guest-${Date.now()}`,
+      email: null,
+      displayName: 'Guest User',
+    };
+    set({ 
+      user: guestUser,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null
+    });
   },
 }));

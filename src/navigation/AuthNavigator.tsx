@@ -6,6 +6,7 @@ import ColorSelectionScreen from '../screens/onboarding/ColorSelectionScreen';
 import TraitSelectionScreen from '../screens/onboarding/TraitSelectionScreen';
 import GlowbagOfferScreen from '../screens/onboarding/GlowbagOfferScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
+import GlowbagOpeningScreen from '../screens/onboarding/GlowbagOpeningScreen';
 import { useMiniZenniStore } from '../store/miniZenniStore';
 
 export type AuthStackParamList = {
@@ -15,6 +16,7 @@ export type AuthStackParamList = {
   TraitSelection: undefined;
   GlowbagOffer: undefined;
   Login: undefined;
+  GlowbagOpening: undefined;
 };
 
 const AuthStack = createStackNavigator<AuthStackParamList>();
@@ -80,6 +82,13 @@ const AuthNavigator = () => {
         options={{
           // Allow going back to welcome screen from login
           gestureEnabled: true,
+        }}
+      />
+      <AuthStack.Screen 
+        name="GlowbagOpening" 
+        component={GlowbagOpeningScreen}
+        options={{
+          gestureEnabled: false,
         }}
       />
     </AuthStack.Navigator>
