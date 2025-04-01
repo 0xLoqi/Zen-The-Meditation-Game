@@ -11,6 +11,30 @@ A beautiful and interactive meditation app that gamifies the practice of mindful
 - **Beautiful UI**: Calming animations and transitions
 - **Cross-platform**: Works on iOS and Android
 
+## Project Roadmap 🗺️
+
+### Current Focus
+- [ ] Complete onboarding flow with Glowbag animations
+- [ ] Implement basic meditation timer with animations
+- [ ] Add user profile and progress tracking
+- [ ] Develop reward system and cosmetic items
+- [ ] Develop costmetics with ChatGPT using already generated cosmetics as style guide
+- [ ] Local device storage
+
+### Future Features
+- [ ] The whole backend system with updates
+- [ ] Daily challenges and streaks
+- [ ] Social features and friend system
+- [ ] Achievement system
+- [ ] Custom meditation backgrounds
+- [ ] Sound pack system
+- [ ] Integration with health apps
+
+### Known Issues
+- Mobile navigation needs refinement
+- Animation performance on lower-end devices
+- Authentication flow edge cases
+
 ## Tech Stack 💻
 
 - React Native
@@ -75,7 +99,33 @@ yarn start
 
 ## Contributing 🤝
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Here's how you can help:
+
+### Getting Started as a Contributor
+
+1. Fork the repository
+2. Create a new branch for your feature: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Test thoroughly
+5. Commit your changes: `git commit -m 'Add amazing feature'`
+6. Push to your fork: `git push origin feature/amazing-feature`
+7. Open a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style and naming conventions
+- Write clear commit messages
+- Add comments for complex logic
+- Update documentation for significant changes
+- Test on both iOS and Android when possible
+
+### Pull Request Process
+
+1. Fill out the PR template completely
+2. Link any related issues
+3. Include screenshots/videos for UI changes
+4. Ensure all tests pass
+5. Request review from maintainers
 
 ## License 📄
 
