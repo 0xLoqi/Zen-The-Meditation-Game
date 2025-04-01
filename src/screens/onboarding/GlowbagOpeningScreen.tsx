@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   Image,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -19,6 +20,7 @@ import Animated, {
   Easing,
   runOnJS,
   withRepeat,
+  useSharedValue,
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONTS } from '../../constants/theme';
@@ -31,43 +33,171 @@ const GlowbagOpeningScreen = () => {
   const navigation = useNavigation();
   const { continueAsGuest } = useAuthStore();
   const hasAnimationFinished = useRef(false);
+  const buttonOpacity = useSharedValue(0);
+  const buttonScale = useSharedValue(0.8);
+  const [canContinue, setCanContinue] = useState(false);
 
-  // Animation for the bag floating and glowing
+  // Animation values using Reanimated
+  const bagScale = useSharedValue(1);
+  const bagOpacity = useSharedValue(1);
+  const bagRotate = useSharedValue(0);
+  const bagTranslateY = useSharedValue(0);
+  
+  // Reward animation values
+  const rewardScale = useSharedValue(0);
+  const rewardOpacity = useSharedValue(0);
+  const rewardTranslateY = useSharedValue(20);
+  const rewardContainerOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    // Bag animation sequence
+    bagScale.value = withSequence(
+      withTiming(1.1, { duration: 400 }),
+      withTiming(1.2, { duration: 400 }),
+      withTiming(1.5, { duration: 400 }),
+      withTiming(0, { duration: 400 })
+    );
+
+    bagOpacity.value = withSequence(
+      withTiming(1, { duration: 2000 }),
+      withTiming(0, { duration: 400 })
+    );
+
+    bagRotate.value = withSequence(
+      withTiming(0.1, { duration: 100 }),
+      withTiming(-0.1, { duration: 100 }),
+      withTiming(0.1, { duration: 100 }),
+      withTiming(0, { duration: 100 }),
+      withDelay(800, withTiming(0.15, { duration: 100 })),
+      withTiming(-0.15, { duration: 100 }),
+      withTiming(0.15, { duration: 100 }),
+      withTiming(0, { duration: 100 }),
+      withDelay(800, withTiming(0.2, { duration: 100 })),
+      withTiming(-0.2, { duration: 100 }),
+      withTiming(0.2, { duration: 100 }),
+      withTiming(0, { duration: 100 })
+    );
+
+    bagTranslateY.value = withSequence(
+      withTiming(-20, { duration: 800 }),
+      withTiming(0, { duration: 800 })
+    );
+
+    // Reward appears after bag disappears
+    rewardContainerOpacity.value = withDelay(2800, 
+      withTiming(1, { duration: 400 })
+    );
+
+    rewardScale.value = withDelay(2800, 
+      withSequence(
+        withSpring(0.5, { damping: 10 }),
+        withSpring(1.2, { damping: 5 }),
+        withSpring(1, { damping: 3 })
+      )
+    );
+
+    rewardOpacity.value = withDelay(2800, 
+      withTiming(1, { duration: 600 })
+    );
+
+    rewardTranslateY.value = withDelay(2800, 
+      withTiming(0, { duration: 600 })
+    );
+  }, []);
+
+  // Animation for the bag
   const bagStyle = useAnimatedStyle(() => {
-    const scale = withSequence(
-      withTiming(1.1, { 
-        duration: 1000,
-        easing: Easing.inOut(Easing.ease)
-      }),
-      withTiming(1, { 
-        duration: 1000,
-        easing: Easing.inOut(Easing.ease)
-      }),
-      withTiming(1.3, { 
-        duration: 500,
-        easing: Easing.inOut(Easing.ease)
-      }),
-      withTiming(0, { 
-        duration: 300,
-        easing: Easing.inOut(Easing.ease)
-      })
-    );
-
-    const translateY = withSequence(
-      withSpring(-20, { damping: 4, stiffness: 30 }),
-      withSpring(0, { damping: 4, stiffness: 30 }),
-      withSpring(-50, { damping: 6, stiffness: 40 })
-    );
-
     return {
       transform: [
-        { scale },
-        { translateY }
+        { scale: bagScale.value },
+        { translateY: bagTranslateY.value },
+        { rotate: `${bagRotate.value}rad` }
       ],
-      opacity: withSequence(
-        withTiming(1, { duration: 500 }),
-        withTiming(1, { duration: 2000 }),
-        withTiming(0, { duration: 300 })
+      opacity: bagOpacity.value,
+    };
+  });
+
+  // Reward container style
+  const rewardContainerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: rewardContainerOpacity.value,
+    };
+  });
+
+  // Reward item animation
+  const rewardStyle = useAnimatedStyle(() => {
+    return {
+      opacity: rewardOpacity.value,
+      transform: [
+        { scale: rewardScale.value },
+        { translateY: rewardTranslateY.value }
+      ],
+    };
+  });
+
+  // Item details animation
+  const itemDetailsStyle = useAnimatedStyle(() => ({
+    opacity: withDelay(3200,
+      withTiming(1, { duration: 500 })
+    ),
+    transform: [
+      {
+        translateY: withDelay(3200,
+          withSpring(0, { 
+            damping: 12,
+            stiffness: 100,
+          })
+        )
+      }
+    ]
+  }));
+
+  // Shiny particles around reward
+  const shinyParticleStyle = (index: number) => useAnimatedStyle(() => {
+    const angle = (index / 8) * Math.PI * 2;
+    const radius = 45;
+    
+    return {
+      transform: [
+        { 
+          translateX: withDelay(3000,
+            withRepeat(
+              withSequence(
+                withSpring(Math.cos(angle) * radius),
+                withSpring(Math.cos(angle + Math.PI/4) * radius)
+              ),
+              -1,
+              true
+            )
+          )
+        },
+        { 
+          translateY: withDelay(3000,
+            withRepeat(
+              withSequence(
+                withSpring(Math.sin(angle) * radius - 80),
+                withSpring(Math.sin(angle + Math.PI/4) * radius - 80)
+              ),
+              -1,
+              true
+            )
+          )
+        },
+        {
+          scale: withDelay(3000,
+            withRepeat(
+              withSequence(
+                withTiming(1.2, { duration: 1000 }),
+                withTiming(0.8, { duration: 1000 })
+              ),
+              -1,
+              true
+            )
+          )
+        }
+      ],
+      opacity: withDelay(3000,
+        withTiming(0.8, { duration: 500 })
       ),
     };
   });
@@ -109,119 +239,6 @@ const GlowbagOpeningScreen = () => {
       ),
     }));
 
-  // Item details animation
-  const itemDetailsStyle = useAnimatedStyle(() => ({
-    opacity: withDelay(3200,
-      withTiming(1, { 
-        duration: 500,
-        easing: Easing.out(Easing.ease)
-      })
-    ),
-    transform: [
-      {
-        translateY: withDelay(3200,
-          withSpring(0, { 
-            from: 20,
-            damping: 12,
-            stiffness: 100,
-          })
-        )
-      }
-    ]
-  }));
-
-  // Reward item animation with delayed visibility
-  const rewardContainerStyle = useAnimatedStyle(() => ({
-    opacity: withDelay(2800,
-      withTiming(1, { 
-        duration: 1,
-        easing: Easing.linear
-      })
-    ),
-    display: withDelay(2800,
-      withTiming(1, {
-        duration: 1,
-      }, (finished) => {
-        if (finished) {
-          runOnJS(handleAnimationComplete)();
-        }
-      })
-    ),
-  }));
-
-  const rewardStyle = useAnimatedStyle(() => ({
-    transform: [
-      { 
-        scale: withDelay(2800,
-          withSequence(
-            withSpring(0.5, { damping: 10 }),
-            withSpring(1.2, { damping: 5 }),
-            withSpring(1, { damping: 3 })
-          )
-        ) 
-      }
-    ],
-  }));
-
-  // Shiny particles around reward
-  const shinyParticleStyle = (index: number) => useAnimatedStyle(() => {
-    const angle = (index / 8) * Math.PI * 2;
-    const radius = 60;
-    
-    return {
-      transform: [
-        { 
-          translateX: withDelay(3000,
-            withRepeat(
-              withSequence(
-                withSpring(Math.cos(angle) * radius),
-                withSpring(Math.cos(angle + Math.PI/4) * radius)
-              ),
-              -1,
-              true
-            )
-          )
-        },
-        { 
-          translateY: withDelay(3000,
-            withRepeat(
-              withSequence(
-                withSpring(Math.sin(angle) * radius),
-                withSpring(Math.sin(angle + Math.PI/4) * radius)
-              ),
-              -1,
-              true
-            )
-          )
-        },
-        {
-          scale: withDelay(3000,
-            withRepeat(
-              withSequence(
-                withTiming(1.2, { duration: 1000 }),
-                withTiming(0.8, { duration: 1000 })
-              ),
-              -1,
-              true
-            )
-          )
-        }
-      ],
-      opacity: withDelay(3000,
-        withTiming(0.8, { duration: 500 })
-      ),
-    };
-  });
-
-  const handleAnimationComplete = () => {
-    if (!hasAnimationFinished.current) {
-      hasAnimationFinished.current = true;
-      setTimeout(() => {
-        continueAsGuest();
-      }, 2000);
-    }
-  };
-
   // Generate multiple sparkle positions
   const sparklePositions = Array.from({ length: 12 }, () => ({
     x: Math.random() * SCREEN_WIDTH - SCREEN_WIDTH/2,
@@ -230,6 +247,32 @@ const GlowbagOpeningScreen = () => {
 
   // Generate shiny particles
   const shinyParticles = Array.from({ length: 8 }, (_, i) => i);
+
+  // Button animation style
+  const buttonStyle = useAnimatedStyle(() => ({
+    opacity: buttonOpacity.value,
+    transform: [{ scale: buttonScale.value }],
+  }));
+
+  // Start button animation after item details
+  useEffect(() => {
+    buttonOpacity.value = withDelay(3700, 
+      withTiming(1, { duration: 500 })
+    );
+    buttonScale.value = withDelay(3700,
+      withSpring(1, { damping: 8 })
+    );
+    // Enable the button after animations
+    setTimeout(() => {
+      setCanContinue(true);
+    }, 3700);
+  }, []);
+
+  const handleContinue = () => {
+    if (canContinue) {
+      continueAsGuest();
+    }
+  };
 
   return (
     <PatternBackground>
@@ -284,10 +327,21 @@ const GlowbagOpeningScreen = () => {
 
             {/* Item Details */}
             <Animated.View style={[styles.itemDetails, itemDetailsStyle]}>
-              <Text style={styles.itemName}>Got Mail Totem</Text>
+              <Text style={styles.itemName}>"Got Mail" Totem</Text>
               <Text style={styles.itemType}>Rare Cosmetic Item</Text>
               <Text style={styles.itemDescription}>A mystical totem that shows your connection to Lumina.</Text>
             </Animated.View>
+          </Animated.View>
+
+          {/* Confirmation Button */}
+          <Animated.View style={[styles.buttonContainer, buttonStyle]}>
+            <TouchableOpacity
+              style={[styles.button, !canContinue && styles.buttonDisabled]}
+              onPress={handleContinue}
+              disabled={!canContinue}
+            >
+              <Text style={styles.buttonText}>Continue</Text>
+            </TouchableOpacity>
           </Animated.View>
         </View>
       </SafeAreaView>
@@ -325,7 +379,6 @@ const styles = StyleSheet.create({
   reward: {
     width: 160,
     height: 160,
-    opacity: 0,
   },
   shinyParticle: {
     position: 'absolute',
@@ -354,6 +407,37 @@ const styles = StyleSheet.create({
     color: COLORS.neutralDark,
     textAlign: 'center',
     maxWidth: 300,
+  },
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 40,
+    width: '100%',
+    alignItems: 'center',
+    opacity: 0,
+    paddingHorizontal: SPACING.xlarge,
+  },
+  button: {
+    backgroundColor: '#FF5C00',
+    paddingHorizontal: SPACING.xlarge * 2,
+    paddingVertical: SPACING.medium,
+    borderRadius: 25,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.5,
+    width: '100%',
+  },
+  buttonDisabled: {
+    backgroundColor: '#E0E0E0', // Light gray when disabled
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 });
 
