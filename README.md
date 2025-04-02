@@ -64,6 +64,8 @@ git clone [repository-url]
 
 2. Install dependencies:
 ```bash
+npx install
+# or
 npm install
 # or
 yarn install
@@ -71,12 +73,14 @@ yarn install
 
 3. Start the development server:
 ```bash
+npx expo start
+# or 
 npm start
 # or
 yarn start
 ```
 
-4. Follow the Expo CLI instructions to run on your desired platform (iOS/Android)
+4. Follow the Expo CLI instructions to run on your desired platform (iOS [must download ExpoGo app]/Android)
 
 ## Project Structure 📁
 
