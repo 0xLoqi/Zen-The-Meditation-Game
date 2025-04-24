@@ -33,22 +33,80 @@ const GlowbagOpeningScreen = () => {
   const navigation = useNavigation();
   const { continueAsGuest } = useAuthStore();
   const hasAnimationFinished = useRef(false);
-  const buttonOpacity = useSharedValue(0);
-  const buttonScale = useSharedValue(0.8);
   const [canContinue, setCanContinue] = useState(false);
 
-  // Animation values using Reanimated
+  // All shared values defined together at the top
+  const buttonOpacity = useSharedValue(0);
+  const buttonScale = useSharedValue(0.8);
   const bagScale = useSharedValue(1);
   const bagOpacity = useSharedValue(1);
   const bagRotate = useSharedValue(0);
   const bagTranslateY = useSharedValue(0);
-  
-  // Reward animation values
   const rewardScale = useSharedValue(0);
   const rewardOpacity = useSharedValue(0);
   const rewardTranslateY = useSharedValue(20);
   const rewardContainerOpacity = useSharedValue(0);
 
+  // Background pattern animation values
+  const bgScrollX = useSharedValue(0);
+  const bgScrollY = useSharedValue(0);
+  const bgRotate = useSharedValue(0);
+  const bgScale = useSharedValue(1);
+
+  // All animation styles defined together
+  const bagStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: bagScale.value },
+      { translateY: bagTranslateY.value },
+      { rotate: `${bagRotate.value}rad` }
+    ],
+    opacity: bagOpacity.value,
+  }));
+
+  const buttonStyle = useAnimatedStyle(() => ({
+    opacity: buttonOpacity.value,
+    transform: [{ scale: buttonScale.value }],
+  }));
+
+  const rewardContainerStyle = useAnimatedStyle(() => ({
+    opacity: rewardContainerOpacity.value,
+  }));
+
+  const rewardStyle = useAnimatedStyle(() => ({
+    opacity: rewardOpacity.value,
+    transform: [
+      { scale: rewardScale.value },
+      { translateY: rewardTranslateY.value }
+    ],
+  }));
+
+  const itemDetailsStyle = useAnimatedStyle(() => ({
+    opacity: withDelay(3200,
+      withTiming(1, { duration: 500 })
+    ),
+    transform: [
+      {
+        translateY: withDelay(3200,
+          withSpring(0, { 
+            damping: 12,
+            stiffness: 100,
+          })
+        )
+      }
+    ]
+  }));
+
+  // Background pattern animation style
+  const backgroundPatternStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: bgScrollX.value },
+      { translateY: bgScrollY.value },
+      { rotate: `${bgRotate.value}deg` },
+      { scale: bgScale.value }
+    ],
+  }));
+
+  // Single useEffect for all animations
   useEffect(() => {
     // Bag animation sequence
     bagScale.value = withSequence(
@@ -103,54 +161,78 @@ const GlowbagOpeningScreen = () => {
     rewardTranslateY.value = withDelay(2800, 
       withTiming(0, { duration: 600 })
     );
+
+    // Button animation
+    buttonOpacity.value = withDelay(3700, 
+      withTiming(1, { duration: 500 })
+    );
+    buttonScale.value = withDelay(3700,
+      withSpring(1, { damping: 8 })
+    );
+
+    // Enable button
+    const timer = setTimeout(() => {
+      setCanContinue(true);
+    }, 3700);
+
+    // Add infinite background pattern animations with faster speeds
+    bgScrollX.value = withRepeat(
+      withSequence(
+        withTiming(-200, { duration: 8000 }),
+        withTiming(0, { duration: 8000 })
+      ),
+      -1,
+      true
+    );
+
+    bgScrollY.value = withRepeat(
+      withSequence(
+        withTiming(-200, { duration: 10000 }),
+        withTiming(0, { duration: 10000 })
+      ),
+      -1,
+      true
+    );
+
+    bgRotate.value = withRepeat(
+      withSequence(
+        withTiming(2, { duration: 15000 }),
+        withTiming(-2, { duration: 15000 })
+      ),
+      -1,
+      true
+    );
+
+    bgScale.value = withRepeat(
+      withSequence(
+        withTiming(1.1, { duration: 10000 }),
+        withTiming(1, { duration: 10000 })
+      ),
+      -1,
+      true
+    );
+
+    return () => clearTimeout(timer);
   }, []);
 
-  // Animation for the bag
-  const bagStyle = useAnimatedStyle(() => {
+  const handleContinue = () => {
+    if (canContinue) {
+      continueAsGuest();
+    }
+  };
+
+  // Generate sparkle positions
+  const sparklePositions = Array.from({ length: 16 }, (_, index) => {
+    const angle = (index / 16) * Math.PI * 2;
+    const radius = 100;
     return {
-      transform: [
-        { scale: bagScale.value },
-        { translateY: bagTranslateY.value },
-        { rotate: `${bagRotate.value}rad` }
-      ],
-      opacity: bagOpacity.value,
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius - 80
     };
   });
 
-  // Reward container style
-  const rewardContainerStyle = useAnimatedStyle(() => {
-    return {
-      opacity: rewardContainerOpacity.value,
-    };
-  });
-
-  // Reward item animation
-  const rewardStyle = useAnimatedStyle(() => {
-    return {
-      opacity: rewardOpacity.value,
-      transform: [
-        { scale: rewardScale.value },
-        { translateY: rewardTranslateY.value }
-      ],
-    };
-  });
-
-  // Item details animation
-  const itemDetailsStyle = useAnimatedStyle(() => ({
-    opacity: withDelay(3200,
-      withTiming(1, { duration: 500 })
-    ),
-    transform: [
-      {
-        translateY: withDelay(3200,
-          withSpring(0, { 
-            damping: 12,
-            stiffness: 100,
-          })
-        )
-      }
-    ]
-  }));
+  // Generate shiny particles
+  const shinyParticles = Array.from({ length: 8 }, (_, i) => i);
 
   // Shiny particles around reward
   const shinyParticleStyle = (index: number) => useAnimatedStyle(() => {
@@ -208,75 +290,69 @@ const GlowbagOpeningScreen = () => {
       transform: [
         { 
           translateX: withDelay(delay,
-            withSequence(
-              withSpring(startPosition.x + Math.random() * 100 - 50),
-              withSpring(startPosition.x + Math.random() * 200 - 100)
+            withRepeat(
+              withSequence(
+                withSpring(startPosition.x + Math.random() * 100 - 50),
+                withSpring(startPosition.x + Math.random() * 200 - 100),
+                withSpring(startPosition.x)
+              ),
+              -1, // Infinite repeat
+              true
             )
           ) 
         },
         { 
           translateY: withDelay(delay,
-            withSequence(
-              withSpring(startPosition.y - Math.random() * 50),
-              withSpring(startPosition.y - Math.random() * 100)
+            withRepeat(
+              withSequence(
+                withSpring(startPosition.y - Math.random() * 50),
+                withSpring(startPosition.y - Math.random() * 100),
+                withSpring(startPosition.y)
+              ),
+              -1, // Infinite repeat
+              true
             )
           ) 
         },
         {
           scale: withDelay(delay,
-            withSequence(
-              withSpring(1.5),
-              withSpring(0)
+            withRepeat(
+              withSequence(
+                withSpring(1.5),
+                withSpring(0.5),
+                withSpring(1)
+              ),
+              -1, // Infinite repeat
+              true
             )
           )
         }
       ],
       opacity: withDelay(delay,
-        withSequence(
-          withTiming(1, { duration: 200 }),
-          withTiming(0, { duration: 300 })
+        withRepeat(
+          withSequence(
+            withTiming(1, { duration: 400 }),
+            withTiming(0.3, { duration: 600 }),
+            withTiming(0.8, { duration: 400 })
+          ),
+          -1, // Infinite repeat
+          true
         )
       ),
     }));
 
-  // Generate multiple sparkle positions
-  const sparklePositions = Array.from({ length: 12 }, () => ({
-    x: Math.random() * SCREEN_WIDTH - SCREEN_WIDTH/2,
-    y: Math.random() * SCREEN_HEIGHT/2
-  }));
-
-  // Generate shiny particles
-  const shinyParticles = Array.from({ length: 8 }, (_, i) => i);
-
-  // Button animation style
-  const buttonStyle = useAnimatedStyle(() => ({
-    opacity: buttonOpacity.value,
-    transform: [{ scale: buttonScale.value }],
-  }));
-
-  // Start button animation after item details
-  useEffect(() => {
-    buttonOpacity.value = withDelay(3700, 
-      withTiming(1, { duration: 500 })
-    );
-    buttonScale.value = withDelay(3700,
-      withSpring(1, { damping: 8 })
-    );
-    // Enable the button after animations
-    setTimeout(() => {
-      setCanContinue(true);
-    }, 3700);
-  }, []);
-
-  const handleContinue = () => {
-    if (canContinue) {
-      continueAsGuest();
-    }
-  };
-
   return (
-    <PatternBackground>
-      <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* Background Pattern */}
+      <Animated.View style={[styles.backgroundPattern, backgroundPatternStyle]}>
+        <Image 
+          source={require('../../../assets/images/backgrounds/Glowbag_background.png')}
+          style={styles.patternImage}
+          resizeMode="repeat"
+        />
+      </Animated.View>
+
+      <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           {/* Bag Animation */}
           <Animated.Image
@@ -291,13 +367,13 @@ const GlowbagOpeningScreen = () => {
               key={index}
               style={[
                 styles.sparkle,
-                sparkleStyle(2500 + Math.random() * 500, position)
+                sparkleStyle(2500 + (index * 100), position) // Stagger the start times
               ]}
             >
               <MaterialCommunityIcons
-                name="star-four-points"
-                size={24}
-                color="#FFD700"
+                name={index % 2 === 0 ? "star-four-points" : "star"}
+                size={index % 3 === 0 ? 24 : 16}
+                color={index % 4 === 0 ? "#FFD700" : "#FFA500"}
               />
             </Animated.View>
           ))}
@@ -325,11 +401,13 @@ const GlowbagOpeningScreen = () => {
               resizeMode="contain"
             />
 
-            {/* Item Details */}
+            {/* Item Details with Background Box */}
             <Animated.View style={[styles.itemDetails, itemDetailsStyle]}>
-              <Text style={styles.itemName}>"Got Mail" Totem</Text>
-              <Text style={styles.itemType}>Rare Cosmetic Item</Text>
-              <Text style={styles.itemDescription}>A mystical totem that shows your connection to Lumina.</Text>
+              <View style={styles.textBackground}>
+                <Text style={styles.itemName}>"Got Mail" Totem</Text>
+                <Text style={styles.itemType}>Rare Cosmetic Item</Text>
+                <Text style={styles.itemDescription}>A mystical totem that shows your connection to Lumina.</Text>
+              </View>
             </Animated.View>
           </Animated.View>
 
@@ -345,12 +423,16 @@ const GlowbagOpeningScreen = () => {
           </Animated.View>
         </View>
       </SafeAreaView>
-    </PatternBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#FFF8F0',
+  },
+  safeArea: {
     flex: 1,
   },
   content: {
@@ -390,17 +472,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: SPACING.large,
     opacity: 0,
+    width: '100%',
+  },
+  textBackground: {
+    backgroundColor: 'rgba(255, 248, 240, 0.85)', // Semi-transparent warm white
+    borderRadius: 15,
+    padding: SPACING.medium,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   itemName: {
     fontSize: 24,
     fontWeight: '600',
     color: COLORS.primary,
     marginBottom: SPACING.small,
+    textAlign: 'center',
   },
   itemType: {
     fontSize: 16,
     color: '#FFD700',
     marginBottom: SPACING.medium,
+    textAlign: 'center',
   },
   itemDescription: {
     fontSize: 16,
@@ -438,6 +534,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  backgroundPattern: {
+    position: 'absolute',
+    top: -200,
+    left: -200,
+    right: -200,
+    bottom: -200,
+    opacity: 0.15,
+  },
+  patternImage: {
+    width: SCREEN_WIDTH * 2,
+    height: SCREEN_HEIGHT * 2,
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
 });
 
