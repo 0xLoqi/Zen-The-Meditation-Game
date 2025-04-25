@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { save, load } from "../lib/persist";
+import * as Device from 'expo-device';
 
 // User slice interface
 interface UserSlice {
@@ -36,6 +37,8 @@ interface CosmeticSlice {
 export type GameStore = UserSlice & ProgressSlice & CosmeticSlice & {
   addXP: (amount: number) => void;
   incrementStreak: () => void;
+  lowPowerMode: boolean;
+  detectLowPowerMode: () => Promise<void>;
 };
 
 const initialState: GameStore = {
@@ -60,6 +63,8 @@ const initialState: GameStore = {
   },
   addXP: () => {},
   incrementStreak: () => {},
+  lowPowerMode: false,
+  detectLowPowerMode: async () => {},
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -81,6 +86,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
         lastMeditatedAt: new Date().toISOString(),
       },
     }));
+  },
+  detectLowPowerMode: async () => {
+    try {
+      const totalMemory = await Device.getMaxMemoryAsync();
+      const brand = Device.brand?.toLowerCase() || '';
+      // 3GB = 3 * 1024 * 1024 * 1024 bytes
+      const isLowMemory = totalMemory && totalMemory < 3 * 1024 * 1024 * 1024;
+      const isSlowBrand = ['alcatel', 'zte', 'tecno', 'infinix', 'itel'].some(b => brand.includes(b));
+      if (isLowMemory || isSlowBrand) {
+        set({ lowPowerMode: true });
+      } else {
+        set({ lowPowerMode: false });
+      }
+    } catch (e) {
+      set({ lowPowerMode: false });
+    }
   },
 }));
 

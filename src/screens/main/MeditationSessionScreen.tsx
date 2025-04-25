@@ -28,6 +28,8 @@ import { formatTime } from '../../utils/formatters';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { useGameStore } from '../../store/index';
 import { maybeDropGlowbag } from '../../services/CosmeticsService';
+import { analytics } from '../../firebase';
+import { requestNotificationPermission, scheduleReminder, cancelAllReminders } from '../../lib/notifications';
 
 const MeditationSessionScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
@@ -109,7 +111,8 @@ const MeditationSessionScreen = () => {
   }, []);
   
   // Start meditation session
-  const startSession = () => {
+  const startSession = async () => {
+    await cancelAllReminders();
     setIsActive(true);
     startTimeRef.current = Date.now() - pausedTimeRef.current;
     
@@ -154,20 +157,45 @@ const MeditationSessionScreen = () => {
   };
   
   // Handle session complete
-  const handleSessionComplete = () => {
+  const handleSessionComplete = async () => {
     triggerHapticFeedback('success');
     fadeAnim.value = withTiming(0, {
       duration: 500,
       easing: Easing.ease,
     });
-    
-    setTimeout(() => {
+    setTimeout(async () => {
       // MVP: XP = duration in seconds
       const xp = selectedDuration ? selectedDuration * 60 : 0;
       addXP(xp);
       incrementStreak();
-      const drop = maybeDropGlowbag();
+      // Get streak after increment
+      const streak = useGameStore.getState().progress.streak;
+      if (streak === 1) {
+        await requestNotificationPermission();
+        await scheduleReminder(
+          { seconds: 60 * 60 * 20 },
+          { title: 'Mini Zenni misses you…', body: 'Come back for your next meditation!' }
+        );
+        // Schedule daily reminder at the same time for the next day if streak < 3
+        await scheduleReminder(
+          { seconds: 60 * 60 * 24, repeats: true },
+          { title: 'Daily Meditation Reminder', body: 'Keep your streak going with a meditation today!' }
+        );
+      } else if (streak < 3) {
+        // For streaks 2 and 3, keep scheduling daily reminders
+        await scheduleReminder(
+          { seconds: 60 * 60 * 24, repeats: true },
+          { title: 'Daily Meditation Reminder', body: 'Keep your streak going with a meditation today!' }
+        );
+      }
+      const drop = await maybeDropGlowbag();
       submitMeditationSession(breathScore, usingBreathTracking);
+      if (analytics && typeof analytics.logEvent === 'function') {
+        analytics.logEvent('session_complete', {
+          duration: selectedDuration ? selectedDuration * 60 : 0,
+          xp,
+        });
+      }
       navigation.replace('PostSessionSummary', { drop });
     }, 500);
   };

@@ -33,6 +33,12 @@ const getInitialMockUsers = async (): Promise<Record<string, MockUser>> => {
       email: 'test@example.com',
       displayName: 'Test User',
       password: 'password123'
+    },
+    'admin@z.com': {
+      uid: 'admin-user-001',
+      email: 'admin@z.com',
+      displayName: 'Admin',
+      password: 'admin'
     }
   };
 };

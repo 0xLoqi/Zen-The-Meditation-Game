@@ -86,6 +86,12 @@ const PostSessionSummaryScreen = () => {
     });
   }, []);
   
+  useEffect(() => {
+    if (!selectedType || !selectedDuration) {
+      navigation.navigate('Home');
+    }
+  }, [selectedType, selectedDuration, navigation]);
+  
   // Handle finish button press
   const handleFinish = () => {
     // Fade out animation
@@ -100,9 +106,7 @@ const PostSessionSummaryScreen = () => {
     }, 500);
   };
   
-  // If no meditation data, go back to home
   if (!selectedType || !selectedDuration) {
-    navigation.navigate('Home');
     return null;
   }
   
@@ -137,7 +141,7 @@ const PostSessionSummaryScreen = () => {
               <View style={styles.levelUpBadge}>
                 <MaterialCommunityIcons
                   name="star"
-                  size={SIZES.icon.small}
+                  size={SIZES.iconMedium}
                   color={COLORS.white}
                 />
                 <Text style={styles.levelUpText}>Level Up!</Text>
@@ -149,7 +153,7 @@ const PostSessionSummaryScreen = () => {
             <Card style={styles.statCard}>
               <MaterialCommunityIcons
                 name="percent"
-                size={SIZES.icon.medium}
+                size={SIZES.iconMedium}
                 color={COLORS.primary}
               />
               <Text style={styles.statValue}>
@@ -161,7 +165,7 @@ const PostSessionSummaryScreen = () => {
             <Card style={styles.statCard}>
               <MaterialCommunityIcons
                 name="star"
-                size={SIZES.icon.medium}
+                size={SIZES.iconMedium}
                 color={COLORS.primary}
               />
               <Text style={styles.statValue}>+{xpGained}</Text>
@@ -170,8 +174,8 @@ const PostSessionSummaryScreen = () => {
             
             <Card style={styles.statCard}>
               <MaterialCommunityIcons
-                name="coin"
-                size={SIZES.icon.medium}
+                name="currency-usd"
+                size={SIZES.iconMedium}
                 color={COLORS.accent}
               />
               <Text style={styles.statValue}>+{tokensEarned}</Text>
@@ -181,7 +185,7 @@ const PostSessionSummaryScreen = () => {
             <Card style={styles.statCard}>
               <MaterialCommunityIcons
                 name="fire"
-                size={SIZES.icon.medium}
+                size={SIZES.iconMedium}
                 color={COLORS.warning}
               />
               <Text style={styles.statValue}>{streakUpdated}</Text>
@@ -193,7 +197,7 @@ const PostSessionSummaryScreen = () => {
             <View style={styles.lessonHeader}>
               <MaterialCommunityIcons
                 name="lightbulb-outline"
-                size={SIZES.icon.medium}
+                size={SIZES.iconMedium}
                 color={COLORS.primary}
               />
               <Text style={styles.lessonTitle}>Zen Wisdom</Text>

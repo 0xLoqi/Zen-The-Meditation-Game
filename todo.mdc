@@ -1,5 +1,5 @@
 ---
-description: todo list
+description: 
 globs: 
 alwaysApply: false
 ---
@@ -126,9 +126,5 @@ _Place this file at `docs/tasks.md`._
 - All referenced images exist or use placeholder.
 - Final commit: `✅ MVP ready`
 
----
-Unstructured additions:
-"What is your screen time" "Trying to spend less time on TikTok"
-Different preferences to hook different types of people - Nerds, show them science stuff, spritual people, spritutal tooltips, young kids, lead on the story
 
-Monetization through the customization of every element
+---

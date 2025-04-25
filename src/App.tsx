@@ -16,6 +16,7 @@ import MainNavigator from './navigation/MainNavigator';
 import AuthNavigator from './navigation/AuthNavigator';
 import { useAuthStore } from './store/authStore';
 import { useMiniZenniStore } from './store/miniZenniStore';
+import { useGameStore } from './store';
 
 // Error boundary component
 class ErrorBoundary extends React.Component {
@@ -48,6 +49,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const { isAuthenticated, checkAuth } = useAuthStore();
   const { initializeMiniZenni } = useMiniZenniStore();
+  const detectLowPowerMode = useGameStore((s) => s.detectLowPowerMode);
 
   useEffect(() => {
     console.log('App - Starting Firebase authentication check');
@@ -71,6 +73,10 @@ export default function App() {
 
     initializeApp();
   }, []);
+
+  useEffect(() => {
+    detectLowPowerMode();
+  }, [detectLowPowerMode]);
 
   if (error) {
     return (

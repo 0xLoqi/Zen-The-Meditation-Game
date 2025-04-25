@@ -4,7 +4,7 @@ import cosmetics from '../../../assets/data/cosmetics.json';
 import { useGameStore } from '../../store/index';
 
 const InventoryScreen = () => {
-  const owned = useGameStore((state) => state.cosmetics.owned);
+  const owned = useGameStore((state) => state.cosmetics.owned || []);
   const ownedCosmetics = (cosmetics as any[]).filter((item) => owned.includes(item.id));
 
   if (ownedCosmetics.length === 0) {

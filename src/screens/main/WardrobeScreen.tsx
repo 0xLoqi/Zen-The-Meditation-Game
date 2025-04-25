@@ -16,6 +16,7 @@ import Card from '../../components/Card';
 import { useUserStore } from '../../store/userStore';
 import { OUTFITS, getAvailableOutfits } from '../../constants/outfits';
 import { Outfit, OutfitId } from '../../types';
+import { analytics } from '../../firebase';
 
 const WardrobeScreen = () => {
   const { userData, equipOutfit, isLoadingUser, userError, getUserData } = useUserStore();
@@ -48,7 +49,7 @@ const WardrobeScreen = () => {
   // Handle outfit selection
   const handleOutfitSelect = (outfitId: OutfitId) => {
     // Only select if outfit is unlocked
-    if (userData && userData.unlockedOutfits.includes(outfitId)) {
+    if (userData && (userData.unlockedOutfits || []).includes(outfitId)) {
       setPreviewOutfit(outfitId);
     } else {
       // Show message that outfit is locked
@@ -73,10 +74,13 @@ const WardrobeScreen = () => {
   
   // Handle equipping outfit
   const handleEquipOutfit = async () => {
-    if (previewOutfit && userData && userData.unlockedOutfits.includes(previewOutfit)) {
+    if (previewOutfit && userData && (userData.unlockedOutfits || []).includes(previewOutfit)) {
       try {
         await equipOutfit(previewOutfit);
         setSelectedOutfit(previewOutfit);
+        if (analytics && typeof analytics.logEvent === 'function') {
+          analytics.logEvent('cosmetic_equip', { itemId: previewOutfit });
+        }
         Alert.alert('Success', 'Outfit equipped successfully!');
       } catch (error: any) {
         Alert.alert('Error', error.message);
@@ -86,7 +90,7 @@ const WardrobeScreen = () => {
   
   // Render outfit item
   const renderOutfitItem = ({ item }: { item: Outfit }) => {
-    const isUnlocked = userData ? userData.unlockedOutfits.includes(item.id) : false;
+    const isUnlocked = userData ? (userData.unlockedOutfits || []).includes(item.id) : false;
     const isEquipped = selectedOutfit === item.id;
     
     return (
