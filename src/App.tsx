@@ -9,13 +9,13 @@ import {
   Platform,
   Text,
 } from 'react-native';
-import { COLORS, FONTS, SPACING } from './src/constants/theme';
+import { COLORS, FONTS, SPACING } from './constants/theme';
 import * as Animatable from 'react-native-animatable';
-import FloatingLeaves from './src/components/FloatingLeaves';
-import MainNavigator from './src/navigation/MainNavigator';
-import AuthNavigator from './src/navigation/AuthNavigator';
-import { useAuthStore } from './src/store/authStore';
-import { useMiniZenniStore } from './src/store/miniZenniStore';
+import FloatingLeaves from './components/FloatingLeaves';
+import MainNavigator from './navigation/MainNavigator';
+import AuthNavigator from './navigation/AuthNavigator';
+import { useAuthStore } from './store/authStore';
+import { useMiniZenniStore } from './store/miniZenniStore';
 
 // Error boundary component
 class ErrorBoundary extends React.Component {
@@ -96,7 +96,7 @@ export default function App() {
           style={styles.loadingContent}
         >
           <Image 
-            source={require('./assets/images/zenni.png')} 
+            source={require('../assets/images/zenni.png')} 
             style={styles.loadingLogo}
             resizeMode="contain"
           />

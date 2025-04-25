@@ -10,7 +10,7 @@ interface PatternBackgroundProps {
 const PatternBackground: React.FC<PatternBackgroundProps> = ({ children, style }) => {
   return (
     <ImageBackground
-      source={require('../../assets/pattern_bg.png')}
+      source={require('../../assets/images/pattern_bg.png')}
       resizeMode="repeat"
       style={[styles.backgroundImage, style]}
     >
