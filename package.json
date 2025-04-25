@@ -45,6 +45,8 @@
     "@babel/preset-react": "^7.26.3",
     "@types/react": "~18.3.12",
     "@types/react-native": "^0.72.8",
+    "@typescript-eslint/eslint-plugin": "^8.31.0",
+    "@typescript-eslint/parser": "^8.31.0",
     "babel-loader": "^10.0.0",
     "typescript": "^5.3.3"
   },

@@ -38,9 +38,9 @@ _Check each box when DoD passes; one commit per sub-task._
 ---
 
 ## Q3  Daily Quests
-- [ ] **Q3-1**  Hard-code 3 rotating quests JSON (`meditate_5`, `open_glowbag`, `equip_item`)
-- [ ] **Q3-2**  At UTC 00:00 reset quests; save progress in store
-- [ ] **Q3-3**  Completing quest gives bonus XP (+50) and 1 Rare Glowbag
+- [x] **Q3-1**  Hard-code 3 rotating quests JSON (`meditate_5`, `open_glowbag`, `equip_item`)
+- [x] **Q3-2**  At UTC 00:00 reset quests; save progress in store
+- [x] **Q3-3**  Completing quest gives bonus XP (+50) and 1 Rare Glowbag
 
 **DoD:** Quests reset next day, reward drops as expected.
 
@@ -62,6 +62,9 @@ _Check each box when DoD passes; one commit per sub-task._
 | Q3 | Quest icons (fire, scroll, crystal) |
 
 When Q1-Q5 are `[x]`, push **`✅ next-wave-2 complete`**.
+
+
+
 
 
 

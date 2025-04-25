@@ -51,6 +51,8 @@ export default function App() {
   const { isAuthenticated, checkAuth } = useAuthStore();
   const { initializeMiniZenni } = useMiniZenniStore();
   const detectLowPowerMode = useGameStore((s) => s.detectLowPowerMode);
+  const resetQuests = useGameStore((s) => s.resetQuests);
+  const lastReset = useGameStore((s) => s.quests.lastReset);
 
   useEffect(() => {
     console.log('App - Starting Firebase authentication check');
@@ -84,6 +86,13 @@ export default function App() {
             }
             useGameStore.setState(merged);
           }
+        }
+
+        // Quest reset logic
+        const nowUTC = new Date().toISOString().slice(0, 10);
+        const lastResetUTC = lastReset ? lastReset.slice(0, 10) : '';
+        if (nowUTC !== lastResetUTC) {
+          resetQuests();
         }
       } catch (error) {
         console.error('Error initializing app:', error);

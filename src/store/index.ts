@@ -3,6 +3,7 @@ import { save, load } from "../lib/persist";
 import * as Device from 'expo-device';
 import { syncUserDoc } from '../firebase';
 import { auth } from '../firebase';
+import questsData from '../../assets/data/quests.json';
 
 // User slice interface
 interface UserSlice {
@@ -42,8 +43,19 @@ interface AchievementsSlice {
   };
 }
 
+// Quests slice interface
+interface QuestsSlice {
+  quests: {
+    dailyQuests: { id: string; name: string; description: string; icon: string }[];
+    progress: { [id: string]: boolean };
+    lastReset: string; // ISO date string
+  };
+  resetQuests: () => void;
+  completeQuest: (id: string) => void;
+}
+
 // Combined store type
-export type GameStore = UserSlice & ProgressSlice & CosmeticSlice & AchievementsSlice & {
+export type GameStore = UserSlice & ProgressSlice & CosmeticSlice & AchievementsSlice & QuestsSlice & {
   addXP: (amount: number) => void;
   incrementStreak: () => void;
   lowPowerMode: boolean;
@@ -74,23 +86,46 @@ const initialState: GameStore = {
   achievements: {
     unlocked: [],
   },
+  quests: {
+    dailyQuests: [],
+    progress: {},
+    lastReset: '',
+  },
   addXP: () => {},
   incrementStreak: () => {},
   lowPowerMode: false,
   detectLowPowerMode: async () => {},
   unlockAchievement: () => {},
+  resetQuests: () => {},
+  completeQuest: () => {},
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
   ...initialState,
   addXP: (amount: number) => {
-    set((state) => ({
-      progress: {
-        ...state.progress,
-        xp: state.progress.xp + amount,
-        lastMeditatedAt: new Date().toISOString(),
-      },
-    }));
+    set((state) => {
+      const newXP = state.progress.xp + amount;
+      const newLastMeditatedAt = new Date().toISOString();
+      // Quest: meditate_5
+      let newQuests = state.quests;
+      if (amount >= 300 && !state.quests.progress['meditate_5']) {
+        newQuests = {
+          ...state.quests,
+          progress: {
+            ...state.quests.progress,
+            meditate_5: true,
+          },
+        };
+      }
+      return {
+        progress: {
+          ...state.progress,
+          xp: newXP,
+          lastMeditatedAt: newLastMeditatedAt,
+        },
+        quests: newQuests,
+      };
+    });
   },
   incrementStreak: () => {
     set((state) => ({
@@ -125,6 +160,51 @@ export const useGameStore = create<GameStore>((set, get) => ({
           ...state.achievements,
           unlocked: [...state.achievements.unlocked, id],
         },
+      };
+    });
+  },
+  resetQuests: () => {
+    // Set new dailyQuests, reset progress, update lastReset
+    set({
+      quests: {
+        dailyQuests: questsData,
+        progress: {},
+        lastReset: new Date().toISOString(),
+      },
+    });
+  },
+  completeQuest: (id: string) => {
+    set((state) => {
+      const newProgress = {
+        ...state.quests.progress,
+        [id]: true,
+      };
+      let bonusXP = 0;
+      let bonusGlowbag = false;
+      // If all quests complete, grant bonus
+      const allComplete = Object.keys(state.quests.dailyQuests).length > 0 &&
+        state.quests.dailyQuests.every((q) => newProgress[q.id]);
+      if (allComplete) {
+        bonusXP = 50;
+        bonusGlowbag = true;
+      }
+      return {
+        quests: {
+          ...state.quests,
+          progress: newProgress,
+        },
+        progress: {
+          ...state.progress,
+          xp: state.progress.xp + bonusXP,
+        },
+        cosmetics: bonusGlowbag
+          ? {
+              ...state.cosmetics,
+              owned: state.cosmetics.owned.includes('glowbag_rare')
+                ? state.cosmetics.owned
+                : [...state.cosmetics.owned, 'glowbag_rare'],
+            }
+          : state.cosmetics,
       };
     });
   },

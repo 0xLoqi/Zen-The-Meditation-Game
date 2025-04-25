@@ -32,6 +32,10 @@ export async function maybeDropGlowbag() {
   if (pool.length === 0) return null;
   const drop = pool[Math.floor(Math.random() * pool.length)];
   grant(drop.id);
+  // Quest: open_glowbag
+  if (!useGameStore.getState().quests.progress['open_glowbag']) {
+    useGameStore.getState().completeQuest('open_glowbag');
+  }
   if (rarity === 'legendary') {
     useGameStore.getState().unlockAchievement('first_legendary');
   }
