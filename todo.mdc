@@ -63,7 +63,7 @@ _Place this file at `docs/tasks.md`._
   - **DoD**
     - ≥ 12 sample items
     - Each: `id`, `name`, `category`, `rarity`, `asset`
-- [ ] **C2 CosmeticsService**  `/src/services/CosmeticsService.ts`
+- [x] **C2 CosmeticsService**  `/src/services/CosmeticsService.ts`
   - **DoD**
     - `getItem(id)`, `grant(id)`, `maybeDropGlowbag()`
     - Drop odds: Common 60 %, Rare 25 %, Epic 12 %, Legendary 3 %
@@ -125,6 +125,8 @@ _Place this file at `docs/tasks.md`._
 - `eslint` & `prettier` show zero errors.
 - All referenced images exist or use placeholder.
 - Final commit: `✅ MVP ready`
+
+
 
 
 
