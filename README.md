@@ -14,7 +14,7 @@ A beautiful and interactive meditation app that gamifies the practice of mindful
 ## Project Roadmap 🗺️
 
 ### Current Focus
-- [ ] Complete onboarding flow with Glowbag animations
+- [🟡] Complete onboarding flow with Glowbag animations (just needs polish)
 - [ ] Implement basic meditation timer with animations
 - [ ] Add user profile and progress tracking
 - [ ] Develop reward system and cosmetic items
