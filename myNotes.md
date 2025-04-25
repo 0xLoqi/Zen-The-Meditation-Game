@@ -10,3 +10,11 @@ Monetization through the customization of every element
 include required breathing and "focus" as part of summoning it
 
 referal system - Make it worth it and easy
+
+musiccc
+
+backgroundssss
+
+Discrete group competitions (challenge your friends/group)
+
+Meditation Validation: Make it so that they can't leave the app or it doesn't count (stop gap for face tracking)

@@ -20,6 +20,7 @@
     "expo-auth-session": "^6.0.3",
     "expo-device": "~7.0.3",
     "expo-haptics": "^14.0.1",
+    "expo-in-app-purchases": "^14.5.0",
     "expo-notifications": "~0.29.14",
     "expo-status-bar": "~2.0.1",
     "expo-web-browser": "^14.0.2",

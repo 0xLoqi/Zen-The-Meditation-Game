@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 # Zen – Next-Wave Task Blocks (P1 → P5)
 

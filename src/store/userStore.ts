@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { User, DailyCheckIn, OutfitId } from '../types';
 import * as userService from '../firebase/user';
 import * as Animatable from 'react-native-animatable';
+import { grant } from '../services/CosmeticsService';
 
 interface UserState {
   userData: User | null;
@@ -12,6 +13,7 @@ interface UserState {
   checkInError: string | null;
   checkInSubmitted: boolean;
   referralCode: string;
+  isPlus: boolean;
   getUserData: () => Promise<void>;
   getTodayCheckIn: () => Promise<void>;
   submitDailyCheckIn: (rating: number, reflection?: string) => Promise<void>;
@@ -28,6 +30,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   checkInError: null,
   checkInSubmitted: false,
   referralCode: '',
+  isPlus: false,
   
   getUserData: async () => {
     try {
@@ -69,6 +72,17 @@ export const useUserStore = create<UserState>((set, get) => ({
         isLoadingCheckIn: false, 
         checkInSubmitted: true 
       });
+
+      // Zenni+ Glowbag: grant epic if isPlus and not already granted today
+      const { isPlus } = get();
+      const today = new Date().toISOString().slice(0, 10);
+      const lastPlusGlowbag = await userService.getLastPlusGlowbagDate?.();
+      if (isPlus && lastPlusGlowbag !== today) {
+        grant('glowbag_epic');
+        if (userService.setLastPlusGlowbagDate) {
+          await userService.setLastPlusGlowbagDate(today);
+        }
+      }
 
       // Refresh user data after check-in
       get().getUserData();

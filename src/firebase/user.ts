@@ -20,6 +20,9 @@ const mockUser: User = {
 // Mock check-in data
 let mockCheckIn: DailyCheckIn | null = null;
 
+// Store the last date the Zenni+ Glowbag was granted (mock, not persisted)
+let lastPlusGlowbagDate: string | null = null;
+
 /**
  * Get user data from Firestore
  * @returns User data object or null if not found
@@ -137,4 +140,12 @@ export const getReferralCode = async (): Promise<string> => {
   mockUser.referralCode = newCode;
   
   return newCode;
+};
+
+export const getLastPlusGlowbagDate = async (): Promise<string | null> => {
+  return lastPlusGlowbagDate;
+};
+
+export const setLastPlusGlowbagDate = async (date: string): Promise<void> => {
+  lastPlusGlowbagDate = date;
 };
