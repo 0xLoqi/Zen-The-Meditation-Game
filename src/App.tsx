@@ -18,6 +18,8 @@ import { useAuthStore } from './store/authStore';
 import { useMiniZenniStore } from './store/miniZenniStore';
 import { useGameStore } from './store';
 import { getUserDoc } from './firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { grant } from './services/CosmeticsService';
 
 // Error boundary component
 class ErrorBoundary extends React.Component {
@@ -93,6 +95,23 @@ export default function App() {
         const lastResetUTC = lastReset ? lastReset.slice(0, 10) : '';
         if (nowUTC !== lastResetUTC) {
           resetQuests();
+        }
+
+        // Referral code reward logic (web only for now)
+        let referralCode = null;
+        if (typeof window !== 'undefined' && window.location && window.location.search) {
+          const params = new URLSearchParams(window.location.search);
+          referralCode = params.get('code');
+        }
+        if (referralCode) {
+          const claimedKey = `referral_claimed_${referralCode}`;
+          const alreadyClaimed = await AsyncStorage.getItem(claimedKey);
+          if (!alreadyClaimed) {
+            // Grant epic glowbag to current user
+            grant('glowbag_epic');
+            // TODO: Grant to referred user in backend (not implemented in mock)
+            await AsyncStorage.setItem(claimedKey, 'true');
+          }
         }
       } catch (error) {
         console.error('Error initializing app:', error);

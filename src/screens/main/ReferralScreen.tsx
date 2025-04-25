@@ -44,7 +44,7 @@ const ReferralScreen = () => {
   const handleShareCode = async () => {
     try {
       const result = await Share.share({
-        message: `Join me on Zen Meditation App! Use my referral code: ${referralCode} to get started on your mindfulness journey.`,
+        message: `Join me on Zen Meditation App! Use my link: https://zen.app/?code=${referralCode} to get started on your mindfulness journey.`,
       });
     } catch (error: any) {
       Alert.alert('Error', 'Could not share the referral code');

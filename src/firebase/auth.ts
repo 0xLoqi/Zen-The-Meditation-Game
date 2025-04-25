@@ -237,7 +237,6 @@ export const listenToAuthState = (callback: (user: FirebaseUser | null) => void)
  * @returns A unique referral code
  */
 export const generateReferralCode = (userId: string): string => {
-  // Take the first 8 characters of the user ID and add a prefix
-  const shortId = userId.substring(0, 8);
-  return `ZEN-${shortId}`;
+  // Take the first 6 characters of the user ID
+  return userId.slice(0, 6);
 };
