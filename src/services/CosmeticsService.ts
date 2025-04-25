@@ -32,5 +32,8 @@ export async function maybeDropGlowbag() {
   if (pool.length === 0) return null;
   const drop = pool[Math.floor(Math.random() * pool.length)];
   grant(drop.id);
+  if (rarity === 'legendary') {
+    useGameStore.getState().unlockAchievement('first_legendary');
+  }
   return drop;
 } 

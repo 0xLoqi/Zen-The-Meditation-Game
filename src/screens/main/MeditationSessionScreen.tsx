@@ -35,7 +35,7 @@ const MeditationSessionScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
   const { selectedType, selectedDuration, submitMeditationSession } = useMeditationStore();
   const { userData } = useUserStore();
-  const { addXP, incrementStreak } = useGameStore();
+  const { addXP, incrementStreak, unlockAchievement } = useGameStore();
   
   // States
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -168,6 +168,7 @@ const MeditationSessionScreen = () => {
       const xp = selectedDuration ? selectedDuration * 60 : 0;
       addXP(xp);
       incrementStreak();
+      unlockAchievement('first_meditation');
       // Get streak after increment
       const streak = useGameStore.getState().progress.streak;
       if (streak === 1) {
@@ -187,6 +188,9 @@ const MeditationSessionScreen = () => {
           { seconds: 60 * 60 * 24, repeats: true },
           { title: 'Daily Meditation Reminder', body: 'Keep your streak going with a meditation today!' }
         );
+      }
+      if (streak === 7) {
+        unlockAchievement('seven_day_streak');
       }
       const drop = await maybeDropGlowbag();
       submitMeditationSession(breathScore, usingBreathTracking);

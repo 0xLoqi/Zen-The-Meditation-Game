@@ -25,13 +25,13 @@ _Check each box when DoD passes; one commit per sub-task._
 ---
 
 ## Q2  Achievement System
-- [ ] **Q2-1**  Add `achievements.json` in assets (≥6 sample badges)
-- [ ] **Q2-2**  Slice `achievements` in store `{unlocked:string[]}`
-- [ ] **Q2-3**  Trigger rules:  
+- [x] **Q2-1**  Add `achievements.json` in assets (≥6 sample badges)
+- [x] **Q2-2**  Slice `achievements` in store `{unlocked:string[]}`
+- [x] **Q2-3**  Trigger rules:  
   - First meditation  
   - 7-day streak  
   - First legendary drop
-- [ ] **Q2-4**  `AchievementsScreen` grid; locked badges greyed
+- [x] **Q2-4**  `AchievementsScreen` grid; locked badges greyed
 
 **DoD:** Unlock badge pops toast & persists after restart.
 
@@ -62,6 +62,8 @@ _Check each box when DoD passes; one commit per sub-task._
 | Q3 | Quest icons (fire, scroll, crystal) |
 
 When Q1-Q5 are `[x]`, push **`✅ next-wave-2 complete`**.
+
+
 
 
 

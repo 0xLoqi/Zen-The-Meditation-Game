@@ -35,12 +35,20 @@ interface CosmeticSlice {
   };
 }
 
+// Achievements slice interface
+interface AchievementsSlice {
+  achievements: {
+    unlocked: string[];
+  };
+}
+
 // Combined store type
-export type GameStore = UserSlice & ProgressSlice & CosmeticSlice & {
+export type GameStore = UserSlice & ProgressSlice & CosmeticSlice & AchievementsSlice & {
   addXP: (amount: number) => void;
   incrementStreak: () => void;
   lowPowerMode: boolean;
   detectLowPowerMode: () => Promise<void>;
+  unlockAchievement: (id: string) => void;
 };
 
 const initialState: GameStore = {
@@ -63,10 +71,14 @@ const initialState: GameStore = {
       aura: "",
     },
   },
+  achievements: {
+    unlocked: [],
+  },
   addXP: () => {},
   incrementStreak: () => {},
   lowPowerMode: false,
   detectLowPowerMode: async () => {},
+  unlockAchievement: () => {},
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -104,6 +116,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch (e) {
       set({ lowPowerMode: false });
     }
+  },
+  unlockAchievement: (id: string) => {
+    set((state) => {
+      if (state.achievements.unlocked.includes(id)) return state;
+      return {
+        achievements: {
+          ...state.achievements,
+          unlocked: [...state.achievements.unlocked, id],
+        },
+      };
+    });
   },
 }));
 

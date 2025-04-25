@@ -9,6 +9,7 @@ import WardrobeScreen from '../screens/main/WardrobeScreen';
 import GuruModeScreen from '../screens/main/GuruModeScreen';
 import ReferralScreen from '../screens/main/ReferralScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
+import AchievementsScreen from '../screens/main/AchievementsScreen';
 
 export type MainStackParamList = {
   Home: undefined;
@@ -23,6 +24,7 @@ export type MainStackParamList = {
   GuruMode: undefined;
   Referral: undefined;
   Settings: undefined;
+  Achievements: undefined;
 };
 
 const MainStack = createStackNavigator<MainStackParamList>();
@@ -39,6 +41,7 @@ const MainNavigator = () => {
       <MainStack.Screen name="GuruMode" component={GuruModeScreen} />
       <MainStack.Screen name="Referral" component={ReferralScreen} />
       <MainStack.Screen name="Settings" component={SettingsScreen} />
+      <MainStack.Screen name="Achievements" component={AchievementsScreen} />
     </MainStack.Navigator>
   );
 };

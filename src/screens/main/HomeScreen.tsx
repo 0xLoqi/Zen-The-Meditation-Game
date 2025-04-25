@@ -56,6 +56,11 @@ const HomeScreen = () => {
     navigation.navigate('Referral');
   };
   
+  const handleAchievementsPress = () => {
+    triggerHapticFeedback('selection');
+    navigation.navigate('Achievements');
+  };
+  
   const handleSignOut = async () => {
     triggerHapticFeedback('selection');
     await signOut();
@@ -185,6 +190,17 @@ const HomeScreen = () => {
               <Ionicons name="sparkles" size={24} color={COLORS.white} />
             </View>
             <Text style={styles.featureLabel}>Guru{'\n'}Mode</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.featureItem}
+            onPress={handleAchievementsPress}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.featureIcon, { backgroundColor: COLORS.neutralMedium }]}>
+              <MaterialCommunityIcons name="trophy-award" size={24} color={COLORS.white} />
+            </View>
+            <Text style={styles.featureLabel}>Achievements</Text>
           </TouchableOpacity>
         </View>
 
