@@ -26,11 +26,14 @@ import { useMeditationStore } from '../../store/meditationStore';
 import { useUserStore } from '../../store/userStore';
 import { formatTime } from '../../utils/formatters';
 import { triggerHapticFeedback } from '../../utils/haptics';
+import { useGameStore } from '../../store/index';
+import { maybeDropGlowbag } from '../../services/CosmeticsService';
 
 const MeditationSessionScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
   const { selectedType, selectedDuration, submitMeditationSession } = useMeditationStore();
   const { userData } = useUserStore();
+  const { addXP, incrementStreak } = useGameStore();
   
   // States
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -159,8 +162,13 @@ const MeditationSessionScreen = () => {
     });
     
     setTimeout(() => {
+      // MVP: XP = duration in seconds
+      const xp = selectedDuration ? selectedDuration * 60 : 0;
+      addXP(xp);
+      incrementStreak();
+      const drop = maybeDropGlowbag();
       submitMeditationSession(breathScore, usingBreathTracking);
-      navigation.replace('PostSessionSummary');
+      navigation.replace('PostSessionSummary', { drop });
     }, 500);
   };
   

@@ -33,7 +33,10 @@ interface CosmeticSlice {
 }
 
 // Combined store type
-export type GameStore = UserSlice & ProgressSlice & CosmeticSlice;
+export type GameStore = UserSlice & ProgressSlice & CosmeticSlice & {
+  addXP: (amount: number) => void;
+  incrementStreak: () => void;
+};
 
 const initialState: GameStore = {
   user: {
@@ -55,9 +58,31 @@ const initialState: GameStore = {
       aura: "",
     },
   },
+  addXP: () => {},
+  incrementStreak: () => {},
 };
 
-export const useGameStore = create<GameStore>(() => ({ ...initialState }));
+export const useGameStore = create<GameStore>((set, get) => ({
+  ...initialState,
+  addXP: (amount: number) => {
+    set((state) => ({
+      progress: {
+        ...state.progress,
+        xp: state.progress.xp + amount,
+        lastMeditatedAt: new Date().toISOString(),
+      },
+    }));
+  },
+  incrementStreak: () => {
+    set((state) => ({
+      progress: {
+        ...state.progress,
+        streak: state.progress.streak + 1,
+        lastMeditatedAt: new Date().toISOString(),
+      },
+    }));
+  },
+}));
 
 // Hydrate store on app launch
 (async () => {
