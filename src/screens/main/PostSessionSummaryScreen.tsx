@@ -7,7 +7,7 @@ import {
   BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
@@ -24,9 +24,13 @@ import Button from '../../components/Button';
 import MiniZenni from '../../components/MiniZenni';
 import { useMeditationStore } from '../../store/meditationStore';
 import { useUserStore } from '../../store/userStore';
+import { RouteProp } from '@react-navigation/native';
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
 const PostSessionSummaryScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
+  const route = useRoute<RouteProp<MainStackParamList, 'PostSessionSummary'>>();
+  const drop = route.params?.drop;
   const { 
     selectedType,
     selectedDuration,
@@ -114,6 +118,11 @@ const PostSessionSummaryScreen = () => {
             <Text style={styles.subtitle}>
               {selectedDuration} minute {selectedType} meditation completed
             </Text>
+            {drop && (
+              <Text style={{ color: 'gold', fontWeight: 'bold', marginTop: 8 }}>
+                🎁 You received a reward!
+              </Text>
+            )}
           </View>
           
           <View style={styles.zennieContainer}>

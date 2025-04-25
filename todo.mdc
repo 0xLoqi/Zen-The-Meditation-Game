@@ -46,11 +46,11 @@ _Place this file at `docs/tasks.md`._
     - Prop: `duration` (sec)
     - Countdown timer text
     - Breath animation: scale up 2 s, down 2 s, loops
-- [ ] **B2 Session Complete Logic**
+- [x] **B2 Session Complete Logic**
   - **DoD**
     - On timer end: `addXP(duration)` + `incrementStreak()` in store
     - Call `maybeDropGlowbag()` (see C2)
-- [ ] **B3 Navigate to RewardScreen**
+- [x] **B3 Navigate to RewardScreen**
   - **DoD**
     - After B2, `navigation.navigate('Reward', { drop })`
     - `drop` is `null` if none
@@ -125,6 +125,8 @@ _Place this file at `docs/tasks.md`._
 - `eslint` & `prettier` show zero errors.
 - All referenced images exist or use placeholder.
 - Final commit: `✅ MVP ready`
+
+
 
 
 

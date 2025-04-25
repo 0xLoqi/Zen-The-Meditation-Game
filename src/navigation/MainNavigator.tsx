@@ -17,7 +17,7 @@ export type MainStackParamList = {
     type: MeditationType;
     duration: MeditationDuration;
   };
-  PostSessionSummary: undefined;
+  PostSessionSummary: { drop: any } | undefined;
   DailyCheckIn: undefined;
   Wardrobe: undefined;
   GuruMode: undefined;
