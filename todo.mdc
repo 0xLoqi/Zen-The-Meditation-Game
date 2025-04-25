@@ -31,7 +31,7 @@ _Place this file at `docs/tasks.md`._
   - **DoD**
     - Export `save(key,val)` + `load(key)` returning Promise
     - JSON stringify / parse inside
-- [ ] **A3 Hydrate + Autosave**
+- [x] **A3 Hydrate + Autosave**
   - **DoD**
     - On app launch hydrate store
     - Subscribe to store; debounce 500 ms; persist slices
@@ -125,6 +125,8 @@ _Place this file at `docs/tasks.md`._
 - `eslint` & `prettier` show zero errors.
 - All referenced images exist or use placeholder.
 - Final commit: `✅ MVP ready`
+
+
 
 
 
