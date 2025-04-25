@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { save, load } from "../lib/persist";
 import * as Device from 'expo-device';
+import { syncUserDoc } from '../firebase';
+import { auth } from '../firebase';
 
 // User slice interface
 interface UserSlice {
@@ -117,7 +119,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 let timeout: NodeJS.Timeout | null = null;
 useGameStore.subscribe((state) => {
   if (timeout) clearTimeout(timeout);
-  timeout = setTimeout(() => {
+  timeout = setTimeout(async () => {
     save("gameStore", state);
-  }, 500);
+    // Cloud backup: push to Firestore if authenticated
+    if (auth.currentUser) {
+      try {
+        await syncUserDoc(auth.currentUser.uid, state);
+      } catch (e) {
+        // Ignore Firestore errors for now
+      }
+    }
+  }, 5000);
 });

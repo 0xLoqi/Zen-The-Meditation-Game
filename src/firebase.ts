@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 
 // Real Firebase config
@@ -25,4 +25,15 @@ try {
   analytics = null;
 }
 
-export { auth, db, analytics }; 
+export { auth, db, analytics };
+
+export async function syncUserDoc(uid, state) {
+  if (!uid) throw new Error('No UID provided');
+  await setDoc(doc(db, 'users', uid), state, { merge: true });
+}
+
+export async function getUserDoc(uid) {
+  if (!uid) throw new Error('No UID provided');
+  const snap = await getDoc(doc(db, 'users', uid));
+  return snap.exists() ? snap.data() : null;
+} 
