@@ -100,6 +100,18 @@ DoD:
 On emulated low-RAM device RewardScreen shows static frame; FPS ≥ 55.
 Commit msg: ✅ P5 low-power-mode
 
+[x] P4-1 expo install expo-notifications
+[x] P4-2 Request permission after first meditation
+[x] P4-3 Schedule:
+[x] Day-1 (20 h post-signup) → "Mini Zenni misses you…"
+[x] Daily at first-session time +24 h if streak < 3
+[x] P4-4 Cancel pending notifications when user meditates that day
+
+[x] P5-1 expo install expo-device
+[x] P5-2 Detect low memory (totalMemory < 3 GB) or known slow brands; set lowPowerMode flag in store
+[x] P5-3 Components with heavy Lottie return static PNG when lowPowerMode
+
+
 
 
 
