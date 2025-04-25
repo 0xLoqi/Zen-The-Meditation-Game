@@ -41,7 +41,7 @@ _Place this file at `docs/tasks.md`._
 
 ## B  Daily Meditation Loop
 
-- [ ] **B1 MeditationScreen**  `/src/screens/MeditationScreen.tsx`
+- [x] **B1 MeditationScreen**  `/src/screens/MeditationScreen.tsx`
   - **DoD**
     - Prop: `duration` (sec)
     - Countdown timer text
@@ -125,6 +125,8 @@ _Place this file at `docs/tasks.md`._
 - `eslint` & `prettier` show zero errors.
 - All referenced images exist or use placeholder.
 - Final commit: `✅ MVP ready`
+
+
 
 
 
