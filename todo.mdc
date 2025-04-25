@@ -8,7 +8,7 @@ _Place this file at `docs/tasks.md`._
 
 ### How to use
 1. Work top-to-bottom.
-2. When every “Definition of Done” bullet is complete, change `[ ]` → `[x]`.
+2. When every "Definition of Done" bullet is complete, change `[ ]` → `[x]`.
 3. Commit one task per commit with message `✅ <task-id> <short description>`.
 4. Run `eslint --fix && prettier --write` before every commit.
 
@@ -68,7 +68,7 @@ _Place this file at `docs/tasks.md`._
     - `getItem(id)`, `grant(id)`, `maybeDropGlowbag()`
     - Drop odds: Common 60 %, Rare 25 %, Epic 12 %, Legendary 3 %
     - `grant()` pushes id into `cosmetics.owned` slice
-- [ ] **C3 InventoryScreen**  `/src/screens/InventoryScreen.tsx`
+- [x] **C3 InventoryScreen**  `/src/screens/InventoryScreen.tsx`
   - **DoD**
     - Tabs: Outfit | Head | Aura
     - Shows owned items as grid
@@ -78,11 +78,11 @@ _Place this file at `docs/tasks.md`._
 
 ## D  Glowbag Reward Flow
 
-- [ ] **D1 Glowbag Lottie**
+- [x] **D1 Glowbag Lottie**
   - **DoD**
     - Import `assets/anim/glowbag-opening.json`
     - `RewardScreen` plays once
-- [ ] **D2 Reward Reveal**
+- [x] **D2 Reward Reveal**
   - **DoD**
     - After animation, show item card with icon, name, rarity color
     - Buttons: **Equip** (equip & close), **Done** (close only)
@@ -91,14 +91,14 @@ _Place this file at `docs/tasks.md`._
 
 ## E  Onboarding Email Screen
 
-- [ ] **E1 EmailRewardScreen UI**
+- [x] **E1 EmailRewardScreen UI**
   - **DoD**
     - Replace old CreateAccount screen
     - Show rotating `zenni_summoning_portal.png`
     - Pulsing `Glowbag_legendary.png`
-- [ ] **E2 Email Logic + Reward**
+- [x] **E2 Email Logic + Reward**
   - **DoD**
-    - TextInput validates `/^.+@.+\\..+$/`
+    - TextInput validates `/^.+@.+\..+$/`
     - **Claim** button:
       - If email valid → save email, `grant('messenger_sprite')`, continue
     - **Skip** text button → continue without reward
@@ -108,11 +108,11 @@ _Place this file at `docs/tasks.md`._
 
 ## F  Documentation
 
-- [ ] **F1 Consolidate Lore**
+- [x] **F1 Consolidate Lore**
   - **DoD**
     - `docs/lore.md` contains full Glow + Dimming story
     - Remove old split lore files
-- [ ] **F2 Consolidate Cosmetics Guide**
+- [x] **F2 Consolidate Cosmetics Guide**
   - **DoD**
     - `docs/cosmetics.md` with system overview + sample items
     - Only keep `docs/cosmetics/concept-art/` for images
@@ -126,17 +126,9 @@ _Place this file at `docs/tasks.md`._
 - All referenced images exist or use placeholder.
 - Final commit: `✅ MVP ready`
 
+---
+Unstructured additions:
+"What is your screen time" "Trying to spend less time on TikTok"
+Different preferences to hook different types of people - Nerds, show them science stuff, spritual people, spritutal tooltips, young kids, lead on the story
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+Monetization through the customization of every element
