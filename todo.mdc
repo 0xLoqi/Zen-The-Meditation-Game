@@ -59,7 +59,7 @@ _Place this file at `docs/tasks.md`._
 
 ## C  Cosmetics Framework
 
-- [ ] **C1 Cosmetics JSON**  `assets/data/cosmetics.json`
+- [x] **C1 Cosmetics JSON**  `assets/data/cosmetics.json`
   - **DoD**
     - ≥ 12 sample items
     - Each: `id`, `name`, `category`, `rarity`, `asset`
@@ -125,6 +125,8 @@ _Place this file at `docs/tasks.md`._
 - `eslint` & `prettier` show zero errors.
 - All referenced images exist or use placeholder.
 - Final commit: `✅ MVP ready`
+
+
 
 
 
