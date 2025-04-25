@@ -27,7 +27,7 @@ _Place this file at `docs/tasks.md`._
       progress: { streak, xp, lastMeditatedAt }
       cosmetics: { owned: string[]; equipped: { outfit; headgear; aura } }
       ```
-- [ ] **A2 AsyncStorage Wrapper**  `/src/lib/persist.ts`
+- [x] **A2 AsyncStorage Wrapper**  `/src/lib/persist.ts`
   - **DoD**
     - Export `save(key,val)` + `load(key)` returning Promise
     - JSON stringify / parse inside
@@ -125,5 +125,7 @@ _Place this file at `docs/tasks.md`._
 - `eslint` & `prettier` show zero errors.
 - All referenced images exist or use placeholder.
 - Final commit: `✅ MVP ready`
+
+
 
 
