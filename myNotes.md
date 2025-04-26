@@ -38,3 +38,10 @@ Guru mode (AI mode where it can learn stuff about you, give you sage wisdom, you
 Courses
 
 Achievements should pull up acheivements
+
+----
+Custom nudges for social
+
+Trade cosmetics, tokens, etc - use as prizes for competitions 
+
+Big focus on the meditation experience

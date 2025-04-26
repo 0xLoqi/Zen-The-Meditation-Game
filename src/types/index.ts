@@ -24,7 +24,7 @@ export interface User {
 }
 
 // Meditation Types
-export type MeditationType = 'focus' | 'calm' | 'loving-kindness' | 'gratitude' | 'energizing' | 'Focus' | 'Sleep';
+export type MeditationType = 'focus' | 'calm' | 'sleep' | 'loving-kindness' | 'gratitude' | 'energizing';
 export type MeditationDuration = 1 | 3 | 5 | 10 | 15 | 20 | 30;
 
 export interface MeditationResult {

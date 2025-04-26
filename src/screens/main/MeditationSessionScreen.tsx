@@ -30,6 +30,8 @@ import { useGameStore } from '../../store/index';
 import { maybeDropGlowbag } from '../../services/CosmeticsService';
 import { analytics } from '../../firebase';
 import { requestNotificationPermission, scheduleReminder, cancelAllReminders } from '../../lib/notifications';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle } from 'react-native-svg';
 
 const MeditationSessionScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
@@ -57,6 +59,16 @@ const MeditationSessionScreen = () => {
       opacity: fadeAnim.value,
     };
   });
+  
+  // Calculate progress for circular timer
+  const totalSeconds = selectedDuration ? selectedDuration * 60 : 1;
+  const progress = 1 - timeRemaining / totalSeconds;
+  // Circular progress constants
+  const size = 220;
+  const strokeWidth = 12;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - progress);
   
   // Initialize timer with selected duration
   useEffect(() => {
@@ -260,167 +272,245 @@ const MeditationSessionScreen = () => {
     setIsInhaling(inhaling);
   };
   
-  // No meditation type selected
-  if (!selectedType) {
-    navigation.goBack();
-    return null;
+  // No meditation type or duration selected
+  if (!selectedType || !selectedDuration) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fffbe6' }}>
+        <Text style={{ color: '#B68900', fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>Oops!</Text>
+        <Text style={{ color: '#6B4F1D', fontSize: 16, textAlign: 'center', marginBottom: 24 }}>
+          Something went wrong starting your meditation session. Please go back and try again.
+        </Text>
+        <Button title="Back to Selection" onPress={() => navigation.navigate('MeditationSelection')} />
+      </View>
+    );
   }
   
   return (
-    <Animated.View style={[styles.container, fadeAnimStyle]}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-      
-      <View style={styles.header}>
-        <View style={styles.sessionInfoContainer}>
+    <LinearGradient
+      colors={['#f8e7c9', '#e6e1f7', '#c9e7f8']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ flex: 1 }}
+    >
+      <Animated.View style={[styles.container, fadeAnimStyle, { backgroundColor: 'transparent' }]}> 
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+        {/* Header: Session Type and Timer */}
+        <View style={styles.header}>
           <Text style={styles.sessionType}>{selectedType}</Text>
-          <Text style={styles.timer}>{formatTime(timeRemaining)}</Text>
         </View>
-        
-        {isPaused ? (
+        {/* Circular Timer */}
+        <View style={styles.timerContainer}>
+          <Svg width={size} height={size}>
+            <Circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke="#e0d7c6"
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+            <Circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke="#B68900"
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeDasharray={`${circumference},${circumference}`}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              rotation="-90"
+              origin={`${size / 2},${size / 2}`}
+            />
+          </Svg>
+          <Text style={styles.timerText}>{formatTime(timeRemaining)}</Text>
+          {/* Floating Pause/Play Button */}
           <TouchableOpacity
-            style={styles.controlButton}
-            onPress={resumeSession}
+            style={styles.fab}
+            onPress={isPaused ? resumeSession : pauseSession}
+            activeOpacity={0.8}
           >
             <MaterialCommunityIcons
-              name="play"
-              size={SIZES.iconMedium}
-              color={COLORS.white}
+              name={isPaused ? 'play' : 'pause'}
+              size={32}
+              color="#fff"
             />
           </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={pauseSession}
-          >
-            <MaterialCommunityIcons
-              name="pause"
-              size={SIZES.iconMedium}
-              color={COLORS.white}
+        </View>
+        {/* Mini Zenni with Glow */}
+        <View style={styles.zenniGlowContainer}>
+          <LinearGradient
+            colors={["#fffbe6", "#f8e7c9", "#e6e1f7"]}
+            style={styles.zenniGlow}
+          />
+          <MiniZenni
+            outfitId={userData?.equippedOutfit || 'default'}
+            animationState="meditating"
+            size="medium"
+          />
+        </View>
+        {/* Breath Tracker (if not paused) */}
+        {!isPaused && (
+          <View style={styles.breathTrackerContainer}>
+            <BreathTracker
+              isActive={isActive && !isPaused}
+              onBreathTracked={handleBreathTracked}
+              onBreathScoreUpdate={handleBreathScoreUpdate}
             />
-          </TouchableOpacity>
+          </View>
         )}
-      </View>
-      
-      <View style={styles.zenniContainer}>
-        <MiniZenni
-          outfitId={userData?.equippedOutfit || 'default'}
-          animationState="meditating"
-          size="medium"
-        />
-      </View>
-      
-      {!isPaused && (
-        <View style={styles.breathTrackerContainer}>
-          <BreathTracker
-            isActive={isActive && !isPaused}
-            onBreathTracked={handleBreathTracked}
-            onBreathScoreUpdate={handleBreathScoreUpdate}
-          />
-        </View>
-      )}
-      
-      {isPaused && (
-        <View style={styles.pausedContainer}>
-          <Text style={styles.pausedText}>Meditation Paused</Text>
-          <Text style={styles.pausedSubtext}>
-            Take a moment, then continue when you're ready
-          </Text>
+        {/* Paused Overlay */}
+        {isPaused && (
+          <View style={styles.pausedContainer}>
+            <Text style={styles.pausedText}>Meditation Paused</Text>
+            <Text style={styles.pausedSubtext}>
+              Take a moment, then continue when you're ready
+            </Text>
+            <Button
+              title="Resume"
+              onPress={resumeSession}
+              style={styles.resumeButton}
+            />
+          </View>
+        )}
+        {/* Floating 'I Did It' Button */}
+        <View style={styles.footer}>
           <Button
-            title="Resume"
-            onPress={resumeSession}
-            style={styles.resumeButton}
+            title="I Did It"
+            variant="outlined"
+            onPress={handleManualComplete}
+            style={styles.didItButton}
           />
         </View>
-      )}
-      
-      <View style={styles.footer}>
-        <Button
-          title="I Did It"
-          variant="outlined"
-          onPress={handleManualComplete}
-          style={styles.didItButton}
-        />
-      </View>
-    </Animated.View>
+      </Animated.View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: 'transparent',
+    justifyContent: 'flex-start',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.xl,
-    paddingTop: SPACING.xxl,
-    paddingBottom: SPACING.l,
-  },
-  sessionInfoContainer: {
-    flex: 1,
+    marginTop: 48,
+    marginBottom: 8,
   },
   sessionType: {
-    ...FONTS.heading.h3,
-    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#B68900',
+    letterSpacing: 1,
+    textTransform: 'capitalize',
   },
-  timer: {
-    ...FONTS.heading.h1,
-    color: COLORS.white,
+  timerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
-  controlButton: {
-    width: 48,
-    height: 48,
-    borderRadius: SIZES.borderRadius.circle,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  timerText: {
+    position: 'absolute',
+    top: '42%',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 44,
+    fontWeight: 'bold',
+    color: '#B68900',
+    letterSpacing: 2,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: -28,
+    left: '50%',
+    marginLeft: -32,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#B68900',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 10,
   },
-  zenniContainer: {
+  zenniGlowContainer: {
     alignItems: 'center',
-    marginVertical: SPACING.xl,
+    justifyContent: 'center',
+    marginVertical: 24,
+  },
+  zenniGlow: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 160,
+    height: 80,
+    borderRadius: 80,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    transform: [{ translateX: -80 }, { translateY: -40 }],
+    zIndex: 0,
+    opacity: 0.7,
   },
   breathTrackerContainer: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    marginHorizontal: 24,
+    marginBottom: 24,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.7)',
     overflow: 'hidden',
+    padding: 12,
   },
   pausedContainer: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.85)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: SPACING.xl,
+    zIndex: 20,
+    padding: 32,
   },
   pausedText: {
-    ...FONTS.heading.h2,
-    color: COLORS.primary,
-    marginBottom: SPACING.s,
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#B68900',
+    marginBottom: 8,
   },
   pausedSubtext: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralDark,
+    fontSize: 16,
+    color: '#6B4F1D',
     textAlign: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: 24,
   },
   resumeButton: {
     width: 200,
+    alignSelf: 'center',
   },
   footer: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
-    padding: SPACING.l,
+    bottom: 32,
+    alignItems: 'center',
     backgroundColor: 'transparent',
+    zIndex: 30,
   },
   didItButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 32,
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
 
