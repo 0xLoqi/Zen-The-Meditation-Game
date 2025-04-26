@@ -1,0 +1,20 @@
+[
+  {
+    "id": "meditate_5",
+    "name": "Meditate 5 Minutes",
+    "description": "Complete a 5-minute meditation session.",
+    "icon": "quest_meditate.png"
+  },
+  {
+    "id": "open_glowbag",
+    "name": "Open a Glowbag",
+    "description": "Open any Glowbag to see what's inside!",
+    "icon": "quest_glowbag.png"
+  },
+  {
+    "id": "equip_item",
+    "name": "Equip a Cosmetic",
+    "description": "Equip any cosmetic item in your wardrobe.",
+    "icon": "quest_equip.png"
+  }
+] 

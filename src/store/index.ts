@@ -1,0 +1,242 @@
+import { create } from "zustand";
+import { save, load } from "../lib/persist";
+import * as Device from 'expo-device';
+import { syncUserDoc } from '../firebase';
+import { auth } from '../firebase';
+import questsData from '../../assets/data/quests.json';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// User slice interface
+interface UserSlice {
+  user: {
+    name: string;
+    element: string;
+    trait: string;
+    email?: string;
+  };
+}
+
+// Progress slice interface
+interface ProgressSlice {
+  progress: {
+    streak: number;
+    xp: number;
+    lastMeditatedAt: string;
+  };
+}
+
+// Cosmetics slice interface
+interface CosmeticSlice {
+  cosmetics: {
+    owned: string[];
+    equipped: {
+      outfit: string;
+      headgear: string;
+      aura: string;
+    };
+  };
+}
+
+// Achievements slice interface
+interface AchievementsSlice {
+  achievements: {
+    unlocked: string[];
+  };
+}
+
+// Quests slice interface
+interface QuestsSlice {
+  quests: {
+    dailyQuests: { id: string; name: string; description: string; icon: string }[];
+    progress: { [id: string]: boolean };
+    lastReset: string; // ISO date string
+  };
+  resetQuests: () => void;
+  completeQuest: (id: string) => void;
+}
+
+// Combined store type
+export type GameStore = UserSlice & ProgressSlice & CosmeticSlice & AchievementsSlice & QuestsSlice & {
+  addXP: (amount: number) => void;
+  incrementStreak: () => void;
+  lowPowerMode: boolean;
+  detectLowPowerMode: () => Promise<void>;
+  unlockAchievement: (id: string) => void;
+};
+
+const initialState: GameStore = {
+  user: {
+    name: "",
+    element: "",
+    trait: "",
+    email: "",
+  },
+  progress: {
+    streak: 0,
+    xp: 0,
+    lastMeditatedAt: "",
+  },
+  cosmetics: {
+    owned: [],
+    equipped: {
+      outfit: "",
+      headgear: "",
+      aura: "",
+    },
+  },
+  achievements: {
+    unlocked: [
+      'first_meditation',
+      'seven_day_streak',
+      'first_legendary',
+    ],
+  },
+  quests: {
+    dailyQuests: [],
+    progress: {},
+    lastReset: '',
+  },
+  addXP: () => {},
+  incrementStreak: () => {},
+  lowPowerMode: false,
+  detectLowPowerMode: async () => {},
+  unlockAchievement: () => {},
+  resetQuests: () => {},
+  completeQuest: () => {},
+};
+
+export const useGameStore = create<GameStore>((set, get) => ({
+  ...initialState,
+  addXP: (amount: number) => {
+    set((state) => {
+      const newXP = state.progress.xp + amount;
+      const newLastMeditatedAt = new Date().toISOString();
+      // Quest: meditate_5
+      let newQuests = state.quests;
+      if (amount >= 300 && !state.quests.progress['meditate_5']) {
+        newQuests = {
+          ...state.quests,
+          progress: {
+            ...state.quests.progress,
+            meditate_5: true,
+          },
+        };
+      }
+      return {
+      progress: {
+        ...state.progress,
+          xp: newXP,
+          lastMeditatedAt: newLastMeditatedAt,
+      },
+        quests: newQuests,
+      };
+    });
+  },
+  incrementStreak: () => {
+    set((state) => ({
+      progress: {
+        ...state.progress,
+        streak: state.progress.streak + 1,
+        lastMeditatedAt: new Date().toISOString(),
+      },
+    }));
+  },
+  detectLowPowerMode: async () => {
+    try {
+      const totalMemory = await Device.getMaxMemoryAsync();
+      const brand = Device.brand?.toLowerCase() || '';
+      // 3GB = 3 * 1024 * 1024 * 1024 bytes
+      const isLowMemory = totalMemory && totalMemory < 3 * 1024 * 1024 * 1024;
+      const isSlowBrand = ['alcatel', 'zte', 'tecno', 'infinix', 'itel'].some(b => brand.includes(b));
+      if (isLowMemory || isSlowBrand) {
+        set({ lowPowerMode: true });
+      } else {
+        set({ lowPowerMode: false });
+      }
+    } catch (e) {
+      set({ lowPowerMode: false });
+    }
+  },
+  unlockAchievement: (id: string) => {
+    set((state) => {
+      if (state.achievements.unlocked.includes(id)) return state;
+      return {
+        achievements: {
+          ...state.achievements,
+          unlocked: [...state.achievements.unlocked, id],
+        },
+      };
+    });
+  },
+  resetQuests: () => {
+    // Set new dailyQuests, reset progress, update lastReset
+    set({
+      quests: {
+        dailyQuests: questsData,
+        progress: {},
+        lastReset: new Date().toISOString(),
+      },
+    });
+  },
+  completeQuest: (id: string) => {
+    set((state) => {
+      const newProgress = {
+        ...state.quests.progress,
+        [id]: true,
+      };
+      let bonusXP = 0;
+      let bonusGlowbag = false;
+      // If all quests complete, grant bonus
+      const allComplete = Object.keys(state.quests.dailyQuests).length > 0 &&
+        state.quests.dailyQuests.every((q) => newProgress[q.id]);
+      if (allComplete) {
+        bonusXP = 50;
+        bonusGlowbag = true;
+      }
+      return {
+        quests: {
+          ...state.quests,
+          progress: newProgress,
+        },
+        progress: {
+          ...state.progress,
+          xp: state.progress.xp + bonusXP,
+        },
+        cosmetics: bonusGlowbag
+          ? {
+              ...state.cosmetics,
+              owned: state.cosmetics.owned.includes('glowbag_rare')
+                ? state.cosmetics.owned
+                : [...state.cosmetics.owned, 'glowbag_rare'],
+            }
+          : state.cosmetics,
+      };
+    });
+  },
+}));
+
+// Hydrate store on app launch
+(async () => {
+  const persisted = await load<GameStore>("gameStore");
+  if (persisted) {
+    useGameStore.setState(persisted);
+  }
+})();
+
+// Debounced autosave
+let timeout: NodeJS.Timeout | null = null;
+useGameStore.subscribe((state) => {
+  if (timeout) clearTimeout(timeout);
+  timeout = setTimeout(async () => {
+    save("gameStore", state);
+    // Cloud backup: push to Firestore if authenticated
+    if (auth.currentUser) {
+      try {
+        await syncUserDoc(auth.currentUser.uid, state);
+      } catch (e) {
+        // Ignore Firestore errors for now
+      }
+    }
+  }, 5000);
+});

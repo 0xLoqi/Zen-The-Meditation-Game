@@ -1,0 +1,130 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Zen – The Meditation Game • MVP Checklist
+_Place this file at `docs/tasks.md`._
+
+### How to use
+1. Work top-to-bottom.
+2. When every "Definition of Done" bullet is complete, change `[ ]` → `[x]`.
+3. Commit one task per commit with message `✅ <task-id> <short description>`.
+4. Run `eslint --fix && prettier --write` before every commit.
+
+---
+
+## A  Core State & Persistence
+
+- [x] **A1 Create Zustand Store**  `/src/store/index.ts`
+  - **DoD**
+    - `yarn add zustand`
+    - TS interfaces: `UserSlice`, `ProgressSlice`, `CosmeticSlice`
+    - Store exposes `useGameStore()`
+    - Slices:
+      ```ts
+      user: { name, element, trait, email? }
+      progress: { streak, xp, lastMeditatedAt }
+      cosmetics: { owned: string[]; equipped: { outfit; headgear; aura } }
+      ```
+- [x] **A2 AsyncStorage Wrapper**  `/src/lib/persist.ts`
+  - **DoD**
+    - Export `save(key,val)` + `load(key)` returning Promise
+    - JSON stringify / parse inside
+- [x] **A3 Hydrate + Autosave**
+  - **DoD**
+    - On app launch hydrate store
+    - Subscribe to store; debounce 500 ms; persist slices
+    - No red-screen errors on cold start
+
+---
+
+## B  Daily Meditation Loop
+
+- [x] **B1 MeditationScreen**  `/src/screens/MeditationScreen.tsx`
+  - **DoD**
+    - Prop: `duration` (sec)
+    - Countdown timer text
+    - Breath animation: scale up 2 s, down 2 s, loops
+- [x] **B2 Session Complete Logic**
+  - **DoD**
+    - On timer end: `addXP(duration)` + `incrementStreak()` in store
+    - Call `maybeDropGlowbag()` (see C2)
+- [x] **B3 Navigate to RewardScreen**
+  - **DoD**
+    - After B2, `navigation.navigate('Reward', { drop })`
+    - `drop` is `null` if none
+
+---
+
+## C  Cosmetics Framework
+
+- [x] **C1 Cosmetics JSON**  `assets/data/cosmetics.json`
+  - **DoD**
+    - ≥ 12 sample items
+    - Each: `id`, `name`, `category`, `rarity`, `asset`
+- [x] **C2 CosmeticsService**  `/src/services/CosmeticsService.ts`
+  - **DoD**
+    - `getItem(id)`, `grant(id)`, `maybeDropGlowbag()`
+    - Drop odds: Common 60 %, Rare 25 %, Epic 12 %, Legendary 3 %
+    - `grant()` pushes id into `cosmetics.owned` slice
+- [x] **C3 InventoryScreen**  `/src/screens/InventoryScreen.tsx`
+  - **DoD**
+    - Tabs: Outfit | Head | Aura
+    - Shows owned items as grid
+    - Tap → equip (updates store)
+
+---
+
+## D  Glowbag Reward Flow
+
+- [x] **D1 Glowbag Lottie**
+  - **DoD**
+    - Import `assets/anim/glowbag-opening.json`
+    - `RewardScreen` plays once
+- [x] **D2 Reward Reveal**
+  - **DoD**
+    - After animation, show item card with icon, name, rarity color
+    - Buttons: **Equip** (equip & close), **Done** (close only)
+
+---
+
+## E  Onboarding Email Screen
+
+- [x] **E1 EmailRewardScreen UI**
+  - **DoD**
+    - Replace old CreateAccount screen
+    - Show rotating `zenni_summoning_portal.png`
+    - Pulsing `Glowbag_legendary.png`
+- [x] **E2 Email Logic + Reward**
+  - **DoD**
+    - TextInput validates `/^.+@.+\..+$/`
+    - **Claim** button:
+      - If email valid → save email, `grant('messenger_sprite')`, continue
+    - **Skip** text button → continue without reward
+    - Console log `signup_email` or `signup_skip`
+
+---
+
+## F  Documentation
+
+- [x] **F1 Consolidate Lore**
+  - **DoD**
+    - `docs/lore.md` contains full Glow + Dimming story
+    - Remove old split lore files
+- [x] **F2 Consolidate Cosmetics Guide**
+  - **DoD**
+    - `docs/cosmetics.md` with system overview + sample items
+    - Only keep `docs/cosmetics/concept-art/` for images
+
+---
+
+### Global Acceptance
+
+- Expo + TypeScript compiles (`expo start -c`).
+- `eslint` & `prettier` show zero errors.
+- All referenced images exist or use placeholder.
+- Final commit: `✅ MVP ready`
+
+
+---

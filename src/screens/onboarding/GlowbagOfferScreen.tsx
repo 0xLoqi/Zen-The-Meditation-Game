@@ -26,6 +26,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { auth, analytics } from '../../firebase';
+import { linkWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { grant } from '../../services/CosmeticsService';
 
 const isValidEmail = (email: string) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -84,16 +87,27 @@ const GlowbagOfferScreen = () => {
     setIsEmailValid(text === '' || isValidEmail(text));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (email && !isValidEmail(email)) {
       setIsEmailValid(false);
       return;
     }
-    // If they entered an email, go to bag opening animation
     if (email) {
+      try {
+        await linkWithCredential(
+          auth.currentUser!,
+          EmailAuthProvider.credential(email, Math.random().toString(36).slice(-12))
+        );
+        grant('messenger_sprite');
+        if (analytics && typeof analytics.logEvent === 'function') {
+          analytics.logEvent('email_linked');
+        }
       navigation.replace('GlowbagOpening');
+      } catch (err) {
+        setIsEmailValid(false);
+        // Optionally show error to user
+      }
     } else {
-      // If no email, continue as guest
       continueAsGuest();
     }
   };

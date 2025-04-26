@@ -24,7 +24,7 @@ const firestore = {
         exists: false,
         data: () => ({}),
       }),
-      set: async () => ({}),
+      set: async (data: any) => ({}),
       update: async () => ({}),
     }),
   }),

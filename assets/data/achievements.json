@@ -1,0 +1,44 @@
+[
+  {
+    "id": "first_meditation",
+    "name": "First Meditation",
+    "description": "Complete your first meditation session.",
+    "icon": "first_meditation_colored.png",
+    "lockedIcon": "first_meditation_locked.png"
+  },
+  {
+    "id": "seven_day_streak",
+    "name": "7-Day Streak",
+    "description": "Meditate 7 days in a row.",
+    "icon": "seven_day_streak_colored.png",
+    "lockedIcon": "seven_day_streak_locked.png"
+  },
+  {
+    "id": "first_legendary",
+    "name": "Legendary Drop",
+    "description": "Open your first legendary Glowbag.",
+    "icon": "first_legendary_colored.png",
+    "lockedIcon": "first_legendary_locked.png"
+  },
+  {
+    "id": "early_bird",
+    "name": "Early Bird",
+    "description": "Meditate before 7am.",
+    "icon": "early_bird_colored.png",
+    "lockedIcon": "early_bird_locked.png"
+  },
+  {
+    "id": "night_owl",
+    "name": "Night Owl",
+    "description": "Meditate after 10pm.",
+    "icon": "night_owl_colored.png",
+    "lockedIcon": "night_owl_locked.png"
+  },
+  {
+    "id": "quest_master",
+    "name": "Quest Master",
+    "description": "Complete all daily quests in one day.",
+    "icon": "quest_master_colored.png",
+    "lockedIcon": "quest_master_locked.png"
+  }
+] 

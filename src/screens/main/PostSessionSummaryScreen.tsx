@@ -7,7 +7,7 @@ import {
   BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
@@ -24,9 +24,13 @@ import Button from '../../components/Button';
 import MiniZenni from '../../components/MiniZenni';
 import { useMeditationStore } from '../../store/meditationStore';
 import { useUserStore } from '../../store/userStore';
+import { RouteProp } from '@react-navigation/native';
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
 const PostSessionSummaryScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
+  const route = useRoute<RouteProp<MainStackParamList, 'PostSessionSummary'>>();
+  const drop = route.params?.drop;
   const { 
     selectedType,
     selectedDuration,
@@ -82,6 +86,12 @@ const PostSessionSummaryScreen = () => {
     });
   }, []);
   
+  useEffect(() => {
+    if (!selectedType || !selectedDuration) {
+      navigation.navigate('Home');
+    }
+  }, [selectedType, selectedDuration, navigation]);
+  
   // Handle finish button press
   const handleFinish = () => {
     // Fade out animation
@@ -96,9 +106,7 @@ const PostSessionSummaryScreen = () => {
     }, 500);
   };
   
-  // If no meditation data, go back to home
   if (!selectedType || !selectedDuration) {
-    navigation.navigate('Home');
     return null;
   }
   
@@ -114,6 +122,11 @@ const PostSessionSummaryScreen = () => {
             <Text style={styles.subtitle}>
               {selectedDuration} minute {selectedType} meditation completed
             </Text>
+            {drop && (
+              <Text style={{ color: 'gold', fontWeight: 'bold', marginTop: 8 }}>
+                🎁 You received a reward!
+              </Text>
+            )}
           </View>
           
           <View style={styles.zennieContainer}>
@@ -128,7 +141,7 @@ const PostSessionSummaryScreen = () => {
               <View style={styles.levelUpBadge}>
                 <MaterialCommunityIcons
                   name="star"
-                  size={SIZES.icon.small}
+                  size={SIZES.iconMedium}
                   color={COLORS.white}
                 />
                 <Text style={styles.levelUpText}>Level Up!</Text>
@@ -140,7 +153,7 @@ const PostSessionSummaryScreen = () => {
             <Card style={styles.statCard}>
               <MaterialCommunityIcons
                 name="percent"
-                size={SIZES.icon.medium}
+                size={SIZES.iconMedium}
                 color={COLORS.primary}
               />
               <Text style={styles.statValue}>
@@ -152,7 +165,7 @@ const PostSessionSummaryScreen = () => {
             <Card style={styles.statCard}>
               <MaterialCommunityIcons
                 name="star"
-                size={SIZES.icon.medium}
+                size={SIZES.iconMedium}
                 color={COLORS.primary}
               />
               <Text style={styles.statValue}>+{xpGained}</Text>
@@ -161,8 +174,8 @@ const PostSessionSummaryScreen = () => {
             
             <Card style={styles.statCard}>
               <MaterialCommunityIcons
-                name="coin"
-                size={SIZES.icon.medium}
+                name="currency-usd"
+                size={SIZES.iconMedium}
                 color={COLORS.accent}
               />
               <Text style={styles.statValue}>+{tokensEarned}</Text>
@@ -172,7 +185,7 @@ const PostSessionSummaryScreen = () => {
             <Card style={styles.statCard}>
               <MaterialCommunityIcons
                 name="fire"
-                size={SIZES.icon.medium}
+                size={SIZES.iconMedium}
                 color={COLORS.warning}
               />
               <Text style={styles.statValue}>{streakUpdated}</Text>
@@ -184,7 +197,7 @@ const PostSessionSummaryScreen = () => {
             <View style={styles.lessonHeader}>
               <MaterialCommunityIcons
                 name="lightbulb-outline"
-                size={SIZES.icon.medium}
+                size={SIZES.iconMedium}
                 color={COLORS.primary}
               />
               <Text style={styles.lessonTitle}>Zen Wisdom</Text>

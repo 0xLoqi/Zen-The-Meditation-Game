@@ -34,8 +34,8 @@ interface LoginScreenProps {
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   // State
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@z.com');
+  const [password, setPassword] = useState('admin');
   const [showPassword, setShowPassword] = useState(false);
 
   // Animation refs

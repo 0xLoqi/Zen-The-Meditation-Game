@@ -16,6 +16,10 @@ import MainNavigator from './navigation/MainNavigator';
 import AuthNavigator from './navigation/AuthNavigator';
 import { useAuthStore } from './store/authStore';
 import { useMiniZenniStore } from './store/miniZenniStore';
+import { useGameStore } from './store';
+import { getUserDoc } from './firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { grant } from './services/CosmeticsService';
 
 // Error boundary component
 class ErrorBoundary extends React.Component {
@@ -48,6 +52,9 @@ export default function App() {
   const [error, setError] = useState(null);
   const { isAuthenticated, checkAuth } = useAuthStore();
   const { initializeMiniZenni } = useMiniZenniStore();
+  const detectLowPowerMode = useGameStore((s) => s.detectLowPowerMode);
+  const resetQuests = useGameStore((s) => s.resetQuests);
+  const lastReset = useGameStore((s) => s.quests.lastReset);
 
   useEffect(() => {
     console.log('App - Starting Firebase authentication check');
@@ -61,6 +68,51 @@ export default function App() {
         console.log('Checking authentication...');
         await checkAuth();
         console.log('Authentication check complete');
+
+        // Cloud backup: merge Firestore user doc if online and authenticated
+        if (navigator.onLine && isAuthenticated && auth.currentUser) {
+          const serverData = await getUserDoc(auth.currentUser.uid);
+          if (serverData) {
+            // Merge logic: server streak >= local wins
+            const local = useGameStore.getState();
+            const merged = { ...local, ...serverData };
+            if (serverData.progress && local.progress) {
+              merged.progress = {
+                ...local.progress,
+                ...serverData.progress,
+                streak: Math.max(
+                  serverData.progress.streak || 0,
+                  local.progress.streak || 0
+                ),
+              };
+            }
+            useGameStore.setState(merged);
+          }
+        }
+
+        // Quest reset logic
+        const nowUTC = new Date().toISOString().slice(0, 10);
+        const lastResetUTC = lastReset ? lastReset.slice(0, 10) : '';
+        if (nowUTC !== lastResetUTC) {
+          resetQuests();
+        }
+
+        // Referral code reward logic (web only for now)
+        let referralCode = null;
+        if (typeof window !== 'undefined' && window.location && window.location.search) {
+          const params = new URLSearchParams(window.location.search);
+          referralCode = params.get('code');
+        }
+        if (referralCode) {
+          const claimedKey = `referral_claimed_${referralCode}`;
+          const alreadyClaimed = await AsyncStorage.getItem(claimedKey);
+          if (!alreadyClaimed) {
+            // Grant epic glowbag to current user
+            grant('glowbag_epic');
+            // TODO: Grant to referred user in backend (not implemented in mock)
+            await AsyncStorage.setItem(claimedKey, 'true');
+          }
+        }
       } catch (error) {
         console.error('Error initializing app:', error);
         setError(error.toString());
@@ -71,6 +123,10 @@ export default function App() {
 
     initializeApp();
   }, []);
+
+  useEffect(() => {
+    detectLowPowerMode();
+  }, [detectLowPowerMode]);
 
   if (error) {
     return (

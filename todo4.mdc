@@ -1,0 +1,84 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Zen – Task Blocks • Next-Wave 4
+
+### How to use
+1. Work top-to-bottom.  
+2. When every **Definition of Done** bullet is complete, change `[ ]` → `[x]`.  
+3. Commit **one task per commit** with the message `✅ <task-id> <short description>`.  
+4. Run `eslint --fix && prettier --write` before every commit.
+
+---
+
+## R1  Monetization α – Zenni Plus Paywall  (Value 5 × Effort 3)
+
+- [x] **R1-1**  `expo install expo-in-app-purchases`
+- [x] **R1-2**  Configure one non-consumable on both stores: **zenni_plus_tier1**
+- [x] **R1-3**  Add `PaywallScreen.tsx`
+  - Shows perks list (ad-free, double XP, exclusive cosmetics)
+  - Purchase button → `IAP.purchaseItemAsync`
+- [x] **R1-4**  Create `useSubscription()` hook; store `isPlus` in `user` slice
+- [x] **R1-5**  Gate a “Zenni+ Glowbag” (extra daily epic) behind `isPlus`
+
+**DoD**  
+Sandbox purchase unlocks `isPlus` flag and epic Glowbag appears next login.
+
+---
+
+## R2  Basic Friends & Leaderboard Stub  (Value 4 × Effort 3)
+
+- [ ] **R2-1**  Add Firestore collection `/friendCodes` (`uid → code`)
+- [ ] **R2-2**  In Profile, display user's code + copy button
+- [ ] **R2-3**  Add `AddFriendScreen`: input code → write doc in both users' `/friends`
+- [ ] **R2-4**  `LeaderboardScreen`: list friends by `streak` DESC
+
+**DoD**  
+Two test accounts add each other, streak leaderboard shows both.
+
+---
+
+## R3  Health-App Integration  (Value 3 × Effort 3)
+
+- [ ] **R3-1**  iOS: `expo install expo-sensors expo-health`
+  - Write meditation minutes to Apple HealthKit
+- [ ] **R3-2**  Android: integrate Google Fit via `react-native-google-fit`
+- [ ] **R3-3**  Permissions prompt & toggle in Settings
+
+**DoD**  
+After a 5-min session, Apple Health shows 5 min Mindful Minutes.
+
+---
+
+## R4  Remote Config for Quest Tables  (Value 4 × Effort 2)
+
+- [ ] **R4-1**  Host `daily-quests.json` (array of quest templates) on S3
+- [ ] **R4-2**  Fetch on app start; fallback to baked-in list if offline
+- [ ] **R4-3**  Quest engine picks three random unique quests each UTC 00:00
+
+**DoD**  
+Updating JSON on S3 changes tomorrow's quests without app update.
+
+---
+
+## R5  Settings & Toggles  (Value 3 × Effort 2)
+
+- [ ] **R5-2**  Toggles:
+  - Low-Power animations on/off (overrides auto-detect)
+- [ ] **R5-3**  Store preferences in `user.settings` slice (persisted)
+
+**DoD**  
+Toggles survive app restart and correctly affect animations .
+
+---
+
+### Assets Needed for This Wave
+| Feature | Asset |
+|---------|-------|
+| R1 | Paywall illustration (Zenni holding premium Glowbag) |
+| R2 | Leaderboard trophy icon |
+
+_When **R1–R5** all read `[x]`, push commit:_  
+`✅ next-wave-3 complete`

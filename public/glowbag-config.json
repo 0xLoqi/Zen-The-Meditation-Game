@@ -1,0 +1,4 @@
+{
+  "odds": { "common": 0.6, "rare": 0.25, "epic": 0.12, "legendary": 0.03 },
+  "vaulted": ["founders_wrap"]
+} 

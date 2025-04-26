@@ -1,0 +1,125 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Zen – Next-Wave Task Blocks (P1 → P5)
+
+### How to use
+1. Work top-to-bottom.
+2. When every "Definition of Done" bullet is complete, change `[ ]` → `[x]`.
+3. Commit one task per commit with message `✅ <task-id> <short description>`.
+4. Run `eslint --fix && prettier --write` before every commit.
+
+Paste this entire file into `docs/tasks_next.md` or directly into your dev-agent.  
+Work top-to-bottom; one commit per sub-task.  
+Mark `[ ]` → `[x]` when Definition of Done (DoD) is met.  
+Run `eslint --fix && prettier --write` before every commit.
+
+---
+
+## P1  Email Upgrade + Legendary Reward  (Value 4, Effort 2)
+
+- [x] **P1-1**  `yarn add firebase@latest`
+- [x] **P1-2**  Create `/src/firebase.ts` exporting `auth` + `db`
+- [x] **P1-3**  In `EmailRewardScreen.tsx`  
+  - Link anon account to email:
+    ```ts
+    linkWithCredential(
+      auth.currentUser!,
+      EmailAuthProvider.credential(email, createRandomPwd())
+    );
+    ```
+  - On success → `grant('messenger_sprite')`
+- [x] **P1-4**  Firestore rule draft: users can read/write only `/users/{uid}`
+- [x] **P1-5**  `analytics().logEvent('email_linked')`
+
+**DoD:**  
+User enters valid email → keeps progress, receives legendary item. Skip still works.  
+Commit msg: `✅ P1 email-link`
+
+---
+
+## P2  Core Analytics  (Value 5, Effort 2)
+
+- [x] **P2-1**  `yarn add @react-native-firebase/analytics`
+- [x] **P2-2**  Init in `App.tsx` → `const analytics = firebaseAnalytics();`
+- [x] **P2-3**  Log events:  
+  - `onboarding_complete`  
+  - `session_complete` {duration,xp}  
+  - `glowbag_open` {rarity}  
+  - `cosmetic_equip` {itemId}
+- [x] **P2-4**  Set user properties: `element`, `trait`
+
+**DoD:**  
+Events visible in Firebase DebugView.  
+Commit msg: `✅ P2 analytics`
+
+---
+
+## P3  Remote-Config Glowbag Odds  (Value 4, Effort 2)
+
+- [x] **P3-1**  Upload `glowbag-config.json` to public S3 (or Remote Config):
+  ```json
+  {
+    "odds": { "common": 0.6, "rare": 0.25, "epic": 0.12, "legendary": 0.03 },
+    "vaulted": ["founders_wrap"]
+  }
+- [x] P3-2 On app launch, fetch & cache JSON (AsyncStorage)
+- [x] P3-3 Update maybeDropGlowbag() to use remote odds & exclude vaulted ids
+
+DoD:
+Changing JSON odds to 0 for legendary stops legendary drops without rebuild.
+Commit msg: ✅ P3 remote-odds
+
+P4 Push Notifications (Value 4, Effort 3)
+ P4-1 expo install expo-notifications
+
+ P4-2 Request permission after first meditation
+
+ P4-3 Schedule:
+
+Day-1 (20 h post-signup) → "Mini Zenni misses you…"
+
+Daily at first-session time +24 h if streak < 3
+
+ P4-4 Cancel pending notifications when user meditates that day
+
+DoD:
+Notifications fire on device (iOS & Android dev client).
+Commit msg: ✅ P4 push-reminders
+
+P5 Animation Throttle for Low-End Devices (Value 3, Effort 2)
+ P5-1 expo install expo-device
+
+ P5-2 Detect low memory (totalMemory < 3 GB) or known slow brands; set lowPowerMode flag in store
+
+ P5-3 Components with heavy Lottie return static PNG when lowPowerMode
+
+DoD:
+On emulated low-RAM device RewardScreen shows static frame; FPS ≥ 55.
+Commit msg: ✅ P5 low-power-mode
+
+[x] P4-1 expo install expo-notifications
+[x] P4-2 Request permission after first meditation
+[x] P4-3 Schedule:
+[x] Day-1 (20 h post-signup) → "Mini Zenni misses you…"
+[x] Daily at first-session time +24 h if streak < 3
+[x] P4-4 Cancel pending notifications when user meditates that day
+
+[x] P5-1 expo install expo-device
+[x] P5-2 Detect low memory (totalMemory < 3 GB) or known slow brands; set lowPowerMode flag in store
+[x] P5-3 Components with heavy Lottie return static PNG when lowPowerMode
+
+
+
+
+
+
+
+
+
+
+
+
+

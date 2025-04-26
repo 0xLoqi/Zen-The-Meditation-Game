@@ -16,6 +16,7 @@ import { TRAITS } from '../../constants/miniZenni';
 import { useMiniZenniStore } from '../../store/miniZenniStore';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import PatternBackground from '../../components/PatternBackground';
+import { analytics } from '../../firebase';
 
 const getTraitIcon = (traitId: string) => {
   switch (traitId) {
@@ -36,7 +37,7 @@ const getTraitIcon = (traitId: string) => {
 
 const TraitSelectionScreen = () => {
   const navigation = useNavigation();
-  const { setTrait } = useMiniZenniStore();
+  const { setTrait, element } = useMiniZenniStore();
   const [selectedTrait, setSelectedTrait] = useState(TRAITS[0]);
 
   const handleTraitSelect = (trait: typeof TRAITS[0]) => {
@@ -45,6 +46,13 @@ const TraitSelectionScreen = () => {
 
   const handleNext = () => {
     setTrait(selectedTrait);
+    if (analytics && typeof analytics.logEvent === 'function') {
+      analytics.logEvent('onboarding_complete');
+      if (element) {
+        analytics.setUserProperties({ element });
+      }
+      analytics.setUserProperties({ trait: selectedTrait.id });
+    }
     navigation.navigate('GlowbagOffer');
   };
 

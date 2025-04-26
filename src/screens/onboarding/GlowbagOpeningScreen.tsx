@@ -26,6 +26,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONTS } from '../../constants/theme';
 import PatternBackground from '../../components/PatternBackground';
 import { useAuthStore } from '../../store/authStore';
+import { analytics } from '../../firebase';
+import { useGameStore } from '../../store';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -34,6 +36,7 @@ const GlowbagOpeningScreen = () => {
   const { continueAsGuest } = useAuthStore();
   const hasAnimationFinished = useRef(false);
   const [canContinue, setCanContinue] = useState(false);
+  const lowPowerMode = useGameStore((s) => s.lowPowerMode);
 
   // All shared values defined together at the top
   const buttonOpacity = useSharedValue(0);
@@ -173,6 +176,9 @@ const GlowbagOpeningScreen = () => {
     // Enable button
     const timer = setTimeout(() => {
       setCanContinue(true);
+      if (analytics && typeof analytics.logEvent === 'function') {
+        analytics.logEvent('glowbag_open', { rarity: 'legendary' });
+      }
     }, 3700);
 
     // Add infinite background pattern animations with faster speeds
@@ -340,6 +346,38 @@ const GlowbagOpeningScreen = () => {
         )
       ),
     }));
+
+  if (lowPowerMode) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.content}>
+            <Image
+              source={require('../../../assets/images/glowbags/Glowbag_legendary.png')}
+              style={styles.glowbag}
+              resizeMode="contain"
+            />
+            <Image
+              source={require('../../../assets/images/Cosmetic_totem_GotMail.png')}
+              style={styles.reward}
+              resizeMode="contain"
+            />
+            <View style={styles.textBackground}>
+              <Text style={styles.itemName}>"Got Mail" Totem</Text>
+              <Text style={styles.itemType}>Rare Cosmetic Item</Text>
+              <Text style={styles.itemDescription}>A mystical totem that shows your connection to Lumina.</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={continueAsGuest}
+            >
+              <Text style={styles.buttonText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

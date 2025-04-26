@@ -101,6 +101,7 @@ Summoning	Starter cosmetics (trait, element)
 Email Signup	Legendary Messenger Sprite
 Milestones	Outfits and unique expressions
 Challenges	Timed exclusives (events, collabs)
+
 ⚙️ System Design Notes
 Cosmetics do not impact performance—they’re purely expressive.
 

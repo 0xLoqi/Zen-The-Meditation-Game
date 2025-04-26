@@ -1,5 +1,6 @@
 import { User, DailyCheckIn, OutfitId } from '../types';
 import { generateReferralCode } from './auth';
+import { firestore } from './config';
 
 // Mock user data for development
 const mockUser: User = {
@@ -19,6 +20,12 @@ const mockUser: User = {
 
 // Mock check-in data
 let mockCheckIn: DailyCheckIn | null = null;
+
+// Store the last date the Zenni+ Glowbag was granted (mock, not persisted)
+let lastPlusGlowbagDate: string | null = null;
+
+// Mock Firestore collection for friend codes (uid → code)
+const friendCodes: Record<string, string> = {};
 
 /**
  * Get user data from Firestore
@@ -133,8 +140,47 @@ export const getReferralCode = async (): Promise<string> => {
   }
   
   // Generate a new code if none exists
-  const newCode = generateReferralCode(mockUser.uid);
+  const newCode = generateReferralCode();
   mockUser.referralCode = newCode;
   
   return newCode;
+};
+
+export const getLastPlusGlowbagDate = async (): Promise<string | null> => {
+  return lastPlusGlowbagDate;
+};
+
+export const setLastPlusGlowbagDate = async (date: string): Promise<void> => {
+  lastPlusGlowbagDate = date;
+};
+
+export const setFriendCode = async (uid: string, code: string): Promise<void> => {
+  friendCodes[uid] = code;
+};
+
+export const getFriendCode = async (uid: string): Promise<string | null> => {
+  return friendCodes[uid] || null;
+};
+
+/**
+ * Write a user's friend code to Firestore /friendCodes collection
+ * @param uid - User ID
+ * @param code - Friend code
+ */
+export const setFriendCodeFirestore = async (uid: string, code: string): Promise<void> => {
+  await firestore.collection('friendCodes').doc(uid).set({ code });
+};
+
+/**
+ * Fetch a user's friend code from Firestore /friendCodes collection
+ * @param uid - User ID
+ * @returns Friend code or null
+ */
+export const getFriendCodeFirestore = async (uid: string): Promise<string | null> => {
+  const doc = await firestore.collection('friendCodes').doc(uid).get();
+  if (doc.exists) {
+    const data = doc.data() as { code?: string };
+    return data && typeof data.code === 'string' ? data.code : null;
+  }
+  return null;
 };

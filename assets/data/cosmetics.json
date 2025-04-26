@@ -1,0 +1,86 @@
+[
+  {
+    "id": "totem_gotmail",
+    "name": "Totem: Got Mail",
+    "category": "totem",
+    "rarity": "common",
+    "asset": "../images/Cosmetic_totem_GotMail.png"
+  },
+  {
+    "id": "zenni_portal",
+    "name": "Zenni Summoning Portal",
+    "category": "background",
+    "rarity": "epic",
+    "asset": "../images/zenni_summoning_portal.png"
+  },
+  {
+    "id": "zenni_success",
+    "name": "Zenni Success",
+    "category": "background",
+    "rarity": "rare",
+    "asset": "../images/zenni_success.png"
+  },
+  {
+    "id": "pattern_bg",
+    "name": "Pattern Background",
+    "category": "background",
+    "rarity": "common",
+    "asset": "../images/pattern_bg.png"
+  },
+  {
+    "id": "zenni_summoning",
+    "name": "Zenni Summoning",
+    "category": "background",
+    "rarity": "epic",
+    "asset": "../images/zenni_summoning.png"
+  },
+  {
+    "id": "splash",
+    "name": "Splash Screen",
+    "category": "background",
+    "rarity": "common",
+    "asset": "../images/splash.png"
+  },
+  {
+    "id": "zenni",
+    "name": "Zenni Character",
+    "category": "character",
+    "rarity": "legendary",
+    "asset": "../images/zenni.png"
+  },
+  {
+    "id": "minizenni",
+    "name": "Mini Zenni",
+    "category": "character",
+    "rarity": "rare",
+    "asset": "../images/minizenni.png"
+  },
+  {
+    "id": "google_logo",
+    "name": "Google Logo",
+    "category": "icon",
+    "rarity": "common",
+    "asset": "../images/google_logo.png"
+  },
+  {
+    "id": "icon",
+    "name": "App Icon",
+    "category": "icon",
+    "rarity": "common",
+    "asset": "../images/icon.png"
+  },
+  {
+    "id": "adaptive_icon",
+    "name": "Adaptive Icon",
+    "category": "icon",
+    "rarity": "rare",
+    "asset": "../images/Adaptive-icon.png"
+  },
+  {
+    "id": "glowbag_blue",
+    "name": "Glowbag Blue",
+    "category": "glowbag",
+    "rarity": "epic",
+    "asset": "../images/glowbags/blue.png"
+  }
+] 
