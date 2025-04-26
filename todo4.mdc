@@ -67,11 +67,10 @@ Updating JSON on S3 changes tomorrow's quests without app update.
 
 - [ ] **R5-2**  Toggles:
   - Low-Power animations on/off (overrides auto-detect)
-  - Push notifications on/off
 - [ ] **R5-3**  Store preferences in `user.settings` slice (persisted)
 
 **DoD**  
-Toggles survive app restart and correctly affect sound / animations / notifications.
+Toggles survive app restart and correctly affect animations .
 
 ---
 
