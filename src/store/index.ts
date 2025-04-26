@@ -4,6 +4,8 @@ import * as Device from 'expo-device';
 import { syncUserDoc } from '../firebase';
 import { auth } from '../firebase';
 import questsData from '../../assets/data/quests.json';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // User slice interface
 interface UserSlice {
@@ -84,7 +86,11 @@ const initialState: GameStore = {
     },
   },
   achievements: {
-    unlocked: [],
+    unlocked: [
+      'first_meditation',
+      'seven_day_streak',
+      'first_legendary',
+    ],
   },
   quests: {
     dailyQuests: [],
@@ -118,11 +124,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
         };
       }
       return {
-        progress: {
-          ...state.progress,
+      progress: {
+        ...state.progress,
           xp: newXP,
           lastMeditatedAt: newLastMeditatedAt,
-        },
+      },
         quests: newQuests,
       };
     });

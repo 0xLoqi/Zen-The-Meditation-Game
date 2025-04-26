@@ -15,19 +15,7 @@ type MockUser = {
   password: string;
 };
 
-// Initialize mock users from AsyncStorage or use default
-const getInitialMockUsers = async (): Promise<Record<string, MockUser>> => {
-  try {
-    const storedUsers = await AsyncStorage.getItem('zen_mock_users');
-    if (storedUsers) {
-      return JSON.parse(storedUsers);
-    }
-  } catch (e) {
-    console.error('Failed to parse stored users:', e);
-  }
-  
-  // Default user if no stored users found
-  return {
+const defaultUsers: Record<string, MockUser> = {
     'test@example.com': {
       uid: 'test-user-123',
       email: 'test@example.com',
@@ -41,6 +29,19 @@ const getInitialMockUsers = async (): Promise<Record<string, MockUser>> => {
       password: 'admin'
     }
   };
+
+// Initialize mock users from AsyncStorage or use default
+const getInitialMockUsers = async (): Promise<Record<string, MockUser>> => {
+  try {
+    const storedUsers = await AsyncStorage.getItem('zen_mock_users');
+    if (storedUsers) {
+      // Merge default users into stored users
+      return { ...defaultUsers, ...JSON.parse(storedUsers) };
+    }
+  } catch (e) {
+    console.error('Failed to parse stored users:', e);
+  }
+  return { ...defaultUsers };
 };
 
 // Store mock users
@@ -236,7 +237,11 @@ export const listenToAuthState = (callback: (user: FirebaseUser | null) => void)
  * @param userId - User ID to base the code on
  * @returns A unique referral code
  */
-export const generateReferralCode = (userId: string): string => {
-  // Take the first 6 characters of the user ID
-  return userId.slice(0, 6);
+export const generateReferralCode = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let code = '';
+  for (let i = 0; i < 7; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
 };

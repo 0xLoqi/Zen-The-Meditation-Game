@@ -10,6 +10,7 @@ import GuruModeScreen from '../screens/main/GuruModeScreen';
 import ReferralScreen from '../screens/main/ReferralScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
 import AchievementsScreen from '../screens/main/AchievementsScreen';
+import ProfileScreen from '../screens/main/ProfileScreen';
 
 export type MainStackParamList = {
   Home: undefined;
@@ -25,6 +26,7 @@ export type MainStackParamList = {
   Referral: undefined;
   Settings: undefined;
   Achievements: undefined;
+  Profile: undefined;
 };
 
 const MainStack = createStackNavigator<MainStackParamList>();
@@ -42,6 +44,7 @@ const MainNavigator = () => {
       <MainStack.Screen name="Referral" component={ReferralScreen} />
       <MainStack.Screen name="Settings" component={SettingsScreen} />
       <MainStack.Screen name="Achievements" component={AchievementsScreen} />
+      <MainStack.Screen name="Profile" component={ProfileScreen} />
     </MainStack.Navigator>
   );
 };

@@ -102,7 +102,7 @@ const GlowbagOfferScreen = () => {
         if (analytics && typeof analytics.logEvent === 'function') {
           analytics.logEvent('email_linked');
         }
-        navigation.replace('GlowbagOpening');
+      navigation.replace('GlowbagOpening');
       } catch (err) {
         setIsEmailValid(false);
         // Optionally show error to user

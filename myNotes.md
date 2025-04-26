@@ -18,3 +18,7 @@ backgroundssss
 Discrete group competitions (challenge your friends/group)
 
 Meditation Validation: Make it so that they can't leave the app or it doesn't count (stop gap for face tracking)
+
+Back button on every screen
+
+Superwall

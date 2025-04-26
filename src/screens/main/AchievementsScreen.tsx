@@ -1,28 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGameStore } from '../../store';
 import achievementsData from '../../../assets/data/achievements.json';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
 
 // Static mapping for badge images
 const badgeImages = {
-  first_meditation_colored: require('../../../assets/images/badges/first_meditation_colored.png'),
-  first_meditation_locked: require('../../../assets/images/badges/first_meditation_locked.png'),
-  seven_day_streak_colored: require('../../../assets/images/badges/seven_day_streak_colored.png'),
-  seven_day_streak_locked: require('../../../assets/images/badges/seven_day_streak_locked.png'),
-  first_legendary_colored: require('../../../assets/images/badges/first_legendary_colored.png'),
-  first_legendary_locked: require('../../../assets/images/badges/first_legendary_locked.png'),
-  early_bird_colored: require('../../../assets/images/badges/early_bird_colored.png'),
-  early_bird_locked: require('../../../assets/images/badges/early_bird_locked.png'),
-  night_owl_colored: require('../../../assets/images/badges/night_owl_colored.png'),
-  night_owl_locked: require('../../../assets/images/badges/night_owl_locked.png'),
-  quest_master_colored: require('../../../assets/images/badges/quest_master_colored.png'),
-  quest_master_locked: require('../../../assets/images/badges/quest_master_locked.png'),
+  first_meditation: require('../../../assets/images/badges/first_meditation.png'),
+  seven_day_streak: require('../../../assets/images/badges/seven_day_streak.png'),
+  first_legendary: require('../../../assets/images/badges/first_legendary.png'),
+  early_bird: require('../../../assets/images/badges/early_bird.png'),
+  night_owl: require('../../../assets/images/badges/night_owl.png'),
+  quest_master: require('../../../assets/images/badges/quest_master.png'),
 };
+const lockedBadge = require('../../../assets/images/badges/locked_achievement.png');
 
 const AchievementsScreen = () => {
   const unlocked = useGameStore((s) => s.achievements.unlocked);
-  const [achievements, setAchievements] = useState([]);
+  const [achievements, setAchievements] = useState<{ id: string; name: string; description: string; icon: string; lockedIcon: string; }[]>([]);
 
   useEffect(() => {
     setAchievements(achievementsData);
@@ -30,11 +26,11 @@ const AchievementsScreen = () => {
 
   const renderItem = ({ item }) => {
     const isUnlocked = unlocked.includes(item.id);
-    const iconKey = isUnlocked ? item.icon.replace('.png', '') : item.lockedIcon.replace('.png', '');
+    const iconKey = item.icon.replace('.png', '').replace('_colored', '');
     return (
       <View style={styles.badgeContainer}>
         <Image
-          source={badgeImages[iconKey]}
+          source={isUnlocked ? badgeImages[iconKey] : lockedBadge}
           style={[styles.badgeImage, !isUnlocked && styles.lockedBadge]}
         />
         <Text style={styles.badgeName}>{item.name}</Text>
@@ -44,7 +40,7 @@ const AchievementsScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Achievements</Text>
       <FlatList
         data={achievements}
@@ -53,7 +49,7 @@ const AchievementsScreen = () => {
         numColumns={2}
         contentContainerStyle={styles.grid}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -64,18 +60,24 @@ const styles = StyleSheet.create({
     padding: SPACING.l,
   },
   title: {
-    ...FONTS.heading.h2,
+    fontSize: 28,
+    fontWeight: 'bold',
     color: COLORS.primary,
     textAlign: 'center',
+    marginTop: 24,
     marginBottom: SPACING.l,
   },
   grid: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   badgeContainer: {
-    flex: 1,
+    flexBasis: '45%',
+    maxWidth: '45%',
+    margin: '2.5%',
     alignItems: 'center',
-    margin: SPACING.m,
     padding: SPACING.m,
     backgroundColor: COLORS.white,
     borderRadius: 16,
@@ -90,13 +92,14 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   badgeName: {
-    ...FONTS.heading.h4,
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.primary,
     textAlign: 'center',
     marginBottom: SPACING.xs,
   },
   badgeDesc: {
-    ...FONTS.body.small,
+    fontSize: 14,
     color: COLORS.neutralDark,
     textAlign: 'center',
   },

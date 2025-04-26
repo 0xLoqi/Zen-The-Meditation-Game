@@ -12,6 +12,7 @@
     "@expo/metro-runtime": "~4.0.1",
     "@expo/vector-icons": "^14.0.4",
     "@react-native-async-storage/async-storage": "^1.23.1",
+    "@react-native-clipboard/clipboard": "^1.16.2",
     "@react-native-firebase/firestore": "^21.14.0",
     "@react-native-google-signin/google-signin": "^13.2.0",
     "@react-navigation/native": "^6.1.18",
@@ -38,7 +39,8 @@
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
     "react-native-web": "^0.19.13",
-    "zustand": "^4.5.6"
+    "zustand": "^4.5.6",
+    "expo-clipboard": "~7.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

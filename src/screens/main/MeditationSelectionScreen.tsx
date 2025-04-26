@@ -15,6 +15,8 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { useMeditationStore } from '../../store/meditationStore';
 import { MeditationType, MeditationDuration } from '../../types';
+import PatternBackground from '../../components/PatternBackground';
+import FloatingLeaves from '../../components/FloatingLeaves';
 
 const MeditationSelectionScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
@@ -72,7 +74,9 @@ const MeditationSelectionScreen = () => {
   };
   
   return (
-    <SafeAreaView style={styles.container}>
+    <PatternBackground>
+      <FloatingLeaves count={6} style={styles.leavesBackground} />
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -168,13 +172,13 @@ const MeditationSelectionScreen = () => {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </PatternBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.neutralLight,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -267,6 +271,15 @@ const styles = StyleSheet.create({
   },
   startButton: {
     width: '100%',
+  },
+  leavesBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: 0,
+    pointerEvents: 'none',
   },
 });
 
