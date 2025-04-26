@@ -137,7 +137,13 @@ const HomeScreen = () => {
                   style={styles.profileImage}
                 />
                 <View style={styles.profileInfo}>
-                  <Text style={styles.username}>{userData?.username || 'ZenUser'}</Text>
+                  <View style={styles.usernameRow}>
+                    <Text style={styles.username}>{userData?.username || 'ZenUser'}</Text>
+                    <View style={styles.streakBadge}>
+                      <Ionicons name="flame" size={16} color={COLORS.accent} style={{ marginRight: 2 }} />
+                      <Text style={styles.streakBadgeText}>{userData?.streak || 7}</Text>
+                    </View>
+                  </View>
                   <View style={styles.levelBadge}>
                     <Text style={styles.levelText}>Level {userData?.level || 1}</Text>
                   </View>
@@ -154,26 +160,6 @@ const HomeScreen = () => {
         </View>
         {/* Main Scrollable Content */}
         <ScrollView contentContainerStyle={styles.scrollContentWithStickyProfile}>
-          {/* Stats Row */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Ionicons name="flame" size={24} color={COLORS.accent} />
-              <Text style={styles.statValue}>{userData?.streak || 7}</Text>
-              <Text style={styles.statLabel}>Day Streak</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <MaterialCommunityIcons name="meditation" size={24} color={COLORS.primary} />
-              <Text style={styles.statValue}>{userData?.xp || 350}</Text>
-              <Text style={styles.statLabel}>Total XP</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <FontAwesome5 name="coins" size={20} color={COLORS.accent} />
-              <Text style={styles.statValue}>{userData?.tokens || 120}</Text>
-              <Text style={styles.statLabel}>Tokens</Text>
-            </View>
-          </View>
           {/* Start Meditation Button */}
           <TouchableOpacity 
             style={styles.meditateButton}
@@ -310,6 +296,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  usernameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   username: {
     fontWeight: 'bold',
     fontSize: 20,
@@ -347,37 +334,8 @@ const styles = StyleSheet.create({
     color: COLORS.neutralMedium,
     fontSize: 11,
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.radiusMedium,
-    padding: SPACING.m,
-    marginTop: SPACING.m,
-    ...SHADOWS.small,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statValue: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    color: COLORS.neutralDark,
-    marginVertical: SPACING.xs,
-  },
-  statLabel: {
-    fontWeight: 'normal',
-    fontSize: 12,
-    color: COLORS.neutralMedium,
-  },
-  statDivider: {
-    width: 1,
-    height: '80%',
-    backgroundColor: COLORS.border,
-    alignSelf: 'center',
-  },
+  streakBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF3E0', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8 },
+  streakBadgeText: { color: COLORS.accent, fontWeight: 'bold', fontSize: 14 },
   meditateButton: {
     backgroundColor: COLORS.primary,
     borderRadius: SIZES.radiusMedium,
