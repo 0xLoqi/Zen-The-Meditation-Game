@@ -65,9 +65,7 @@ Updating JSON on S3 changes tomorrow's quests without app update.
 
 ## R5  Settings & Toggles  (Value 3 × Effort 2)
 
-- [ ] **R5-1**  `SettingsScreen.tsx` accessible from Home gear icon
 - [ ] **R5-2**  Toggles:
-  - Sound on/off
   - Low-Power animations on/off (overrides auto-detect)
   - Push notifications on/off
 - [ ] **R5-3**  Store preferences in `user.settings` slice (persisted)
@@ -82,7 +80,6 @@ Toggles survive app restart and correctly affect sound / animations / notificati
 |---------|-------|
 | R1 | Paywall illustration (Zenni holding premium Glowbag) |
 | R2 | Leaderboard trophy icon |
-| R5 | Gear-icon button (48 px white) |
 
 _When **R1–R5** all read `[x]`, push commit:_  
 `✅ next-wave-3 complete`

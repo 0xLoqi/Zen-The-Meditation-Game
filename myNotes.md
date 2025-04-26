@@ -1,24 +1,35 @@
-Unstructured additions:
+"What is your screen time" "Trying to spend less time on TikTok?" in the onboarding
 
-"What is your screen time" "Trying to spend less time on TikTok"
-Different preferences to hook different types of people - Nerds, show them science stuff, spritual people, spritutal tooltips, young kids, lead on the story
+More onboarding stuff - include required breathing and "focus" as part of summoning the mini zenni during onboarding
 
-Monetization through the customization of every element
+Different preferences to hook different types of people, regular "toasts", "loading" screens or bumper screens where we display the value of meditation through preferences, in onboarding we learn about what their motivation is and then serve them personalized reminders that they care about - Nerds, show them science stuff, spritual people, spritutal tooltips, young kids, lean on the story, etc.
+
+Monetization through the customization of every element in the profile and otherwise, cosmetics, borders, animated backgrounds, everything.
 
 "Calm your monkey mind" - Slogan for branding, explains the monkey theme
 
-include required breathing and "focus" as part of summoning it
+referal system started but not completed - Make it worth it and super easy
 
-referal system - Make it worth it and easy
+music, sounds for meditations (and other screens)
 
-musiccc
+Modular cosmetic system integration (finish assets first)
 
-backgroundssss
+✅ backgroundssss
 
 Discrete group competitions (challenge your friends/group)
 
-Meditation Validation: Make it so that they can't leave the app or it doesn't count (stop gap for face tracking)
+Leaderboards
+
+Meditation Validation: Make it so that they can't leave the app or it doesn't count (stop gap until we figure out how to implement face tracking to keep you from cheating the system) "You're free to walk away... but your mini will know 😠"
 
 Back button on every screen
 
-Superwall
+Superwall (way later)
+
+Also need a store so they can spend their tokens on cosmetics (glowbags will mostly give tokens and common drops)
+
+Guru mode (AI mode where it can learn stuff about you, give you sage wisdom, you can grow closer with it and earn XP and whatever other cool AI features (premium feature))
+
+Courses
+
+Achievements should pull up acheivements

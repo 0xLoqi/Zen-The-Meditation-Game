@@ -8,12 +8,14 @@ import {
   ScrollView,
   Image,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 import { useUserStore } from '../../store/userStore';
 import { useAuthStore } from '../../store/authStore';
+import { useGameStore } from '../../store';
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { triggerHapticFeedback } from '../../utils/haptics';
@@ -25,6 +27,18 @@ import PatternBackground from '../../components/PatternBackground';
 import FloatingLeaves from '../../components/FloatingLeaves';
 
 type HomeScreenNavigationProp = StackNavigationProp<MainStackParamList, 'Home'>;
+
+const badgeImages = {
+  first_meditation: require('../../../assets/images/badges/first_meditation.png'),
+  seven_day_streak: require('../../../assets/images/badges/seven_day_streak.png'),
+  first_legendary: require('../../../assets/images/badges/first_legendary.png'),
+  early_bird: require('../../../assets/images/badges/early_bird.png'),
+  night_owl: require('../../../assets/images/badges/night_owl.png'),
+  quest_master: require('../../../assets/images/badges/quest_master.png'),
+};
+
+const PROFILE_CARD_HEIGHT = 110;
+const PROFILE_CARD_WIDTH = Math.round(Dimensions.get('window').width * 0.9);
 
 const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
@@ -108,10 +122,10 @@ const HomeScreen = () => {
 
   return (
     <PatternBackground>
-      <FloatingLeaves count={6} style={styles.leavesBackground} />
-      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* User Profile Card */}
+      <FloatingLeaves count={12} style={styles.leavesBackground} />
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}> 
+        {/* Sticky Profile Card */}
+        <View style={styles.stickyProfileCardContainer}>
           <View style={styles.profileCard}>
             <TouchableOpacity style={styles.settingsButton} onPress={() => navigation.navigate('Settings')} accessibilityLabel="Settings" accessible>
               <Ionicons name="settings-outline" size={28} color={COLORS.primary} />
@@ -137,7 +151,9 @@ const HomeScreen = () => {
               </View>
             </TouchableOpacity>
           </View>
-
+        </View>
+        {/* Main Scrollable Content */}
+        <ScrollView contentContainerStyle={styles.scrollContentWithStickyProfile}>
           {/* Stats Row */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
@@ -145,24 +161,19 @@ const HomeScreen = () => {
               <Text style={styles.statValue}>{userData?.streak || 7}</Text>
               <Text style={styles.statLabel}>Day Streak</Text>
             </View>
-            
             <View style={styles.statDivider} />
-            
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="meditation" size={24} color={COLORS.primary} />
               <Text style={styles.statValue}>{userData?.xp || 350}</Text>
               <Text style={styles.statLabel}>Total XP</Text>
             </View>
-            
             <View style={styles.statDivider} />
-            
             <View style={styles.statItem}>
               <FontAwesome5 name="coins" size={20} color={COLORS.accent} />
               <Text style={styles.statValue}>{userData?.tokens || 120}</Text>
               <Text style={styles.statLabel}>Tokens</Text>
             </View>
           </View>
-
           {/* Start Meditation Button */}
           <TouchableOpacity 
             style={styles.meditateButton}
@@ -180,105 +191,43 @@ const HomeScreen = () => {
               <Ionicons name="chevron-forward" size={24} color={COLORS.white} />
             </View>
           </TouchableOpacity>
-
-          {/* Feature Grid */}
-          <View style={styles.featureGrid}>
-            <TouchableOpacity 
-              style={styles.featureItem}
-              onPress={handleDailyCheckInPress}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.featureIcon, { backgroundColor: COLORS.primaryLight }]}>
-                <Ionicons name="calendar" size={24} color={COLORS.white} />
-              </View>
-              <Text style={styles.featureLabel}>Daily{'\n'}Check-in</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.featureItem}
-              onPress={handleWardrobePress}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.featureIcon, { backgroundColor: COLORS.accentLight }]}>
-                <Ionicons name="shirt-outline" size={24} color={COLORS.white} />
-              </View>
-              <Text style={styles.featureLabel}>Zenni{'\n'}Wardrobe</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.featureItem}
-              onPress={handleGuruModePress}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.featureIcon, { backgroundColor: COLORS.tertiaryLight }]}>
-                <Ionicons name="sparkles" size={24} color={COLORS.white} />
-              </View>
-              <Text style={styles.featureLabel}>Guru{'\n'}Mode</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.featureItem}
-              onPress={handleAchievementsPress}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.featureIcon, { backgroundColor: COLORS.neutralMedium }]}>
-                <MaterialCommunityIcons name="trophy-award" size={24} color={COLORS.white} />
-              </View>
-              <Text style={styles.featureLabel}>Achievements</Text>
-            </TouchableOpacity>
+          {/* Quests Section */}
+          <Text style={styles.sectionTitle}>Today's Quests</Text>
+          <View style={styles.questsContainer}>
+            {useGameStore.getState().quests.dailyQuests.map((quest) => {
+              const complete = useGameStore.getState().quests.progress[quest.id];
+              return (
+                <View key={quest.id} style={[styles.questRow, complete && styles.questRowComplete]}>
+                  <View style={styles.questTextStack}>
+                    <Text style={[styles.questName, complete && styles.questNameComplete]}>{quest.name} {complete ? '✔️' : ''}</Text>
+                    <Text style={styles.questDescription}>{quest.description}</Text>
+                  </View>
+                </View>
+              );
+            })}
           </View>
-
-          {/* Meditation Types */}
-          <Text style={styles.sectionTitle}>Meditation Types</Text>
-
-          <TouchableOpacity 
-            style={[styles.meditationCard, { backgroundColor: COLORS.calmColor }]}
-            onPress={handleMeditatePress}
-            activeOpacity={0.8}
-          >
-            <View style={styles.meditationCardContent}>
-              <View style={styles.meditationIconContainer}>
-                <Ionicons name="water-outline" size={24} color={COLORS.white} />
-              </View>
-              <View style={styles.meditationTextContainer}>
-                <Text style={styles.meditationTitle}>Calm Meditation</Text>
-                <Text style={styles.meditationDescription}>Relax anxiety and find inner peace</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.meditationCard, { backgroundColor: COLORS.focusColor }]}
-            onPress={handleMeditatePress}
-            activeOpacity={0.8}
-          >
-            <View style={styles.meditationCardContent}>
-              <View style={styles.meditationIconContainer}>
-                <Ionicons name="bulb-outline" size={24} color={COLORS.white} />
-              </View>
-              <View style={styles.meditationTextContainer}>
-                <Text style={styles.meditationTitle}>Focus Meditation</Text>
-                <Text style={styles.meditationDescription}>Improve concentration and clarity</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.meditationCard, { backgroundColor: COLORS.sleepColor }]}
-            onPress={handleMeditatePress}
-            activeOpacity={0.8}
-          >
-            <View style={styles.meditationCardContent}>
-              <View style={styles.meditationIconContainer}>
-                <Ionicons name="moon-outline" size={24} color={COLORS.white} />
-              </View>
-              <View style={styles.meditationTextContainer}>
-                <Text style={styles.meditationTitle}>Sleep Meditation</Text>
-                <Text style={styles.meditationDescription}>Improve sleep quality and relaxation</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
+          {/* Achievements Section */}
+          <Text style={styles.sectionTitle}>Closest Achievements</Text>
+          <View style={styles.achievementsContainer}>
+            {(() => {
+              const unlocked = useGameStore.getState().achievements.unlocked;
+              const achievementsData = require('../../../assets/data/achievements.json');
+              const locked = achievementsData.filter((a) => !unlocked.includes(a.id));
+              return locked.slice(0, 3).map((ach) => (
+                <View key={ach.id} style={styles.achievementCard}>
+                  {badgeImages[ach.id] && (
+                    <Image source={badgeImages[ach.id]} style={styles.achievementIcon} />
+                  )}
+                  <View style={styles.achievementTextStack}>
+                    <Text style={styles.achievementName}>{ach.name}</Text>
+                    <Text style={styles.achievementDescription}>{ach.description}</Text>
+                  </View>
+                </View>
+              ));
+            })()}
+          </View>
         </ScrollView>
+        <FloatingLeaves count={12} style={styles.leavesOverlay} />
       </SafeAreaView>
     </PatternBackground>
   );
@@ -323,16 +272,20 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   profileCard: {
+    width: PROFILE_CARD_WIDTH,
+    height: PROFILE_CARD_HEIGHT,
+    borderRadius: 20,
     backgroundColor: COLORS.white,
-    borderRadius: SIZES.radiusMedium,
-    padding: SPACING.m,
     ...SHADOWS.medium,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
     position: 'relative',
   },
   settingsButton: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 10,
+    right: 10,
     zIndex: 2,
     backgroundColor: 'rgba(255,255,255,0.8)',
     borderRadius: 20,
@@ -340,19 +293,22 @@ const styles = StyleSheet.create({
   },
   profileCardTouchable: {
     zIndex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   profileHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   profileImage: {
-    width: 80,
-    height: 80,
+    width: 64,
+    height: 64,
     marginRight: SPACING.m,
   },
   profileInfo: {
     flex: 1,
-    paddingTop: SPACING.xs,
+    justifyContent: 'center',
   },
   username: {
     fontWeight: 'bold',
@@ -455,70 +411,86 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
   },
-  featureGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.l,
-  },
-  featureItem: {
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.radiusMedium,
-    padding: SPACING.m,
-    alignItems: 'center',
-    width: '30%',
-    ...SHADOWS.small,
-  },
-  featureIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.s,
-  },
-  featureLabel: {
-    ...FONTS.body.small,
-    color: COLORS.neutralDark,
-    textAlign: 'center',
-  },
   sectionTitle: {
     fontWeight: 'bold',
     fontSize: 18,
     color: COLORS.neutralDark,
     marginBottom: SPACING.m,
   },
-  meditationCard: {
+  questsContainer: {
+    backgroundColor: COLORS.white,
     borderRadius: SIZES.radiusMedium,
+    padding: SPACING.m,
     marginBottom: SPACING.m,
     ...SHADOWS.small,
   },
-  meditationCardContent: {
+  questRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.m,
+    alignItems: 'flex-start',
+    marginBottom: SPACING.m,
+    paddingBottom: SPACING.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  meditationIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.m,
+  questRowComplete: {
+    backgroundColor: '#f0fff0',
   },
-  meditationTextContainer: {
+  questTextStack: {
     flex: 1,
   },
-  meditationTitle: {
+  questName: {
     fontWeight: 'bold',
     fontSize: 16,
-    color: COLORS.white,
-    marginBottom: SPACING.xs,
+    color: COLORS.neutralDark,
+    marginBottom: 2,
   },
-  meditationDescription: {
+  questNameComplete: {
+    color: COLORS.accent,
+    textDecorationLine: 'line-through',
+  },
+  questDescription: {
     fontWeight: 'normal',
     fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
+    color: COLORS.neutralMedium,
+  },
+  achievementsContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radiusMedium,
+    padding: SPACING.m,
+    marginBottom: SPACING.m,
+    ...SHADOWS.small,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  achievementCard: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 8,
+    flexDirection: 'column',
+  },
+  achievementIcon: {
+    width: 40,
+    height: 40,
+    marginBottom: 4,
+    resizeMode: 'contain',
+  },
+  achievementTextStack: {
+    alignItems: 'center',
+  },
+  achievementName: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    color: COLORS.neutralDark,
+    marginBottom: 2,
+  },
+  achievementDescription: {
+    fontWeight: 'normal',
+    fontSize: 11,
+    color: COLORS.neutralMedium,
+    textAlign: 'center',
   },
   leavesBackground: {
     position: 'absolute',
@@ -528,6 +500,31 @@ const styles = StyleSheet.create({
     height: '100%',
     zIndex: 0,
     pointerEvents: 'none',
+  },
+  leavesOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: 100,
+    pointerEvents: 'none',
+  },
+  stickyProfileCardContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    alignItems: 'center',
+    width: '100%',
+    height: PROFILE_CARD_HEIGHT,
+    backgroundColor: 'transparent',
+    paddingTop: 60,
+  },
+  scrollContentWithStickyProfile: {
+    paddingTop: PROFILE_CARD_HEIGHT + 16, // Add a little extra margin
+    padding: SPACING.m,
   },
 });
 

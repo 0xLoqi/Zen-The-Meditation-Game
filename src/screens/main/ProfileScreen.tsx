@@ -71,27 +71,35 @@ const ProfileScreen = () => {
         <ScrollView contentContainerStyle={styles.scrollContentWithBackArrow}>
           {/* 1. Hero Pane */}
           <View style={styles.heroPaneCentered}>
-            <Image source={miniZenni} style={styles.profileZenniLarge} />
+            <Image source={miniZenni} style={styles.profileZenniLargeModern} />
           </View>
-          <Text style={styles.userName}>{userData.username}</Text>
+          <Text style={styles.userNameModern}>{userData.username}</Text>
           {friendCode ? (
-            <View style={styles.friendCodeRow}>
-              <Text style={styles.friendCodeLabel}>Friend Code:</Text>
-              <Text style={styles.friendCodeValue}>{friendCode}</Text>
-              <TouchableOpacity onPress={handleCopyCode} style={styles.copyButton} accessibilityLabel="Copy friend code" accessible>
-                <Ionicons name="copy-outline" size={18} color="#FF8C42" />
+            <View style={styles.friendCodePill}>
+              <Text style={styles.friendCodeLabelModern}>Friend Code:</Text>
+              <Text style={styles.friendCodeValueModern}>{friendCode}</Text>
+              <TouchableOpacity onPress={handleCopyCode} style={styles.copyButtonModern} accessibilityLabel="Copy friend code" accessible>
+                <Ionicons name="copy-outline" size={16} color="#FF8C42" />
               </TouchableOpacity>
             </View>
           ) : null}
 
           {/* 2. Progress Ring */}
-          <View style={styles.progressRing}>
-            <View style={styles.ringPlaceholder}>
-              <Text style={styles.levelText}>12</Text>
+          <View style={styles.statsCard}>
+            <View style={styles.statItemModern}>
+              <Ionicons name="flame" size={22} color="#FF8C42" />
+              <Text style={styles.statValueModern}>21</Text>
+              <Text style={styles.statLabelModern}>Streak</Text>
             </View>
-            <View style={styles.streakRow}>
-              <Text style={styles.flame}>🔥</Text>
-              <Text style={styles.streakText}>21</Text>
+            <View style={styles.statItemModern}>
+              <Ionicons name="medal-outline" size={22} color="#FFD580" />
+              <Text style={styles.statValueModern}>12</Text>
+              <Text style={styles.statLabelModern}>Level</Text>
+            </View>
+            <View style={styles.statItemModern}>
+              <Ionicons name="wallet-outline" size={22} color="#FFD580" />
+              <Text style={styles.statValueModern}>120</Text>
+              <Text style={styles.statLabelModern}>Tokens</Text>
             </View>
           </View>
 
@@ -107,40 +115,33 @@ const ProfileScreen = () => {
             </TouchableOpacity>
           </ScrollView>
 
-          {/* 4. Customize Tiles */}
-          <View style={styles.customizeTiles}>
-            {['Outfit', 'Headgear', 'Aura', 'Companion'].map((label, i) => (
-              <TouchableOpacity key={i} style={styles.customizeTile} activeOpacity={0.7} accessibilityLabel={`Edit ${label}`} accessible>
-                <Text style={styles.customizeTileLabel}>{label}</Text>
-                <Text style={styles.editText}>Edit</Text>
-              </TouchableOpacity>
-            ))}
+          {/* 4. Daily Quest Panel */}
+          <View style={styles.questPanelModern}>
+            <Text style={styles.questTitleModern}>Today's Quests</Text>
+            {[...Array(3)].map((_, i) => {
+              const claimable = i === 0; // Only first quest is claimable for demo
+              return (
+                <View key={i} style={styles.questRowModern}>
+                  <Text style={styles.questTextModern}>Quest {i + 1}</Text>
+                  <View style={styles.progressBarModern}><View style={styles.progressFillModern} /></View>
+                  <TouchableOpacity style={[styles.claimButtonModern, claimable && styles.claimButtonActive]} activeOpacity={0.7} onPress={() => showModal('Quest Claimed', 'You have claimed your quest reward!')} accessibilityLabel="Claim quest reward" accessible>
+                    <Text style={[styles.claimTextModern, claimable && styles.claimTextActive]}>Claim</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
           </View>
 
-          {/* 5. Zen Tokens & Glowbags Row */}
-          <View style={styles.currencyRow}>
-            <TouchableOpacity style={styles.tokenPill} activeOpacity={0.7} onPress={() => showModal('Zen Tokens', 'Tokens are used to unlock premium features and restore streaks.')} accessibilityLabel="Zen Tokens info" accessible>
-              <Text style={styles.tokenText}>120</Text>
-              <Text style={styles.plusText}>+</Text>
+          {/* 5. Customize Button */}
+          <View style={styles.customizeButtonContainerBottom}>
+            <TouchableOpacity style={styles.customizeButton} activeOpacity={0.8} onPress={() => alert('Open customization screen/modal here!')} accessibilityLabel="Customize your Zenni and profile" accessible>
+              <Ionicons name="color-palette-outline" size={28} color="#FFD580" style={{ marginRight: 8 }} />
+              <Text style={styles.customizeButtonLabel}>Customize</Text>
             </TouchableOpacity>
-          </View>
-
-          {/* 6. Daily Quest Panel */}
-          <View style={styles.questPanel}>
-            <Text style={styles.questTitle}>Today's Quests</Text>
-            {[...Array(3)].map((_, i) => (
-              <View key={i} style={styles.questRow}>
-                <Text style={styles.questText}>Quest {i + 1}</Text>
-                <View style={styles.progressBar}><View style={styles.progressFill} /></View>
-                <TouchableOpacity style={styles.claimButton} activeOpacity={0.7} onPress={() => showModal('Quest Claimed', 'You have claimed your quest reward!')} accessibilityLabel="Claim quest reward" accessible>
-                  <Text style={styles.claimText}>Claim</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
           </View>
         </ScrollView>
 
-        {/* 7. Settings & Subscription Footer */}
+        {/* 6. Settings & Subscription Footer */}
         {/* Footer removed */}
         <InfoModal {...modal} onClose={closeModal} />
       </View>
@@ -164,8 +165,8 @@ const styles = StyleSheet.create({
   },
   scrollContentWithBackArrow: { padding: 16, paddingBottom: 100, paddingTop: 56 },
   heroPaneCentered: { alignItems: 'center', justifyContent: 'center', marginBottom: 8, marginTop: 32 },
-  profileZenniLarge: { width: 160, height: 160, resizeMode: 'contain', alignSelf: 'center', shadowColor: '#FFD580', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8 },
-  userName: { alignSelf: 'center', fontWeight: 'bold', fontSize: 20, color: '#7A5C00', marginBottom: 8 },
+  profileZenniLargeModern: { width: 160, height: 160, resizeMode: 'contain', alignSelf: 'center', borderRadius: 80, borderWidth: 4, borderColor: '#FFD580', shadowColor: '#FFD580', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8, backgroundColor: '#fff' },
+  userNameModern: { alignSelf: 'center', fontWeight: 'bold', fontSize: 26, color: '#7A5C00', marginBottom: 12, marginTop: 4 },
   glowbagIcon: { position: 'relative', marginRight: 8 },
   glowbagImage: { width: 40, height: 40 },
   unreadBadge: { position: 'absolute', top: -4, right: -4, backgroundColor: '#FF8C42', borderRadius: 8, paddingHorizontal: 4 },
@@ -181,9 +182,9 @@ const styles = StyleSheet.create({
   badgeIcon: { width: 40, height: 40 },
   friendChip: { backgroundColor: '#FFD580', borderRadius: CARD_RADIUS, paddingHorizontal: 12, justifyContent: 'center', marginLeft: 8, ...SHADOW },
   friendChipText: { color: '#7A5C00', fontWeight: 'bold' },
-  customizeTiles: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  customizeTile: { backgroundColor: '#fff', borderRadius: CARD_RADIUS, padding: 12, alignItems: 'center', flex: 1, marginHorizontal: 4, ...SHADOW },
-  customizeTileLabel: { fontWeight: 'bold', marginBottom: 4 },
+  customizeButtonContainer: { alignItems: 'center', marginVertical: 16 },
+  customizeButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 24, paddingVertical: 14, paddingHorizontal: 32, ...SHADOW },
+  customizeButtonLabel: { fontWeight: 'bold', fontSize: 18, color: '#7A5C00' },
   editText: { color: '#FF8C42', fontWeight: 'bold' },
   currencyRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   tokenPill: { backgroundColor: '#FFD580', borderRadius: CARD_RADIUS, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, marginRight: 12, ...SHADOW },
@@ -247,6 +248,25 @@ const styles = StyleSheet.create({
   copyButton: { padding: 4 },
   backArrow: { position: 'absolute', top: 56, left: 20, zIndex: 10, padding: 8, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20, shadowColor: '#FFD580', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 },
   backArrowIcon: { textShadowColor: '#FFD580', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 4 },
+  friendCodePill: { flexDirection: 'row', alignSelf: 'center', alignItems: 'center', backgroundColor: '#FFF8E9', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6, marginBottom: 18, marginTop: 2, shadowColor: '#FFD580', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 },
+  friendCodeLabelModern: { color: '#7A5C00', fontWeight: 'bold', marginRight: 4 },
+  friendCodeValueModern: { color: '#FF8C42', fontWeight: 'bold', marginRight: 6 },
+  copyButtonModern: { padding: 2 },
+  statsCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 18, padding: 18, marginVertical: 12, marginHorizontal: 2, ...SHADOW },
+  statItemModern: { alignItems: 'center', flex: 1 },
+  statValueModern: { fontWeight: 'bold', fontSize: 20, color: '#FF8C42', marginTop: 2 },
+  statLabelModern: { fontSize: 12, color: '#7A5C00', marginTop: 2 },
+  questPanelModern: { backgroundColor: '#fff', borderRadius: CARD_RADIUS, padding: 20, marginBottom: 16, ...SHADOW },
+  questTitleModern: { fontWeight: 'bold', fontSize: 18, marginBottom: 12, color: '#7A5C00' },
+  questRowModern: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  questTextModern: { flex: 1, fontWeight: 'bold', color: '#7A5C00' },
+  progressBarModern: { flex: 2, height: 8, backgroundColor: '#FFD580', borderRadius: 4, marginHorizontal: 8 },
+  progressFillModern: { width: '60%', height: '100%', backgroundColor: '#FF8C42', borderRadius: 4 },
+  claimButtonModern: { backgroundColor: '#eee', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 6 },
+  claimButtonActive: { backgroundColor: '#FF8C42' },
+  claimTextModern: { color: '#7A5C00', fontWeight: 'bold' },
+  claimTextActive: { color: '#fff' },
+  customizeButtonContainerBottom: { alignItems: 'center', marginVertical: 24, marginBottom: 40 },
 });
 
 export default ProfileScreen; 
