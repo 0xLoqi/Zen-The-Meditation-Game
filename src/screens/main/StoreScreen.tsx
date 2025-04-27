@@ -12,6 +12,7 @@ const MODULAR_CATEGORIES = ['outfit', 'headgear', 'aura', 'face', 'accessory', '
 const storeBg = require('../../../assets/images/backgrounds/store_background.png');
 const paneBg = require('../../../assets/images/backgrounds/pane_background.png');
 const CARD_SIZE = Math.floor((Dimensions.get('window').width - 48) / 2);
+const PANE_SIZE = CARD_SIZE + 64;
 
 function getPreviewProps(item) {
   if (!item) return {};
@@ -57,7 +58,12 @@ const StoreScreen = () => {
                   onPress={() => setPreview(getPreviewProps(item))}
                   activeOpacity={0.8}
                 >
-                  <ImageBackground source={paneBg} style={styles.cardPaneBg} imageStyle={styles.cardPaneImg} resizeMode="stretch">
+                  <ImageBackground
+                    source={paneBg}
+                    style={styles.cardPaneBg}
+                    imageStyle={styles.cardPaneImg}
+                    resizeMode="contain"
+                  >
                     {imgSrc && (
                       <Image source={imgSrc} style={styles.cardImage} resizeMode="contain" />
                     )}
@@ -111,14 +117,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardPaneBg: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
+    width: PANE_SIZE,
+    height: PANE_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 12,
   },
   cardPaneImg: {
+    width: PANE_SIZE,
+    height: PANE_SIZE,
     borderRadius: 16,
     opacity: 0.85,
   },
