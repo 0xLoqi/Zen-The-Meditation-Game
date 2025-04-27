@@ -14,17 +14,28 @@ const paneBg = require('../../../assets/images/backgrounds/pane_background.png')
 const CARD_SIZE = Math.floor((Dimensions.get('window').width - 48) / 2);
 const PANE_SIZE = CARD_SIZE + 64;
 
-function getPreviewProps(item) {
+// Define the shape of the preview state for cosmetics
+type PreviewProps = {
+  outfitId?: string;
+  headgearId?: string;
+  auraId?: string;
+  faceId?: string;
+  accessoryId?: string;
+  companionId?: string;
+};
+
+function getPreviewProps(item: any): PreviewProps {
   if (!item) return {};
   const category = (item.category || '').toLowerCase();
-  const id = item.id;
+  // Use the image filename from data so it matches the mapping keys
+  const imageKey = item.image;
   switch (category) {
-    case 'outfit': return { outfitId: id };
-    case 'headgear': return { headgearId: id };
-    case 'aura': return { auraId: id };
-    case 'face': return { faceId: id };
-    case 'accessory': return { accessoryId: id };
-    case 'companion': return { companionId: id };
+    case 'outfit': return { outfitId: imageKey };
+    case 'headgear': return { headgearId: imageKey };
+    case 'aura': return { auraId: imageKey };
+    case 'face': return { faceId: imageKey };
+    case 'accessory': return { accessoryId: imageKey };
+    case 'companion': return { companionId: imageKey };
     default: return {};
   }
 }
@@ -32,7 +43,8 @@ function getPreviewProps(item) {
 const StoreScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const [preview, setPreview] = useState({});
+  // Use typed state for preview so dynamic indexing is safe
+  const [preview, setPreview] = useState<PreviewProps>({});
 
   return (
     <ImageBackground source={storeBg} style={styles.bg} resizeMode="cover">
@@ -52,10 +64,21 @@ const StoreScreen = () => {
             renderItem={({ item }) => {
               const imgKey = item.image?.replace(/^.*[\\/]/, '');
               const imgSrc = cosmeticImages[imgKey];
+              const prop = getPreviewProps(item);
+              // Cast key to the PreviewProps keys so TS recognizes it
+              const key = Object.keys(prop)[0] as keyof PreviewProps;
+              const value = prop[key]!;
+              const isSelected = preview[key] === value;
               return (
                 <TouchableOpacity
-                  style={styles.card}
-                  onPress={() => setPreview(getPreviewProps(item))}
+                  style={[styles.card, isSelected && styles.cardSelected]}
+                  onPress={() => setPreview(prev => {
+                    if (prev[key] === value) {
+                      const { [key]: _, ...rest } = prev;
+                      return rest;
+                    }
+                    return { ...prev, [key]: value };
+                  })}
                   activeOpacity={0.8}
                 >
                   <ImageBackground
@@ -132,6 +155,10 @@ const styles = StyleSheet.create({
   cardImage: { width: CARD_SIZE - 32, height: CARD_SIZE - 32, marginBottom: 8 },
   cardName: { fontWeight: 'bold', color: COLORS.primary, fontSize: 14, marginBottom: 2, textAlign: 'center' },
   cardPrice: { color: COLORS.accent, fontSize: 12 },
+  cardSelected: {
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
 });
 
 export default StoreScreen; 
