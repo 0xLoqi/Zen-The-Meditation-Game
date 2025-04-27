@@ -4,8 +4,16 @@ import * as Device from 'expo-device';
 import { syncUserDoc } from '../firebase';
 import { auth } from '../firebase';
 import questsData from '../../assets/data/quests.json';
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Friend type
+export interface Friend {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  xp?: number;
+  streak?: number;
+}
 
 // User slice interface
 interface UserSlice {
@@ -14,7 +22,9 @@ interface UserSlice {
     element: string;
     trait: string;
     email?: string;
+    motivation?: string;
   };
+  friends: Friend[];
 }
 
 // Progress slice interface
@@ -23,6 +33,7 @@ interface ProgressSlice {
     streak: number;
     xp: number;
     lastMeditatedAt: string;
+    tokens: number;
   };
 }
 
@@ -63,6 +74,8 @@ export type GameStore = UserSlice & ProgressSlice & CosmeticSlice & Achievements
   lowPowerMode: boolean;
   detectLowPowerMode: () => Promise<void>;
   unlockAchievement: (id: string) => void;
+  firstMeditationRewarded: boolean;
+  setFirstMeditationRewarded: (rewarded: boolean) => void;
 };
 
 const initialState: GameStore = {
@@ -71,11 +84,17 @@ const initialState: GameStore = {
     element: "",
     trait: "",
     email: "",
+    motivation: "",
   },
+  friends: [
+    { id: '1', name: 'Alex', xp: 1200, streak: 7 },
+    { id: '2', name: 'Sam', xp: 900, streak: 3 },
+  ],
   progress: {
     streak: 0,
     xp: 0,
     lastMeditatedAt: "",
+    tokens: 0,
   },
   cosmetics: {
     owned: [],
@@ -104,6 +123,8 @@ const initialState: GameStore = {
   unlockAchievement: () => {},
   resetQuests: () => {},
   completeQuest: () => {},
+  firstMeditationRewarded: false,
+  setFirstMeditationRewarded: () => {},
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -214,7 +235,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       };
     });
   },
+  firstMeditationRewarded: false,
+  setFirstMeditationRewarded: (rewarded: boolean) => set({ firstMeditationRewarded: rewarded }),
 }));
+
+// Utility: Only keep serializable data for Firestore
+function getSerializableGameStore(state) {
+  return {
+    user: state.user,
+    friends: state.friends,
+    progress: state.progress,
+    cosmetics: state.cosmetics,
+    achievements: state.achievements,
+    quests: state.quests,
+    firstMeditationRewarded: state.firstMeditationRewarded,
+    lowPowerMode: state.lowPowerMode,
+    // Add any other fields here, but DO NOT include functions
+  };
+}
 
 // Hydrate store on app launch
 (async () => {
@@ -233,7 +271,7 @@ useGameStore.subscribe((state) => {
     // Cloud backup: push to Firestore if authenticated
     if (auth.currentUser) {
       try {
-        await syncUserDoc(auth.currentUser.uid, state);
+        await syncUserDoc(auth.currentUser.uid, getSerializableGameStore(state));
       } catch (e) {
         // Ignore Firestore errors for now
       }

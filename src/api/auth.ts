@@ -29,7 +29,7 @@ export const signup = async (email: string, password: string, username: string):
     throw new Error('Password must be at least 6 characters long');
   }
   
-  if (!email.includes('@')) {
+  if (typeof email !== 'string' || !email.includes('@')) {
     throw new Error('Invalid email address');
   }
   
@@ -65,7 +65,7 @@ export const login = async (email: string, password: string): Promise<FirebaseUs
     return {
       uid: `user_${Math.random().toString(36).substring(2, 9)}`,
       email,
-      displayName: email.split('@')[0],
+      displayName: typeof email === 'string' && email.includes('@') ? email.split('@')[0] : 'User',
     };
   }
   

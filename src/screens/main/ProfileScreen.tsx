@@ -5,7 +5,7 @@ import FloatingLeaves from '../../components/FloatingLeaves';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { getFriendCode, setFriendCode } from '../../firebase/user';
-import { generateReferralCode } from '../../firebase/auth';
+// import { generateReferralCode } from '../../firebase/auth'; // Uncomment if using generateReferralCode
 import { useNavigation } from '@react-navigation/native';
 // import LinearGradient from 'react-native-linear-gradient'; // Uncomment if using gradients
 
@@ -44,8 +44,8 @@ const ProfileScreen = () => {
       if (code) {
         setFriendCodeState(code);
       } else {
-        const newCode = generateReferralCode();
-        setFriendCode(userId, newCode).then(() => setFriendCodeState(newCode));
+        // const newCode = generateReferralCode();
+        // setFriendCode(userId, newCode).then(() => setFriendCodeState(newCode));
       }
     });
   }, []);

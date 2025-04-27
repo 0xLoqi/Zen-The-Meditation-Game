@@ -21,9 +21,10 @@ import { useMiniZenniStore } from '../../store/miniZenniStore';
 import { Ionicons } from '@expo/vector-icons';
 import MiniZenni from '../../components/MiniZenni';
 import PatternBackground from '../../components/PatternBackground';
+import ProgressDots from '../../components/ProgressDots';
 
-const NameSelectionScreen = () => {
-  const navigation = useNavigation();
+const NameSelectionScreen = ({ navigation, route }: any) => {
+  const { step = 3, total = 9 } = route.params || {};
   const { setMiniZenniName } = useMiniZenniStore();
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -83,68 +84,67 @@ const NameSelectionScreen = () => {
   };
 
   return (
-    <PatternBackground>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.backgroundContainer}>
-          <FloatingLeaves count={30} />
-        </View>
-        
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={handleBack}
-        >
-          <Ionicons 
-            name="chevron-back" 
-            size={28} 
-            color={COLORS.primary}
-          />
-        </TouchableOpacity>
-
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          keyboardDismissMode="on-drag"
-        >
-          <View style={styles.headerContainer}>
-            <Image
-              source={require('../../../assets/images/minizenni.png')}
-              style={[styles.miniZenniImage, { tintColor: '#000000' }]}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>Name Your Mini Zenni</Text>
-            <Text style={styles.description}>
-              Choose a name that resonates with your spiritual companion's essence.
-            </Text>
+    <>
+      <ProgressDots step={step} total={total} />
+      <PatternBackground>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.backgroundContainer}>
+            <FloatingLeaves count={30} />
           </View>
-
-          <View style={styles.inputContainer}>
-            <Input
-              label=""
-              value={name}
-              onChangeText={handleNameChange}
-              placeholder="Enter a name"
-              error={error}
-              autoCapitalize="words"
-              maxLength={20}
-              containerStyle={styles.input}
-              textStyle={styles.inputText}
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={handleBack}
+          >
+            <Ionicons 
+              name="chevron-back" 
+              size={28} 
+              color={COLORS.primary}
             />
-          </View>
-
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Continue"
-              onPress={handleNext}
-              disabled={!name || !!error}
-              size="large"
-              style={styles.button}
-            />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </PatternBackground>
+          </TouchableOpacity>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            keyboardDismissMode="on-drag"
+          >
+            <View style={styles.headerContainer}>
+              <Image
+                source={require('../../../assets/images/minizenni.png')}
+                style={[styles.miniZenniImage, { tintColor: '#000000' }]}
+                resizeMode="contain"
+              />
+              <Text style={styles.title}>Name Your Mini Zenni</Text>
+              <Text style={styles.description}>
+                Choose a name that resonates with your spiritual companion's essence.
+              </Text>
+            </View>
+            <View style={styles.inputContainer}>
+              <Input
+                label=""
+                value={name}
+                onChangeText={handleNameChange}
+                placeholder="Enter a name"
+                error={error}
+                autoCapitalize="words"
+                maxLength={20}
+                containerStyle={styles.input}
+                textStyle={styles.inputText}
+              />
+            </View>
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Continue"
+                onPress={handleNext}
+                disabled={!name || !!error}
+                size="large"
+                style={styles.button}
+              />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </PatternBackground>
+    </>
   );
 };
 

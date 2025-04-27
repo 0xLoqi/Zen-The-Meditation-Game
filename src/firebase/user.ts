@@ -1,6 +1,6 @@
 import { User, DailyCheckIn, OutfitId } from '../types';
-import { generateReferralCode } from './auth';
-import { firestore } from './config';
+import { db } from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 // Mock user data for development
 const mockUser: User = {
@@ -31,11 +31,32 @@ const friendCodes: Record<string, string> = {};
  * Get user data from Firestore
  * @returns User data object or null if not found
  */
-export const getUserData = async (): Promise<User | null> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return mockUser;
+export const getUserData = async (uid: string, email?: string): Promise<User | null> => {
+  console.log('[getUserData] called with', { uid, email });
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef);
+  if (snap.exists()) {
+    console.log('[getUserData] user exists');
+    return snap.data() as User;
+  } else {
+    console.log('[getUserData] user does not exist, creating...');
+    const newUser: User = {
+      uid,
+      username: email ? email.split('@')[0] : 'ZenUser',
+      email: email || null,
+      xp: 0,
+      level: 1,
+      tokens: 0,
+      streak: 0,
+      lastMeditationDate: null,
+      outfits: ['default'],
+      equippedOutfit: 'default',
+      createdAt: new Date().toISOString(),
+    };
+    await setDoc(userRef, newUser);
+    console.log('[getUserData] user created in Firestore');
+    return newUser;
+  }
 };
 
 /**
@@ -140,7 +161,7 @@ export const getReferralCode = async (): Promise<string> => {
   }
   
   // Generate a new code if none exists
-  const newCode = generateReferralCode();
+  const newCode = 'demo-code'; // Placeholder referral code
   mockUser.referralCode = newCode;
   
   return newCode;
@@ -168,7 +189,7 @@ export const getFriendCode = async (uid: string): Promise<string | null> => {
  * @param code - Friend code
  */
 export const setFriendCodeFirestore = async (uid: string, code: string): Promise<void> => {
-  await firestore.collection('friendCodes').doc(uid).set({ code });
+  // This function is no longer used in the mock system
 };
 
 /**
@@ -177,10 +198,11 @@ export const setFriendCodeFirestore = async (uid: string, code: string): Promise
  * @returns Friend code or null
  */
 export const getFriendCodeFirestore = async (uid: string): Promise<string | null> => {
-  const doc = await firestore.collection('friendCodes').doc(uid).get();
-  if (doc.exists) {
-    const data = doc.data() as { code?: string };
-    return data && typeof data.code === 'string' ? data.code : null;
-  }
+  // This function is no longer used in the mock system
   return null;
+};
+
+export const setUserData = async (uid: string, data: User): Promise<void> => {
+  const userRef = doc(db, 'users', uid);
+  await setDoc(userRef, data, { merge: true });
 };

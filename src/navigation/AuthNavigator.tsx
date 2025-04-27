@@ -8,10 +8,14 @@ import GlowbagOfferScreen from '../screens/onboarding/GlowbagOfferScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import GlowbagOpeningScreen from '../screens/onboarding/GlowbagOpeningScreen';
 import { useMiniZenniStore } from '../store/miniZenniStore';
+import ScreenTimeQScreen from '../screens/onboarding/ScreenTimeQScreen';
+import TikTokQScreen from '../screens/onboarding/TikTokQScreen';
 
 export type AuthStackParamList = {
   Welcome: undefined;
   NameSelection: undefined;
+  ScreenTimeQ: undefined;
+  TikTokQ: undefined;
   ColorSelection: undefined;
   TraitSelection: undefined;
   GlowbagOffer: undefined;
@@ -52,6 +56,16 @@ const AuthNavigator = () => {
           // Prevent going back to name selection
           gestureEnabled: false,
         }}
+      />
+      <AuthStack.Screen 
+        name="ScreenTimeQ" 
+        component={ScreenTimeQScreen}
+        options={{ gestureEnabled: false }}
+      />
+      <AuthStack.Screen 
+        name="TikTokQ" 
+        component={TikTokQScreen}
+        options={{ gestureEnabled: false }}
       />
       <AuthStack.Screen 
         name="ColorSelection" 

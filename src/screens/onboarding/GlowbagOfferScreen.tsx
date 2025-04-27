@@ -29,6 +29,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth, analytics } from '../../firebase';
 import { linkWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { grant } from '../../services/CosmeticsService';
+import { requestNotificationPermission } from '../../lib/notifications';
+import { ensureSignedIn } from '../../firebase';
+import { navigationRef } from '../../navigation';
 
 const isValidEmail = (email: string) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -87,33 +90,40 @@ const GlowbagOfferScreen = () => {
     setIsEmailValid(text === '' || isValidEmail(text));
   };
 
+  const handleSkip = async () => {
+    console.log('Skip pressed');
+    continueAsGuest();
+    await requestNotificationPermission();
+    navigationRef.current?.navigate('Main', { screen: 'Home' });
+  };
+
   const handleSubmit = async () => {
     if (email && !isValidEmail(email)) {
       setIsEmailValid(false);
       return;
     }
-    if (email) {
-      try {
-        await linkWithCredential(
-          auth.currentUser!,
-          EmailAuthProvider.credential(email, Math.random().toString(36).slice(-12))
-        );
+    try {
+      const user = await ensureSignedIn();
+      if (email) {
+        const credential = EmailAuthProvider.credential(email, Math.random().toString(36).slice(-12));
+        await linkWithCredential(user, credential);
         grant('messenger_sprite');
         if (analytics && typeof analytics.logEvent === 'function') {
           analytics.logEvent('email_linked');
         }
-      navigation.replace('GlowbagOpening');
-      } catch (err) {
-        setIsEmailValid(false);
-        // Optionally show error to user
+        await requestNotificationPermission();
+        navigationRef.current?.navigate('Main', { screen: 'Home' });
+      } else {
+        continueAsGuest();
+        await requestNotificationPermission();
+        navigationRef.current?.navigate('Main', { screen: 'Home' });
       }
-    } else {
-      continueAsGuest();
+    } catch (err: any) {
+      setIsEmailValid(false);
+      if (err && err.message) {
+        alert(err.message);
+      }
     }
-  };
-
-  const handleSkip = () => {
-    continueAsGuest();
   };
 
   return (

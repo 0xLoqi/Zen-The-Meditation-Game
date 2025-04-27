@@ -15,6 +15,9 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
+import AppleAuthentication from 'expo-apple-authentication';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
@@ -32,10 +35,12 @@ interface LoginScreenProps {
   navigation: LoginScreenNavigationProp;
 }
 
+WebBrowser.maybeCompleteAuthSession();
+
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   // State
   const [email, setEmail] = useState('admin@z.com');
-  const [password, setPassword] = useState('admin');
+  const [password, setPassword] = useState('adminn');
   const [showPassword, setShowPassword] = useState(false);
 
   // Animation refs
@@ -48,9 +53,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     login, 
     isLoading, 
     error, 
-    signInWithGoogle, 
     googleAuthLoading, 
-    googleAuthError 
+    googleAuthError,
+    firebaseSignInWithGoogle
   } = useAuthStore();
 
   // Animation state
@@ -59,6 +64,23 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const zenAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Google Auth Request
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    expoClientId: '<YOUR_EXPO_CLIENT_ID>',
+    iosClientId: '<YOUR_IOS_CLIENT_ID>',
+    androidClientId: '<YOUR_ANDROID_CLIENT_ID>',
+    webClientId: '<YOUR_WEB_CLIENT_ID>',
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      if (id_token) {
+        firebaseSignInWithGoogle(id_token);
+      }
+    }
+  }, [response]);
 
   // Set up floating animation
   useEffect(() => {
@@ -116,40 +138,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     }
   };
 
-  // Handle Google sign-in
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.log('Google sign in error:', error);
-    }
-  };
-
-  // Handle signup navigation
-  const handleSignupPress = () => {
-    // Fun exit animation before navigating
-    if (formRef.current && logoRef.current && titleRef.current) {
-      try {
-        const formPromise = formRef.current.fadeOutDown?.(300) || Promise.resolve();
-        const logoPromise = logoRef.current.fadeOutUp?.(300) || Promise.resolve();
-        const titlePromise = titleRef.current.fadeOutUp?.(300) || Promise.resolve();
-        
-        Promise.all([formPromise, logoPromise, titlePromise])
-          .then(() => {
-            setTimeout(() => {
-              navigation.navigate('Signup');
-            }, 300);
-          })
-          .catch(() => {
-            navigation.navigate('Signup');
-          });
-      } catch (error) {
-        // Fallback in case animation fails
-        navigation.navigate('Signup');
-      }
-    } else {
-      navigation.navigate('Signup');
-    }
+  // Handle Apple sign-in
+  const handleAppleSignIn = async () => {
+    // TODO: Implement Apple sign-in logic and link to Firebase
+    console.log('Apple sign-in pressed');
   };
 
   // Interpolate floating animation
@@ -202,12 +194,35 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
           <Animatable.View
             ref={formRef}
-            animation="fadeIn"
+            animation="fadeInUp"
             duration={800}
             delay={700}
             useNativeDriver={Platform.OS !== 'web'}
             style={styles.formContainer}
           >
+            {/* Google Sign-In Button */}
+            <GoogleSignInButton
+              onPress={() => promptAsync()}
+              isLoading={googleAuthLoading}
+              style={styles.googleSignInButton}
+            />
+            {/* Apple Sign-In Button is hidden until developer account is ready */}
+            {/* {Platform.OS === 'ios' && (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={5}
+                style={styles.appleSignInButton}
+                onPress={handleAppleSignIn}
+              />
+            )} */}
+            {/* Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.divider} />
+            </View>
+            {/* Email/Password Form */}
             <Input
               label="Email"
               placeholder="Enter your email"
@@ -257,27 +272,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               size="large"
               textStyle={{ fontSize: 16, fontWeight: '600' }}
             />
-
-            <View style={styles.dividerContainer}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.divider} />
-            </View>
-
-            <GoogleSignInButton
-              onPress={handleGoogleSignIn}
-              isLoading={googleAuthLoading}
-              style={styles.googleSignInButton}
-            />
-
-            <View style={styles.signupContainer}>
-              <Text style={styles.signupText}>
-                Don't have an account?{' '}
-                <Text style={styles.signupLink} onPress={handleSignupPress}>
-                  Sign Up
-                </Text>
-              </Text>
-            </View>
           </Animatable.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -353,35 +347,26 @@ const styles = StyleSheet.create({
   googleSignInButton: {
     marginVertical: SPACING.medium,
   },
+  appleSignInButton: {
+    width: '100%',
+    height: 44,
+    marginTop: 12,
+    marginBottom: 12,
+  },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: SPACING.xxlarge,
-    paddingHorizontal: SPACING.large,
+    marginVertical: 16,
   },
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.neutralLight,
   },
   dividerText: {
-    fontFamily: FONTS.primary,
-    fontSize: FONTS.small,
-    color: COLORS.textSecondary,
-    marginHorizontal: SPACING.small,
-  },
-  signupContainer: {
-    alignItems: 'center',
-    marginTop: SPACING.small,
-  },
-  signupText: {
-    fontFamily: FONTS.primary,
-    fontSize: FONTS.regular_size,
-    color: COLORS.textSecondary,
-  },
-  signupLink: {
-    color: COLORS.primary,
-    fontWeight: FONTS.bold as '700',
+    marginHorizontal: 8,
+    color: COLORS.neutralMedium,
+    fontSize: 16,
   },
   formContainer: {
     // Add appropriate styles for the form container

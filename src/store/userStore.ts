@@ -3,6 +3,7 @@ import { User, DailyCheckIn, OutfitId } from '../types';
 import * as userService from '../firebase/user';
 import * as Animatable from 'react-native-animatable';
 import { grant } from '../services/CosmeticsService';
+import { useAuthStore } from './authStore';
 
 interface UserState {
   userData: User | null;
@@ -14,6 +15,14 @@ interface UserState {
   checkInSubmitted: boolean;
   referralCode: string;
   isPlus: boolean;
+  screenTime?: number;
+  reduceTikTok?: boolean;
+  soundPackId?: 'rain' | 'waves' | 'silence';
+  isPremium: boolean;
+  setScreenTime: (minutes: number) => void;
+  setReduceTikTok: (reduce: boolean) => void;
+  setSoundPackId: (id: 'rain' | 'waves' | 'silence') => void;
+  setPremium: (value: boolean) => void;
   getUserData: () => Promise<void>;
   getTodayCheckIn: () => Promise<void>;
   submitDailyCheckIn: (rating: number, reflection?: string) => Promise<void>;
@@ -31,11 +40,61 @@ export const useUserStore = create<UserState>((set, get) => ({
   checkInSubmitted: false,
   referralCode: '',
   isPlus: false,
+  screenTime: undefined,
+  reduceTikTok: undefined,
+  soundPackId: 'rain',
+  isPremium: false,
+  setScreenTime: (minutes: number) => set({ screenTime: minutes }),
+  setReduceTikTok: (reduce: boolean) => set({ reduceTikTok: reduce }),
+  setSoundPackId: (id) => set({ soundPackId: id }),
+  setPremium: (value) => set({ isPremium: value }),
   
   getUserData: async () => {
     try {
       set({ isLoadingUser: true, userError: null });
-      const userData = await userService.getUserData();
+      const { user } = useAuthStore.getState();
+      if (!user || !user.uid) throw new Error('No authenticated user');
+      let userData = await userService.getUserData(user.uid, user.email ?? undefined);
+      if (!userData) {
+        // User does not exist; create and use initial state
+        const initialUserData = {
+          user: {
+            name: '',
+            element: '',
+            trait: '',
+            email: user.email ?? '',
+            motivation: '',
+          },
+          friends: [],
+          progress: {
+            streak: 0,
+            xp: 0,
+            lastMeditatedAt: '',
+            tokens: 0,
+          },
+          cosmetics: {
+            owned: [],
+            equipped: {
+              outfit: '',
+              headgear: '',
+              aura: '',
+            },
+          },
+          achievements: {
+            unlocked: [],
+          },
+          quests: {
+            dailyQuests: [],
+            progress: {},
+            lastReset: '',
+          },
+          firstMeditationRewarded: false,
+          lowPowerMode: false,
+        };
+        await userService.syncUserDoc(user.uid, initialUserData);
+        set({ userData: initialUserData, isLoadingUser: false });
+        return;
+      }
       set({ userData, isLoadingUser: false });
     } catch (error: any) {
       set({ userError: error.message, isLoadingUser: false });

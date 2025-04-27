@@ -6,7 +6,6 @@ Regular notification system
 
 Different preferences to hook different types of people, regular "toasts", "loading" screens or bumper screens where we display the value of meditation through preferences, in onboarding we learn about what their motivation is and then serve them personalized reminders that they care about - Nerds, show them science stuff, spritual people, spritutal tooltips, young kids, lean on the story, etc.
 
-
 Monetization through the customization of every element in the profile and otherwise, cosmetics, borders, animated backgrounds, everything.
 
 "Calm your monkey mind" - Slogan for branding, explains the monkey theme
@@ -44,4 +43,9 @@ Custom nudges for social
 
 Trade cosmetics, tokens, etc - use as prizes for competitions 
 
-Big focus on the meditation experience
+Big focus on the meditation experience - the different types - guides
+
+Setting up proper routines with different types on different days- Customizable pace - "At this pace, you'll be finished with this in 3 weeks!"
+
+Apple health - heart rate: purpose to surface data - finding proper metrics that will show progress
+

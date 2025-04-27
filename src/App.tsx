@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Platform,
   Text,
+  LogBox,
 } from 'react-native';
 import { COLORS, FONTS, SPACING } from './constants/theme';
 import * as Animatable from 'react-native-animatable';
@@ -20,6 +21,29 @@ import { useGameStore } from './store';
 import { getUserDoc } from './firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { grant } from './services/CosmeticsService';
+import { handleInitialLink } from './services/referral';
+import { ToastProvider, showToast } from './components/Toasts';
+
+// Optional: hide yellow box warnings
+// LogBox.ignoreAllLogs();
+
+// Global error handler for debugging
+if (typeof ErrorUtils !== 'undefined' && ErrorUtils.setGlobalHandler) {
+  ErrorUtils.setGlobalHandler((error, isFatal) => {
+    console.log('GLOBAL ERROR:', error, isFatal);
+    alert('Error: ' + error.message);
+  });
+}
+
+// Global unhandled promise rejection handler
+if (typeof global !== 'undefined') {
+  global.onunhandledrejection = (e) => {
+    console.log('UNHANDLED PROMISE REJECTION:', e.reason || e);
+    alert('Unhandled promise rejection: ' + (e.reason?.message || e.reason || e));
+  };
+}
+
+console.log('App started');
 
 // Error boundary component
 class ErrorBoundary extends React.Component {
@@ -31,6 +55,7 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('App Error:', error, errorInfo);
+    alert('ErrorBoundary: ' + (error?.message || error));
   }
 
   render() {
@@ -55,6 +80,7 @@ export default function App() {
   const detectLowPowerMode = useGameStore((s) => s.detectLowPowerMode);
   const resetQuests = useGameStore((s) => s.resetQuests);
   const lastReset = useGameStore((s) => s.quests.lastReset);
+  const motivation = useGameStore((s) => s.user.motivation || 'nerd');
 
   useEffect(() => {
     console.log('App - Starting Firebase authentication check');
@@ -113,6 +139,14 @@ export default function App() {
             await AsyncStorage.setItem(claimedKey, 'true');
           }
         }
+
+        // Handle referral dynamic link
+        await handleInitialLink();
+
+        // Show toast on app launch
+        const variants = ['nerdFact', 'spiritualQuote', 'storyLore'];
+        const variant = motivation === 'nerd' ? 'nerdFact' : motivation === 'spiritual' ? 'spiritualQuote' : motivation === 'story' ? 'storyLore' : variants[Math.floor(Math.random() * variants.length)];
+        showToast(variant);
       } catch (error) {
         console.error('Error initializing app:', error);
         setError(error.toString());
@@ -177,6 +211,7 @@ export default function App() {
         {isAuthenticated ? <MainNavigator /> : <AuthNavigator />}
         <StatusBar style="auto" />
       </NavigationContainer>
+      <ToastProvider />
     </ErrorBoundary>
   );
 }

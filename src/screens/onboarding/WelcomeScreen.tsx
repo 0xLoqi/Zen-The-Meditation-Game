@@ -20,9 +20,10 @@ import Button from '../../components/Button';
 import FloatingLeaves from '../../components/FloatingLeaves';
 import MiniZenni from '../../components/MiniZenni';
 import PatternBackground from '../../components/PatternBackground';
+import ProgressDots from '../../components/ProgressDots';
 
-const WelcomeScreen = () => {
-  const navigation = useNavigation();
+const WelcomeScreen = ({ navigation, route }: any) => {
+  const { step = 1, total = 9 } = route.params || {};
   
   // Animation values
   const fadeAnim = useSharedValue(0);
@@ -105,53 +106,56 @@ const WelcomeScreen = () => {
   };
   
   return (
-    <PatternBackground>
-      <SafeAreaView style={styles.container}>
-        <FloatingLeaves count={30} style={styles.leavesBackground} />
-        
-        <View style={styles.content}>
-          <Animated.View style={[styles.zenniContainer, zenniStyle]}>
-            <Animated.View style={[styles.glowContainer, glowStyle]}>
-              <MiniZenni
-                outfitId="default"
-                size="large"
-                animationState="idle"
-                autoPlay
-                loop
-              />
+    <>
+      <ProgressDots step={step} total={total} />
+      <PatternBackground>
+        <SafeAreaView style={styles.container}>
+          <FloatingLeaves count={30} style={styles.leavesBackground} />
+          
+          <View style={styles.content}>
+            <Animated.View style={[styles.zenniContainer, zenniStyle]}>
+              <Animated.View style={[styles.glowContainer, glowStyle]}>
+                <MiniZenni
+                  outfitId="default"
+                  size="large"
+                  animationState="idle"
+                  autoPlay
+                  loop
+                />
+              </Animated.View>
             </Animated.View>
-          </Animated.View>
-          
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>Welcome to Zen</Text>
-            <Text style={styles.message}>
-              "Let's create your companion of the path..."
-            </Text>
-            <Text style={styles.description}>
-              Together, we'll summon your Mini Zenni - a spiritual guide for your mindfulness journey.
-            </Text>
-          </View>
-          
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Begin Journey"
-              onPress={handleStart}
-              size="large"
-              style={styles.button}
-            />
             
-            <TouchableOpacity 
-              onPress={handleLogin}
-              style={styles.loginButton}
-            >
-              <Text style={styles.loginText}>
-                Already have an account? Sign in
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>Welcome to Zen</Text>
+              <Text style={styles.message}>
+                "Let's create your companion of the path..."
               </Text>
-            </TouchableOpacity>
+              <Text style={styles.description}>
+                Together, we'll summon your Mini Zenni - a spiritual guide for your mindfulness journey.
+              </Text>
+            </View>
+            
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Begin Journey"
+                onPress={handleStart}
+                size="large"
+                style={styles.button}
+              />
+              
+              <TouchableOpacity 
+                onPress={handleLogin}
+                style={styles.loginButton}
+              >
+                <Text style={styles.loginText}>
+                  Already have an account? Sign in
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </SafeAreaView>
-    </PatternBackground>
+        </SafeAreaView>
+      </PatternBackground>
+    </>
   );
 };
 

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
-import { FirebaseUser, checkUsernameUnique, signup, login, signOut, listenToAuthState } from '../firebase/auth';
-import { useGoogleAuth } from '../firebase/googleAuth';
+import { auth } from '../firebase';
+import type { User as FirebaseUser } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import * as AuthSession from 'expo-auth-session';
 
 interface AuthState {
   user: FirebaseUser | null;
@@ -10,12 +12,11 @@ interface AuthState {
   googleAuthLoading: boolean;
   googleAuthError: string | null;
   checkAuth: () => (() => void); // Returns the unsubscribe function
-  signup: (email: string, password: string, username: string) => Promise<void>;
+  signup: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
-  checkUsernameUnique: (username: string) => Promise<boolean>;
   continueAsGuest: () => void;
+  firebaseSignInWithGoogle: (idToken: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -28,7 +29,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkAuth: () => {
     // Listen to auth state changes
-    const unsubscribe = listenToAuthState((user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       set({ 
         user, 
         isAuthenticated: !!user, 
@@ -36,15 +37,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: null
       });
     });
-
     return unsubscribe;
   },
 
-  signup: async (email: string, password: string, username: string) => {
+  signup: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const user = await signup(email, password, username);
-      set({ user, isAuthenticated: true, isLoading: false });
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      set({ user: userCredential.user, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
       set({ 
         error: error.message || 'Error signing up', 
@@ -57,8 +57,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const user = await login(email, password);
-      set({ user, isAuthenticated: true, isLoading: false });
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      set({ user: userCredential.user, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
       set({ 
         error: error.message || 'Error logging in', 
@@ -68,35 +68,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signInWithGoogle: async () => {
-    set({ googleAuthLoading: true, googleAuthError: null });
-    
-    try {
-      // We're using the custom hook directly to leverage Firebase Auth providers
-      const { signInWithGoogle } = useGoogleAuth();
-      
-      const result = await signInWithGoogle();
-      
-      // The actual auth state update is handled by the listenToAuthState effect
-      // Since Firebase Auth will emit an event when the user signs in with Google
-      set({ googleAuthLoading: false });
-      
-      if (!result) {
-        throw new Error('Google sign in failed');
-      }
-    } catch (error: any) {
-      set({ 
-        googleAuthError: error.message || 'Error signing in with Google', 
-        googleAuthLoading: false 
-      });
-      throw error;
-    }
-  },
-
   signOut: async () => {
     set({ isLoading: true, error: null });
     try {
-      await signOut();
+      await signOut(auth);
       set({ 
         user: null, 
         isAuthenticated: false, 
@@ -111,26 +86,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  checkUsernameUnique: async (username: string) => {
-    try {
-      return await checkUsernameUnique(username);
-    } catch (error: any) {
-      set({ error: error.message || 'Error checking username' });
-      throw error;
-    }
-  },
-
   continueAsGuest: () => {
-    const guestUser: FirebaseUser = {
-      uid: `guest-${Date.now()}`,
-      email: null,
-      displayName: 'Guest User',
-    };
+    // Optionally implement guest logic or leave as a no-op
     set({ 
-      user: guestUser,
-      isAuthenticated: true,
+      user: null,
+      isAuthenticated: false,
       isLoading: false,
       error: null
     });
+  },
+
+  firebaseSignInWithGoogle: async (idToken: string) => {
+    try {
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+      set({ isAuthenticated: true });
+    } catch (error: any) {
+      set({ error: error.message || 'Google sign-in failed' });
+      throw error;
+    }
   },
 }));

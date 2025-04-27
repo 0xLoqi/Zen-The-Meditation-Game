@@ -11,6 +11,7 @@ const FIREBASE_MEASUREMENT_ID = process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID 
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 export default {
+  owner: "wilby-org",
   name: "Zen",
   slug: "zen-meditation-app",
   version: "1.0.0",
@@ -25,7 +26,10 @@ export default {
   assetBundlePatterns: ["**/*"],
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.zenmeditation.app"
+    bundleIdentifier: "com.zenmeditation.app",
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false
+    }
   },
   android: {
     adaptiveIcon: {
@@ -50,7 +54,7 @@ export default {
     firebaseMeasurementId: FIREBASE_MEASUREMENT_ID,
     googleClientId: GOOGLE_CLIENT_ID,
     eas: {
-      projectId: "your-expo-project-id-here"
+      projectId: "0c429300-5faa-4857-a40e-3510e9cdd0c2"
     }
   }
 };

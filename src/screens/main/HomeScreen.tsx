@@ -22,9 +22,12 @@ import { triggerHapticFeedback } from '../../utils/haptics';
 import { formatStreak } from '../../utils/formatters';
 import * as Clipboard from 'expo-clipboard';
 import { getFriendCode, setFriendCode } from '../../firebase/user';
-import { generateReferralCode } from '../../firebase/auth';
+// import { generateReferralCode } from '../../firebase/auth';
 import PatternBackground from '../../components/PatternBackground';
 import FloatingLeaves from '../../components/FloatingLeaves';
+import FriendBar from '../../components/FriendBar';
+import Leaderboard from '../../components/Leaderboard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type HomeScreenNavigationProp = StackNavigationProp<MainStackParamList, 'Home'>;
 
@@ -45,7 +48,14 @@ const HomeScreen = () => {
   const { signOut } = useAuthStore();
   const { userData, isLoadingUser, userError, getUserData, todayCheckIn, getTodayCheckIn } = useUserStore();
   const [friendCode, setFriendCodeState] = useState('');
+  const insets = useSafeAreaInsets();
   
+  // Debug logs
+  // Only log once per mount for sanity
+  useEffect(() => {
+    console.log('Rendering HomeScreen', { userData, gameStore: useGameStore.getState() });
+  }, []);
+
   useEffect(() => {
     getUserData();
     getTodayCheckIn();
@@ -54,13 +64,23 @@ const HomeScreen = () => {
         if (code) {
           setFriendCodeState(code);
         } else {
-          // Auto-generate and set a code if missing
-          const newCode = generateReferralCode();
-          setFriendCode(userData.uid, newCode).then(() => setFriendCodeState(newCode));
+          // const newCode = generateReferralCode();
+          // setFriendCode(userId, newCode).then(() => setFriendCodeState(newCode));
         }
       });
     }
-  }, [userData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
+  if (!userData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading user data...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleMeditatePress = () => {
     triggerHapticFeedback('selection');
@@ -120,103 +140,124 @@ const HomeScreen = () => {
     );
   }
 
-  return (
-    <PatternBackground>
-      <FloatingLeaves count={12} style={styles.leavesBackground} />
-      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}> 
-        {/* Sticky Profile Card */}
-        <View style={styles.stickyProfileCardContainer}>
-          <View style={styles.profileCard}>
-            <TouchableOpacity style={styles.settingsButton} onPress={() => navigation.navigate('Settings')} accessibilityLabel="Settings" accessible>
-              <Ionicons name="settings-outline" size={28} color={COLORS.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.profileCardTouchable} onPress={() => navigation.navigate('Profile')} activeOpacity={0.8} accessibilityLabel="View profile" accessible>
-              <View style={styles.profileHeader} pointerEvents="box-none">
-                <Image 
-                  source={require('../../../assets/images/minizenni.png')} 
-                  style={styles.profileImage}
-                />
-                <View style={styles.profileInfo}>
-                  <View style={styles.usernameRow}>
-                    <Text style={styles.username}>{userData?.username || 'ZenUser'}</Text>
-                    <View style={styles.streakBadge}>
-                      <Ionicons name="flame" size={16} color={COLORS.accent} style={{ marginRight: 2 }} />
-                      <Text style={styles.streakBadgeText}>{userData?.streak || 7}</Text>
+  try {
+    const scrollContentTopMargin = PROFILE_CARD_HEIGHT + insets.top + SPACING.m;
+    return (
+      <PatternBackground>
+        <FloatingLeaves count={12} style={styles.leavesBackground} />
+        <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}> 
+          {/* Sticky Profile Card */}
+          <View style={[styles.stickyProfileCardContainer, { paddingTop: insets.top }]}>
+            <View style={styles.profileCard}>
+              <View style={styles.headerButtons}>
+                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Store')} accessibilityLabel="Store" accessible>
+                  <MaterialCommunityIcons name="store" size={24} color={COLORS.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')} accessibilityLabel="Settings" accessible>
+                  <Ionicons name="settings-outline" size={24} color={COLORS.primary} />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity style={styles.profileCardTouchable} onPress={() => navigation.navigate('Profile')} activeOpacity={0.8} accessibilityLabel="View profile" accessible>
+                <View style={styles.profileHeader} pointerEvents="box-none">
+                  <Image 
+                    source={require('../../../assets/images/minizenni.png')} 
+                    style={styles.profileImage}
+                  />
+                  <View style={styles.profileInfo}>
+                    <View style={styles.usernameRow}>
+                      <Text style={styles.username}>{userData?.username || 'ZenUser'}</Text>
+                      <View style={styles.streakBadge}>
+                        <Ionicons name="flame" size={16} color={COLORS.accent} style={{ marginRight: 2 }} />
+                        <Text style={styles.streakBadgeText}>{userData?.streak || 7}</Text>
+                      </View>
                     </View>
-                  </View>
-                  <View style={styles.levelBadge}>
-                    <Text style={styles.levelText}>Level {userData?.level || 1}</Text>
-                  </View>
-                  <View style={styles.xpContainer}>
-                    <View style={styles.xpBarContainer}>
-                      <View style={[styles.xpBar, { width: '87.5%' }]} />
+                    <View style={styles.levelBadge}>
+                      <Text style={styles.levelText}>Level {userData?.level || 1}</Text>
                     </View>
-                    <Text style={styles.xpText}>350/400 XP</Text>
+                    <View style={styles.xpContainer}>
+                      <View style={styles.xpBarContainer}>
+                        <View style={[styles.xpBar, { width: '87.5%' }]} />
+                      </View>
+                      <Text style={styles.xpText}>350/400 XP</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-        {/* Main Scrollable Content */}
-        <ScrollView contentContainerStyle={styles.scrollContentWithStickyProfile}>
-          {/* Start Meditation Button */}
-          <TouchableOpacity 
-            style={styles.meditateButton}
-            onPress={handleMeditatePress}
-            activeOpacity={0.8}
-          >
-            <View style={styles.meditateButtonContent}>
-              <View style={styles.meditateIconContainer}>
-                <MaterialCommunityIcons name="meditation" size={32} color={COLORS.white} />
-              </View>
-              <View style={styles.meditateTextContainer}>
-                <Text style={styles.meditateButtonTitle}>Start Meditation</Text>
-                <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color={COLORS.white} />
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-          {/* Quests Section */}
-          <Text style={styles.sectionTitle}>Today's Quests</Text>
-          <View style={styles.questsContainer}>
-            {useGameStore.getState().quests.dailyQuests.map((quest) => {
-              const complete = useGameStore.getState().quests.progress[quest.id];
-              return (
-                <View key={quest.id} style={[styles.questRow, complete && styles.questRowComplete]}>
-                  <View style={styles.questTextStack}>
-                    <Text style={[styles.questName, complete && styles.questNameComplete]}>{quest.name} {complete ? '✔️' : ''}</Text>
-                    <Text style={styles.questDescription}>{quest.description}</Text>
-                  </View>
-                </View>
-              );
-            })}
           </View>
-          {/* Achievements Section */}
-          <Text style={styles.sectionTitle}>Closest Achievements</Text>
-          <View style={styles.achievementsContainer}>
-            {(() => {
-              const unlocked = useGameStore.getState().achievements.unlocked;
-              const achievementsData = require('../../../assets/data/achievements.json');
-              const locked = achievementsData.filter((a) => !unlocked.includes(a.id));
-              return locked.slice(0, 3).map((ach) => (
-                <View key={ach.id} style={styles.achievementCard}>
-                  {badgeImages[ach.id] && (
-                    <Image source={badgeImages[ach.id]} style={styles.achievementIcon} />
-                  )}
-                  <View style={styles.achievementTextStack}>
-                    <Text style={styles.achievementName}>{ach.name}</Text>
-                    <Text style={styles.achievementDescription}>{ach.description}</Text>
-                  </View>
+          <ScrollView
+            style={styles.mainContent} contentContainerStyle={styles.scrollContentWithStickyProfile}
+          >
+            <View style={{ marginTop: 50 }}>
+              <FriendBar />
+            </View>
+            {/* Leaderboard */}
+            <Leaderboard />
+            {/* Start Meditation Button */}
+            <TouchableOpacity 
+              style={styles.meditateButton}
+              onPress={handleMeditatePress}
+              activeOpacity={0.8}
+            >
+              <View style={styles.meditateButtonContent}>
+                <View style={styles.meditateIconContainer}>
+                  <MaterialCommunityIcons name="meditation" size={32} color={COLORS.white} />
                 </View>
-              ));
-            })()}
-          </View>
-        </ScrollView>
-        <FloatingLeaves count={12} style={styles.leavesOverlay} />
+                <View style={styles.meditateTextContainer}>
+                  <Text style={styles.meditateButtonTitle}>Start Meditation</Text>
+                  <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color={COLORS.white} />
+              </View>
+            </TouchableOpacity>
+            {/* Quests Section */}
+            <Text style={styles.sectionTitle}>Today's Quests</Text>
+            <View style={styles.questsContainer}>
+              {useGameStore.getState().quests.dailyQuests.map((quest) => {
+                const complete = useGameStore.getState().quests.progress[quest.id];
+                return (
+                  <View key={quest.id} style={[styles.questRow, complete && styles.questRowComplete]}>
+                    <View style={styles.questTextStack}>
+                      <Text style={[styles.questName, complete && styles.questNameComplete]}>{quest.name} {complete ? '✔️' : ''}</Text>
+                      <Text style={styles.questDescription}>{quest.description}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+            {/* Achievements Section */}
+            <Text style={styles.sectionTitle}>Closest Achievements</Text>
+            <View style={styles.achievementsContainer}>
+              {(() => {
+                const unlocked = useGameStore.getState().achievements.unlocked || [];
+                const achievementsData = require('../../../assets/data/achievements.json');
+                const locked = achievementsData.filter((a) => !unlocked.includes(a.id));
+                return locked.slice(0, 3).map((ach) => (
+                  <View key={ach.id} style={styles.achievementCard}>
+                    {badgeImages[ach.id] && (
+                      <Image source={badgeImages[ach.id]} style={styles.achievementIcon} />
+                    )}
+                    <View style={styles.achievementTextStack}>
+                      <Text style={styles.achievementName}>{ach.name}</Text>
+                      <Text style={styles.achievementDescription}>{ach.description}</Text>
+                    </View>
+                  </View>
+                ));
+              })()}
+            </View>
+          </ScrollView>
+          <FloatingLeaves count={12} style={styles.leavesOverlay} />
+        </SafeAreaView>
+      </PatternBackground>
+    );
+  } catch (e) {
+    console.log('Render error in HomeScreen:', e);
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: 'red', fontSize: 18 }}>Render error: {e.message}</Text>
       </SafeAreaView>
-    </PatternBackground>
-  );
+    );
+  }
 };
 
 const styles = StyleSheet.create({
@@ -268,14 +309,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     position: 'relative',
   },
-  settingsButton: {
+  headerButtons: {
+    flexDirection: 'row',
     position: 'absolute',
     top: 10,
     right: 10,
     zIndex: 2,
-    backgroundColor: 'rgba(255,255,255,0.8)',
+  },
+  iconButton: {
+    padding: 8,
     borderRadius: 20,
-    padding: 4,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    marginLeft: 8,
   },
   profileCardTouchable: {
     zIndex: 1,
@@ -470,19 +515,20 @@ const styles = StyleSheet.create({
   },
   stickyProfileCardContainer: {
     position: 'absolute',
-    top: 0,
+    top: Platform.OS === 'ios' ? 60 : 20,
     left: 0,
     right: 0,
     zIndex: 10,
     alignItems: 'center',
     width: '100%',
-    height: PROFILE_CARD_HEIGHT,
     backgroundColor: 'transparent',
-    paddingTop: 60,
   },
   scrollContentWithStickyProfile: {
-    paddingTop: PROFILE_CARD_HEIGHT + 16, // Add a little extra margin
     padding: SPACING.m,
+  },
+  mainContent: {
+    flex: 1,
+    marginTop: PROFILE_CARD_HEIGHT + SPACING.m,
   },
 });
 

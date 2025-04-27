@@ -7,6 +7,7 @@ import {
   Alert,
   TouchableOpacity,
   StatusBar,
+  AppState,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -27,17 +28,18 @@ import { useUserStore } from '../../store/userStore';
 import { formatTime } from '../../utils/formatters';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { useGameStore } from '../../store/index';
-import { maybeDropGlowbag } from '../../services/CosmeticsService';
+import { maybeDropGlowbag, grant } from '../../services/CosmeticsService';
 import { analytics } from '../../firebase';
 import { requestNotificationPermission, scheduleReminder, cancelAllReminders } from '../../lib/notifications';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
+import { playAmbient, stopAmbient } from '../../services/audio';
 
 const MeditationSessionScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
   const { selectedType, selectedDuration, submitMeditationSession } = useMeditationStore();
-  const { userData } = useUserStore();
-  const { addXP, incrementStreak, unlockAchievement } = useGameStore();
+  const { userData, soundPackId, setSoundPackId } = useUserStore();
+  const { addXP, incrementStreak, unlockAchievement, firstMeditationRewarded, setFirstMeditationRewarded } = useGameStore();
   
   // States
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -46,6 +48,9 @@ const MeditationSessionScreen = () => {
   const [breathScore, setBreathScore] = useState(100);
   const [isInhaling, setIsInhaling] = useState(true);
   const [usingBreathTracking, setUsingBreathTracking] = useState(true);
+  const [showCheatOverlay, setShowCheatOverlay] = useState(false);
+  const appState = useRef(AppState.currentState);
+  const backgroundTimer = useRef<NodeJS.Timeout | null>(null);
   
   // Refs
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -122,6 +127,45 @@ const MeditationSessionScreen = () => {
     };
   }, []);
   
+  // App switch guard (cheat-detection)
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
+        // App is backgrounded
+        if (isActive && !isPaused) {
+          backgroundTimer.current = setTimeout(() => {
+            setShowCheatOverlay(true);
+            setIsActive(false); // Invalidate run
+            // Optionally log 'rejected'
+            console.log('Meditation session rejected: app backgrounded');
+          }, 5000);
+        }
+      } else if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App is foregrounded
+        if (backgroundTimer.current) {
+          clearTimeout(backgroundTimer.current);
+          backgroundTimer.current = null;
+        }
+      }
+      appState.current = nextAppState;
+    };
+    const sub = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      if (backgroundTimer.current) clearTimeout(backgroundTimer.current);
+      sub.remove();
+    };
+  }, [isActive, isPaused]);
+  
+  // Play ambient sound on session start and when soundPackId changes
+  useEffect(() => {
+    if (isActive && !isPaused) {
+      playAmbient(soundPackId);
+    } else {
+      stopAmbient();
+    }
+    return () => { stopAmbient(); };
+  }, [isActive, isPaused, soundPackId]);
+  
   // Start meditation session
   const startSession = async () => {
     await cancelAllReminders();
@@ -181,6 +225,11 @@ const MeditationSessionScreen = () => {
       addXP(xp);
       incrementStreak();
       unlockAchievement('first_meditation');
+      // T07: Grant Glowbag on first meditation
+      if (!firstMeditationRewarded) {
+        grant('glowbag_rare');
+        setFirstMeditationRewarded(true);
+      }
       // Get streak after increment
       const streak = useGameStore.getState().progress.streak;
       if (streak === 1) {
@@ -382,6 +431,35 @@ const MeditationSessionScreen = () => {
             style={styles.didItButton}
           />
         </View>
+        {/* Cheat Overlay */}
+        {showCheatOverlay && (
+          <View style={styles.cheatOverlay}>
+            <Text style={styles.cheatText}>Mini Zenni is disappointed 😠{"\n"}Please stay focused during your session!</Text>
+          </View>
+        )}
+        {/* Sound Selection Dropdown */}
+        <View style={{ alignItems: 'center', marginBottom: 16 }}>
+          <Text style={{ fontSize: 16, color: COLORS.primary, marginBottom: 4 }}>Background Sound</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {['rain', 'waves', 'silence'].map((id) => (
+              <TouchableOpacity
+                key={id}
+                style={{
+                  backgroundColor: soundPackId === id ? COLORS.primary : COLORS.neutralLight,
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 20,
+                  marginHorizontal: 4,
+                }}
+                onPress={() => setSoundPackId(id)}
+              >
+                <Text style={{ color: soundPackId === id ? '#fff' : COLORS.primary, fontWeight: 'bold' }}>
+                  {id.charAt(0).toUpperCase() + id.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       </Animated.View>
     </LinearGradient>
   );
@@ -511,6 +589,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 8,
+  },
+  cheatOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+    padding: 32,
+  },
+  cheatText: {
+    fontSize: 24,
+    color: '#B68900',
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
 

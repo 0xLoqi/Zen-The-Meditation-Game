@@ -11,6 +11,8 @@ import ReferralScreen from '../screens/main/ReferralScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
 import AchievementsScreen from '../screens/main/AchievementsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
+import StoreScreen from '../screens/main/StoreScreen';
+import PaywallScreen from '../screens/PaywallScreen';
 
 export type MainStackParamList = {
   Home: undefined;
@@ -27,6 +29,8 @@ export type MainStackParamList = {
   Settings: undefined;
   Achievements: undefined;
   Profile: undefined;
+  Store: undefined;
+  Paywall: undefined;
 };
 
 const MainStack = createStackNavigator<MainStackParamList>();
@@ -45,6 +49,8 @@ const MainNavigator = () => {
       <MainStack.Screen name="Settings" component={SettingsScreen} />
       <MainStack.Screen name="Achievements" component={AchievementsScreen} />
       <MainStack.Screen name="Profile" component={ProfileScreen} />
+      <MainStack.Screen name="Store" component={StoreScreen} />
+      <MainStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
     </MainStack.Navigator>
   );
 };

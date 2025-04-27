@@ -4,83 +4,107 @@
     "name": "Totem: Got Mail",
     "category": "totem",
     "rarity": "common",
-    "asset": "../images/Cosmetic_totem_GotMail.png"
+    "image": "../images/Cosmetic_totem_GotMail.png",
+    "price": 100,
+    "isNew": true
   },
   {
     "id": "zenni_portal",
     "name": "Zenni Summoning Portal",
     "category": "background",
     "rarity": "epic",
-    "asset": "../images/zenni_summoning_portal.png"
+    "image": "../images/zenni_summoning_portal.png",
+    "price": 500,
+    "isNew": false
   },
   {
     "id": "zenni_success",
     "name": "Zenni Success",
     "category": "background",
     "rarity": "rare",
-    "asset": "../images/zenni_success.png"
+    "image": "../images/zenni_success.png",
+    "price": 300,
+    "isNew": false
   },
   {
     "id": "pattern_bg",
     "name": "Pattern Background",
     "category": "background",
     "rarity": "common",
-    "asset": "../images/pattern_bg.png"
+    "image": "../images/pattern_bg.png",
+    "price": 100,
+    "isNew": false
   },
   {
     "id": "zenni_summoning",
     "name": "Zenni Summoning",
     "category": "background",
     "rarity": "epic",
-    "asset": "../images/zenni_summoning.png"
+    "image": "../images/zenni_summoning.png",
+    "price": 500,
+    "isNew": false
   },
   {
     "id": "splash",
     "name": "Splash Screen",
     "category": "background",
     "rarity": "common",
-    "asset": "../images/splash.png"
+    "image": "../images/splash.png",
+    "price": 100,
+    "isNew": false
   },
   {
     "id": "zenni",
     "name": "Zenni Character",
     "category": "character",
     "rarity": "legendary",
-    "asset": "../images/zenni.png"
+    "image": "../images/zenni.png",
+    "price": 1000,
+    "isNew": false
   },
   {
     "id": "minizenni",
     "name": "Mini Zenni",
     "category": "character",
     "rarity": "rare",
-    "asset": "../images/minizenni.png"
+    "image": "../images/minizenni.png",
+    "price": 300,
+    "isNew": false
   },
   {
     "id": "google_logo",
     "name": "Google Logo",
     "category": "icon",
     "rarity": "common",
-    "asset": "../images/google_logo.png"
+    "image": "../images/google_logo.png",
+    "price": 50,
+    "isNew": false
   },
   {
     "id": "icon",
     "name": "App Icon",
     "category": "icon",
     "rarity": "common",
-    "asset": "../images/icon.png"
+    "image": "../images/icon.png",
+    "price": 50,
+    "isNew": false
   },
   {
     "id": "adaptive_icon",
     "name": "Adaptive Icon",
     "category": "icon",
     "rarity": "rare",
-    "asset": "../images/Adaptive-icon.png"
+    "image": "../images/Adaptive-icon.png",
+    "price": 200,
+    "isNew": false
   },
   {
     "id": "glowbag_blue",
     "name": "Glowbag Blue",
     "category": "glowbag",
     "rarity": "epic",
-    "asset": "../images/glowbags/blue.png"
+    "image": "../images/glowbags/blue.png",
+    "price": 500,
+    "isNew": false
   }
 ] 

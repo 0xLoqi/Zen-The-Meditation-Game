@@ -1,3 +1,5 @@
+import 'react-native';
+
 // Global NodeJS type definitions
 declare namespace NodeJS {
   interface Global {

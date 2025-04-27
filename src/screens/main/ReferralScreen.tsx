@@ -14,6 +14,7 @@ import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { useUserStore } from '../../store/userStore';
+import { generateLink } from '../../services/referral';
 
 const ReferralScreen = () => {
   const { referralCode, getReferralCode } = useUserStore();
@@ -43,11 +44,12 @@ const ReferralScreen = () => {
   // Handle share referral code
   const handleShareCode = async () => {
     try {
-      const result = await Share.share({
-        message: `Join me on Zen Meditation App! Use my link: https://zen.app/?code=${referralCode} to get started on your mindfulness journey.`,
+      const link = await generateLink(referralCode);
+      await Share.share({
+        message: `Join me on Zen Meditation App! Use my link: ${link} to get started on your mindfulness journey.`,
       });
     } catch (error: any) {
-      Alert.alert('Error', 'Could not share the referral code');
+      Alert.alert('Error', 'Could not share the referral link');
     }
   };
   
