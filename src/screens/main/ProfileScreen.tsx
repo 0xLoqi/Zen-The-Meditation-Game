@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable, Modal, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable, Modal, TouchableWithoutFeedback, ImageBackground } from 'react-native';
+import { Video } from 'expo-av';
 import PatternBackground from '../../components/PatternBackground';
 import FloatingLeaves from '../../components/FloatingLeaves';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +15,7 @@ const miniZenni = require('../../../assets/images/minizenni.png');
 const glowbagIcon = require('../../../assets/images/glowbags/Glowbag_common.png');
 const badgeIcon = require('../../../assets/images/badges/locked_achievement.png');
 const editIcon = require('../../../assets/images/minizenni.png'); // fallback to Zenni image for now
+const animatedBg = require('../../../assets/images/backgrounds/animated_darkmode_bg.mp4');
 
 const userData = { username: 'ZenMaster' }; // Placeholder for user data
 
@@ -62,9 +64,18 @@ const ProfileScreen = () => {
     Clipboard.setStringAsync(friendCode);
   };
   return (
-    <PatternBackground>
+    <View style={styles.container}>
+      <Video
+        source={animatedBg}
+        style={styles.animatedBg}
+        resizeMode="cover"
+        shouldPlay
+        isLooping
+        isMuted
+        ignoreSilentSwitch="obey"
+      />
       <FloatingLeaves count={6} style={styles.leavesBackground} />
-      <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+      <View style={[styles.container, { backgroundColor: 'transparent', zIndex: 1 }]}>
         <TouchableOpacity style={styles.backArrow} onPress={() => navigation.goBack()} accessibilityLabel="Back" accessible>
           <Ionicons name="chevron-back" size={36} color="#FF8C42" style={styles.backArrowIcon} />
         </TouchableOpacity>
@@ -73,7 +84,9 @@ const ProfileScreen = () => {
           <View style={styles.heroPaneCentered}>
             <Image source={miniZenni} style={styles.profileZenniLargeModern} />
           </View>
-          <Text style={styles.userNameModern}>{userData.username}</Text>
+          <View style={styles.userNamePill}>
+            <Text style={styles.userNameModern}>{userData.username}</Text>
+          </View>
           {friendCode ? (
             <View style={styles.friendCodePill}>
               <Text style={styles.friendCodeLabelModern}>Friend Code:</Text>
@@ -145,7 +158,7 @@ const ProfileScreen = () => {
         {/* Footer removed */}
         <InfoModal {...modal} onClose={closeModal} />
       </View>
-    </PatternBackground>
+    </View>
   );
 };
 
@@ -165,8 +178,8 @@ const styles = StyleSheet.create({
   },
   scrollContentWithBackArrow: { padding: 16, paddingBottom: 100, paddingTop: 56 },
   heroPaneCentered: { alignItems: 'center', justifyContent: 'center', marginBottom: 8, marginTop: 32 },
-  profileZenniLargeModern: { width: 160, height: 160, resizeMode: 'contain', alignSelf: 'center', borderRadius: 80, borderWidth: 4, borderColor: '#FFD580', shadowColor: '#FFD580', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8, backgroundColor: '#fff' },
-  userNameModern: { alignSelf: 'center', fontWeight: 'bold', fontSize: 26, color: '#7A5C00', marginBottom: 12, marginTop: 4 },
+  profileZenniLargeModern: { width: 160, height: 160, resizeMode: 'contain', alignSelf: 'center' },
+  userNameModern: { alignSelf: 'center', fontWeight: 'bold', fontSize: 26, color: '#F5E9D0', marginBottom: 12, marginTop: 4 },
   glowbagIcon: { position: 'relative', marginRight: 8 },
   glowbagImage: { width: 40, height: 40 },
   unreadBadge: { position: 'absolute', top: -4, right: -4, backgroundColor: '#FF8C42', borderRadius: 8, paddingHorizontal: 4 },
@@ -183,8 +196,8 @@ const styles = StyleSheet.create({
   friendChip: { backgroundColor: '#FFD580', borderRadius: CARD_RADIUS, paddingHorizontal: 12, justifyContent: 'center', marginLeft: 8, ...SHADOW },
   friendChipText: { color: '#7A5C00', fontWeight: 'bold' },
   customizeButtonContainer: { alignItems: 'center', marginVertical: 16 },
-  customizeButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 24, paddingVertical: 14, paddingHorizontal: 32, ...SHADOW },
-  customizeButtonLabel: { fontWeight: 'bold', fontSize: 18, color: '#7A5C00' },
+  customizeButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(35,32,20,0.95)', borderRadius: 24, paddingVertical: 14, paddingHorizontal: 32, ...SHADOW },
+  customizeButtonLabel: { fontWeight: 'bold', fontSize: 18, color: '#FFD580' },
   editText: { color: '#FF8C42', fontWeight: 'bold' },
   currencyRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   tokenPill: { backgroundColor: '#FFD580', borderRadius: CARD_RADIUS, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, marginRight: 12, ...SHADOW },
@@ -252,21 +265,39 @@ const styles = StyleSheet.create({
   friendCodeLabelModern: { color: '#7A5C00', fontWeight: 'bold', marginRight: 4 },
   friendCodeValueModern: { color: '#FF8C42', fontWeight: 'bold', marginRight: 6 },
   copyButtonModern: { padding: 2 },
-  statsCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 18, padding: 18, marginVertical: 12, marginHorizontal: 2, ...SHADOW },
+  statsCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(35,32,20,0.95)', borderRadius: 18, padding: 18, marginVertical: 12, marginHorizontal: 2, ...SHADOW },
   statItemModern: { alignItems: 'center', flex: 1 },
-  statValueModern: { fontWeight: 'bold', fontSize: 20, color: '#FF8C42', marginTop: 2 },
-  statLabelModern: { fontSize: 12, color: '#7A5C00', marginTop: 2 },
-  questPanelModern: { backgroundColor: '#fff', borderRadius: CARD_RADIUS, padding: 20, marginBottom: 16, ...SHADOW },
-  questTitleModern: { fontWeight: 'bold', fontSize: 18, marginBottom: 12, color: '#7A5C00' },
+  statValueModern: { fontWeight: 'bold', fontSize: 20, color: '#FFD580', marginTop: 2 },
+  statLabelModern: { fontSize: 12, color: '#F5E9D0', marginTop: 2 },
+  questPanelModern: { backgroundColor: 'rgba(35,32,20,0.95)', borderRadius: CARD_RADIUS, padding: 20, marginBottom: 16, ...SHADOW },
+  questTitleModern: { fontWeight: 'bold', fontSize: 18, marginBottom: 12, color: '#FFD580' },
   questRowModern: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  questTextModern: { flex: 1, fontWeight: 'bold', color: '#7A5C00' },
+  questTextModern: { flex: 1, fontWeight: 'bold', color: '#F5E9D0' },
   progressBarModern: { flex: 2, height: 8, backgroundColor: '#FFD580', borderRadius: 4, marginHorizontal: 8 },
   progressFillModern: { width: '60%', height: '100%', backgroundColor: '#FF8C42', borderRadius: 4 },
-  claimButtonModern: { backgroundColor: '#eee', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 6 },
-  claimButtonActive: { backgroundColor: '#FF8C42' },
-  claimTextModern: { color: '#7A5C00', fontWeight: 'bold' },
-  claimTextActive: { color: '#fff' },
+  claimButtonModern: { backgroundColor: '#2C2617', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 6 },
+  claimButtonActive: { backgroundColor: '#FFD580' },
+  claimTextModern: { color: '#FFD580', fontWeight: 'bold' },
+  claimTextActive: { color: '#232014' },
   customizeButtonContainerBottom: { alignItems: 'center', marginVertical: 24, marginBottom: 40 },
+  animatedBg: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  userNamePill: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(35,32,20,0.95)',
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    marginBottom: 12,
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 4,
+  },
 });
 
 export default ProfileScreen; 
