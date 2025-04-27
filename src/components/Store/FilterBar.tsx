@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Picker } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { COLORS } from '../../constants/theme';
 
 const RARITIES = ['common', 'rare', 'epic', 'legendary'];
@@ -39,16 +40,28 @@ const FilterBar = ({ selectedRarities, sort, onChange }: any) => {
           </TouchableOpacity>
         ))}
       </View>
-      <Picker
-        selectedValue={localSort}
-        style={styles.picker}
-        onValueChange={changeSort}
-        mode="dropdown"
-      >
-        {SORTS.map((s) => (
-          <Picker.Item key={s.value} label={s.label} value={s.value} />
-        ))}
-      </Picker>
+      {Platform.OS === 'web' ? (
+        <select
+          value={localSort}
+          onChange={e => changeSort(e.target.value)}
+          style={{ width: 150, color: COLORS.primary, padding: 6, borderRadius: 8 }}
+        >
+          {SORTS.map((s) => (
+            <option key={s.value} value={s.value}>{s.label}</option>
+          ))}
+        </select>
+      ) : (
+        <Picker
+          selectedValue={localSort}
+          style={styles.picker}
+          onValueChange={changeSort}
+          mode="dropdown"
+        >
+          {SORTS.map((s) => (
+            <Picker.Item key={s.value} label={s.label} value={s.value} />
+          ))}
+        </Picker>
+      )}
     </View>
   );
 };

@@ -1,22 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Platform,
   ViewStyle,
   Image,
+  Animated,
 } from 'react-native';
-import * as ReactNative from 'react-native';
-const {
-  SafeAreaView: RN_SafeAreaView,
-  ScrollView: RN_ScrollView,
-  TouchableOpacity: RN_TouchableOpacity,
-  Platform: RN_Platform,
-} = ReactNative;
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, SHADOWS } from '../../constants/theme';
 import Button from '../../components/Button';
@@ -46,6 +40,24 @@ const ColorSelectionScreen = () => {
   const navigation = useNavigation();
   const { setColorScheme } = useMiniZenniStore();
   const [selectedColor, setSelectedColor] = useState(COLOR_SCHEMES[0]);
+  const floatAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: -16,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [floatAnim]);
 
   const handleColorSelect = (color: typeof COLOR_SCHEMES[0]) => {
     setSelectedColor(color);
@@ -83,14 +95,16 @@ const ColorSelectionScreen = () => {
         >
           <View style={styles.content}>
             <View style={styles.headerContainer}>
-              <Image
-                source={require('../../../assets/images/minizenni.png')}
-                style={[
-                  styles.miniZenniImage,
-                  { tintColor: selectedColor.primary }
-                ]}
-                resizeMode="contain"
-              />
+              <Animated.View style={{ transform: [{ translateY: floatAnim }] }}>
+                <Image
+                  source={require('../../../assets/images/minizenni.png')}
+                  style={[
+                    styles.miniZenniImage,
+                    { tintColor: selectedColor.primary }
+                  ]}
+                  resizeMode="contain"
+                />
+              </Animated.View>
               <Text style={styles.title}>Choose Your Element</Text>
               <Text style={styles.description}>
                 Select an element that will define your Mini Zenni's essence.
@@ -149,7 +163,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: RN_Platform.OS === 'ios' ? 60 : 20,
+    top: Platform.OS === 'ios' ? 60 : 20,
     left: 20,
     zIndex: 10,
     width: 40,
@@ -203,7 +217,7 @@ const styles = StyleSheet.create({
     maxWidth: 280,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignSelf: 'center',
     gap: SPACING.medium,
     marginBottom: SPACING.xxlarge,

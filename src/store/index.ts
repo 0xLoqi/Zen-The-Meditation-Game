@@ -45,6 +45,9 @@ interface CosmeticSlice {
       outfit: string;
       headgear: string;
       aura: string;
+      face: string;
+      accessory: string;
+      companion: string;
     };
   };
 }
@@ -102,6 +105,9 @@ const initialState: GameStore = {
       outfit: "",
       headgear: "",
       aura: "",
+      face: "",
+      accessory: "",
+      companion: "",
     },
   },
   achievements: {

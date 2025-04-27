@@ -14,9 +14,16 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import Sparkle from './Sparkle';
+import { useGameStore } from '../store';
+import { cosmeticImages, defaultImage } from './Store/cosmeticImages';
 
 interface MiniZenniProps {
-  outfitId: OutfitId;
+  outfitId?: string;
+  headgearId?: string;
+  auraId?: string;
+  faceId?: string;
+  accessoryId?: string;
+  companionId?: string;
   size?: 'small' | 'medium' | 'large';
   style?: ViewStyle;
   animationState?: 'idle' | 'meditating' | 'levelUp' | 'bouncing' | 'success';
@@ -30,7 +37,12 @@ interface MiniZenniProps {
 }
 
 const MiniZenni = ({
-  outfitId = 'default',
+  outfitId,
+  headgearId,
+  auraId,
+  faceId,
+  accessoryId,
+  companionId,
   size = 'medium',
   style,
   animationState = 'idle',
@@ -96,6 +108,9 @@ const MiniZenni = ({
     };
   });
 
+  // Zustand fallback
+  const equipped = useGameStore((s) => s.cosmetics.equipped);
+
   // Determine dimensions based on size (increased by 30%)
   const getDimensions = () => {
     switch (size) {
@@ -112,13 +127,16 @@ const MiniZenni = ({
   const dimensions = getDimensions();
   const sparkleSize = dimensions.width * 1.5;
 
-  // Get the appropriate image based on state
-  const getImage = () => {
-    if (animationState === 'success') {
-      return require('../../assets/images/zenni_success.png');
-    }
-    return require('../../assets/images/zenni_summoning.png');
-  };
+  // Layer order: base -> outfit -> face -> headgear -> accessory -> aura -> companion
+  const layers = [
+    cosmeticImages['default_base.png'] || defaultImage,
+    cosmeticImages[outfitId || equipped.outfit] || null,
+    cosmeticImages[faceId || equipped.face] || null,
+    cosmeticImages[headgearId || equipped.headgear] || null,
+    cosmeticImages[accessoryId || equipped.accessory] || null,
+    cosmeticImages[auraId || equipped.aura] || null,
+    cosmeticImages[companionId || equipped.companion] || null,
+  ].filter(Boolean);
 
   return (
     <RNView style={[styles.container, dimensions, style]}>
@@ -130,17 +148,21 @@ const MiniZenni = ({
         />
       </Animated.View>
       <Animated.View style={animatedStyle}>
-        <RNImage
-          source={getImage()}
-          style={[
-            styles.image,
-            dimensions,
-            colorScheme && {
-              tintColor: colorScheme.primary,
-            },
-          ]}
-          resizeMode="contain"
-        />
+        {layers.map((src, idx) => (
+          <RNImage
+            key={idx}
+            source={src}
+            style={[
+              styles.image,
+              dimensions,
+              colorScheme && idx === 0 && {
+                tintColor: colorScheme.primary,
+              },
+              // Optionally add zIndex if needed
+            ]}
+            resizeMode="contain"
+          />
+        ))}
       </Animated.View>
     </RNView>
   );

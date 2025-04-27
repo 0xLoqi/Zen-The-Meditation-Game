@@ -9,11 +9,15 @@ import SoundPrefScreen from '../screens/onboarding/SoundPrefScreen';
 import ReminderPrompt from '../screens/onboarding/ReminderPrompt';
 import AccountScreen from '../screens/onboarding/AccountScreen';
 import FirstSessionIntroScreen from '../screens/onboarding/FirstSessionIntroScreen';
+import NameEntryScreen from '../screens/onboarding/NameEntryScreen';
+import GlowbagOfferScreen from '../screens/onboarding/GlowbagOfferScreen';
+import GlowbagOpeningScreen from '../screens/onboarding/GlowbagOpeningScreen';
 // TODO: Import all other onboarding screens as implemented
 
 const OnboardingStackNav = createStackNavigator();
 
 const ONBOARDING_SCREENS = [
+  { name: 'NameEntry', component: NameEntryScreen },
   { name: 'Welcome', component: WelcomeScreen },
   { name: 'SummonMiniZenni', component: SummonMiniZenniScreen },
   { name: 'NameMini', component: NameSelectionScreen },
@@ -21,7 +25,8 @@ const ONBOARDING_SCREENS = [
   { name: 'Commitment', component: CommitmentScreen },
   { name: 'SoundPref', component: SoundPrefScreen },
   { name: 'Reminder', component: ReminderPrompt },
-  { name: 'Account', component: AccountScreen },
+  { name: 'GlowbagOffer', component: GlowbagOfferScreen },
+  { name: 'GlowbagOpening', component: GlowbagOpeningScreen },
   { name: 'FirstSessionIntro', component: FirstSessionIntroScreen },
   // { name: 'Motivation', component: MotivationScreen },
   // { name: 'Reminder', component: ReminderPrompt },
