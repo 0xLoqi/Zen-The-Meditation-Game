@@ -20,7 +20,7 @@ type PreviewProps = {
   headgearId?: string;
   auraId?: string;
   faceId?: string;
-  accessoryId?: string;
+  accessoryId?: string | string[];
   companionId?: string;
 };
 
@@ -68,11 +68,30 @@ const StoreScreen = () => {
               // Cast key to the PreviewProps keys so TS recognizes it
               const key = Object.keys(prop)[0] as keyof PreviewProps;
               const value = prop[key]!;
-              const isSelected = preview[key] === value;
+              const isSelected = key === 'accessoryId'
+                ? (Array.isArray(preview.accessoryId) 
+                    ? preview.accessoryId.includes(value) 
+                    : preview.accessoryId === value)
+                : preview[key] === value;
               return (
                 <TouchableOpacity
                   style={[styles.card, isSelected && styles.cardSelected]}
                   onPress={() => setPreview(prev => {
+                    // Special handling for accessories: allow toggling up to 2
+                    if (key === 'accessoryId') {
+                      const curr = prev.accessoryId;
+                      const arr = Array.isArray(curr) ? curr : curr ? [curr] : [];
+                      if (arr.includes(value)) {
+                        // remove
+                        const newArr = arr.filter(v => v !== value);
+                        return { ...prev, accessoryId: newArr.length > 1 ? newArr : newArr[0] };
+                      } else if (arr.length < 2) {
+                        // add
+                        return { ...prev, accessoryId: [...arr, value] };
+                      }
+                      return prev;
+                    }
+                    // Default single-selection for other categories
                     if (prev[key] === value) {
                       const { [key]: _, ...rest } = prev;
                       return rest;

@@ -22,7 +22,7 @@ interface MiniZenniProps {
   headgearId?: string;
   auraId?: string;
   faceId?: string;
-  accessoryId?: string;
+  accessoryId?: string | string[];
   companionId?: string;
   size?: 'small' | 'medium' | 'large';
   style?: ViewStyle;
@@ -127,14 +127,22 @@ const MiniZenni = ({
   const dimensions = getDimensions();
   const sparkleSize = dimensions.width * 1.5;
 
-  // Layer order: base -> outfit -> face -> headgear -> accessory -> aura -> companion
+  // Build layers with aura behind the base
   const layers = [
+    // Aura behind everything
+    cosmeticImages[auraId || equipped.aura] || null,
+    // Base body
     cosmeticImages['default_base.png'] || defaultImage,
+    // Outfit, face, headgear
     cosmeticImages[outfitId || equipped.outfit] || null,
     cosmeticImages[faceId || equipped.face] || null,
     cosmeticImages[headgearId || equipped.headgear] || null,
-    cosmeticImages[accessoryId || equipped.accessory] || null,
-    cosmeticImages[auraId || equipped.aura] || null,
+    // Handle up to two accessories
+    ...(Array.isArray(accessoryId)
+      ? accessoryId.map(id => cosmeticImages[id] || null)
+      : [cosmeticImages[accessoryId || equipped.accessory] || null]
+    ),
+    // Companion on top
     cosmeticImages[companionId || equipped.companion] || null,
   ].filter(Boolean);
 
@@ -147,7 +155,7 @@ const MiniZenni = ({
           style={styles.sparkle}
         />
       </Animated.View>
-      <Animated.View style={animatedStyle}>
+      <Animated.View style={[animatedStyle, dimensions]}>
         {layers.map((src, idx) => (
           <RNImage
             key={idx}
@@ -174,6 +182,9 @@ const styles = RNStyleSheet.create({
     alignItems: 'center',
   },
   image: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
     width: '100%',
     height: '100%',
   },
