@@ -72,14 +72,6 @@
     "price": 800
   },
   {
-    "id": "glowpuff_aura",
-    "name": "Glowpuff Aura",
-    "category": "aura",
-    "rarity": "epic",
-    "image": "Glowpuff_Aura.png",
-    "price": 550
-  },
-  {
     "id": "whorled_staff",
     "name": "Whorled Staff",
     "category": "accessory",

@@ -19,7 +19,6 @@ const cosmeticImages = {
   'auric_bloom.png': require('../../../assets/images/cosmetics/auras/auric_bloom.png'),
   'focus_spiral.png': require('../../../assets/images/cosmetics/auras/focus_spiral.png'),
   'verdant_halo.png': require('../../../assets/images/cosmetics/auras/verdant_halo.png'),
-  'Glowpuff_Aura.png': require('../../../assets/images/cosmetics/auras/Glowpuff_Aura.png'),
   // companions
   'cozy_owl.png': require('../../../assets/images/cosmetics/companions/cozy_owl.png'),
   'busy_bee.png': require('../../../assets/images/cosmetics/companions/busy_bee.png'),

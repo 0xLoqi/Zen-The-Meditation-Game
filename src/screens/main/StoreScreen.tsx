@@ -287,7 +287,7 @@ const StoreScreen = () => {
                   </View>
                 )}
                 contentContainerStyle={{ paddingBottom: 32 }}
-                stickySectionHeadersEnabled={false}
+                stickySectionHeadersEnabled={true}
                 showsVerticalScrollIndicator={false}
                 style={{ flex: 1 }}
               />
