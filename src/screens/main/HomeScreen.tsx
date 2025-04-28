@@ -308,11 +308,15 @@ const HomeScreen = () => {
             <View style={styles.questsContainer}>
               {useGameStore.getState().quests.dailyQuests.map((quest) => {
                 const complete = useGameStore.getState().quests.progress[quest.id];
+                // Emoji prefix for each quest
+                const emoji = quest.id === 'daily_checkin_start' ? '📝'
+                  : quest.id === 'first_meditation' ? '✨'
+                  : quest.id === 'daily_checkin_end' ? '💭' : '';
                 return (
                   <TouchableOpacity key={quest.id} onPress={() => handleQuestPress(quest)} activeOpacity={0.8}>
                     <View style={[styles.questRow, complete && styles.questRowComplete]}>
                       <View style={styles.questTextStack}>
-                        <Text style={[styles.questName, complete && styles.questNameComplete]}>{quest.name} {complete ? '✔️' : ''}</Text>
+                        <Text style={[styles.questName, complete && styles.questNameComplete]}>{emoji} {quest.name} {complete ? '✔️' : ''}</Text>
                         <Text style={styles.questDescription}>{quest.description}</Text>
                       </View>
                     </View>
