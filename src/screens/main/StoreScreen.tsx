@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, Dimensions, ImageBackground, TouchableOpacity, Modal, Pressable, ScrollView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, Dimensions, ImageBackground, TouchableOpacity, Modal, Pressable, SectionList, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,9 @@ import MiniZenni from '../../components/MiniZenni';
 import { cosmeticImages } from '../../components/Store/cosmeticImages';
 import TokenBalanceBar from '../../components/TokenBalanceBar';
 import LootBagCard from '../../components/LootBagCard';
+import { setUserData } from '../../firebase/user';
+import { useAuthStore } from '../../store/authStore';
+import { useUserStore } from '../../store/userStore';
 
 const MODULAR_CATEGORIES = ['outfit', 'headgear', 'aura', 'face', 'accessory', 'companion'];
 const storeBg = require('../../../assets/images/backgrounds/store_background.png');
@@ -54,10 +57,62 @@ function groupByCategory(items) {
   }, {});
 }
 
+// Helper to chunk an array into rows of n
+function chunkArray(array, size) {
+  const result = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
+function mapPreviewToEquipped(preview) {
+  return {
+    outfit: preview.outfitId || '',
+    headgear: preview.headgearId || '',
+    aura: preview.auraId || '',
+    face: preview.faceId || '',
+    accessory: Array.isArray(preview.accessoryId)
+      ? preview.accessoryId.join(',')
+      : preview.accessoryId || '',
+    companion: preview.companionId || '',
+  };
+}
+
+async function equipCosmetics(preview) {
+  try {
+    const { user } = useAuthStore.getState();
+    if (!user || !user.uid) throw new Error('Not signed in');
+    // Fetch current user data (could use a selector/store if available)
+    // We'll do a minimal merge update
+    const equipped = mapPreviewToEquipped(preview);
+    // Only update cosmetics.equipped, preserve all other fields
+    await setUserData(user.uid, { cosmetics: { equipped } });
+    Alert.alert('Equipped!', 'Your cosmetics have been updated.');
+  } catch (e) {
+    Alert.alert('Error', e.message || 'Failed to equip cosmetics');
+  }
+}
+
 const StoreScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const [preview, setPreview] = useState<PreviewProps>({});
+  const userData = useUserStore((s) => s.userData);
+  const equipped = userData?.cosmetics?.equipped || {};
+
+  // Map equipped cosmetics to preview state
+  function equippedToPreview(equipped) {
+    return {
+      outfitId: equipped.outfit || undefined,
+      headgearId: equipped.headgear || undefined,
+      auraId: equipped.aura || undefined,
+      faceId: equipped.face || undefined,
+      accessoryId: equipped.accessory ? equipped.accessory.split(',').filter(Boolean) : undefined,
+      companionId: equipped.companion || undefined,
+    };
+  }
+
+  const [preview, setPreview] = useState<PreviewProps>(() => equippedToPreview(equipped));
   // TODO: Replace with real values from store/user
   const tokens = 1234;
   const lootBagPrice = 500;
@@ -73,6 +128,30 @@ const StoreScreen = () => {
     aura: 'Auras',
     companion: 'Companions',
   };
+  const sections = CATEGORY_ORDER.map(cat => ({
+    title: CATEGORY_LABELS[cat],
+    // chunk into rows of 2 for grid
+    data: chunkArray(grouped[cat] || [], 2),
+    key: cat,
+  })).filter(section => section.data.length > 0);
+
+  // Helper: is the preview different from equipped?
+  function isPreviewUnequipped() {
+    if (!preview || Object.keys(preview).length === 0) return false;
+    // Check each category
+    return (
+      (preview.outfitId && preview.outfitId !== equipped.outfit) ||
+      (preview.headgearId && preview.headgearId !== equipped.headgear) ||
+      (preview.auraId && preview.auraId !== equipped.aura) ||
+      (preview.faceId && preview.faceId !== equipped.face) ||
+      (preview.accessoryId && (
+        Array.isArray(preview.accessoryId)
+          ? preview.accessoryId.join(',') !== (equipped.accessory || '')
+          : preview.accessoryId !== equipped.accessory
+      )) ||
+      (preview.companionId && preview.companionId !== equipped.companion)
+    );
+  }
 
   return (
     <ImageBackground source={storeBg} style={styles.bg} resizeMode="cover">
@@ -88,94 +167,109 @@ const StoreScreen = () => {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
           </TouchableOpacity>
-          <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-            <View style={styles.previewContainer}>
-              <MiniZenni size="large" {...preview} />
-            </View>
-            {/* Render each category section */}
-            {CATEGORY_ORDER.map(cat => (
-              grouped[cat]?.length ? (
-                <View key={cat} style={styles.section}>
-                  <Text style={styles.sectionHeader}>{CATEGORY_LABELS[cat]}</Text>
-                  <FlatList
-                    data={grouped[cat]}
-                    keyExtractor={item => item.id}
-                    numColumns={2}
-                    contentContainerStyle={styles.list}
-                    renderItem={({ item }) => {
-                      const imgKey = item.image?.replace(/^.*[\\/]/, '');
-                      const imgSrc = cosmeticImages[imgKey];
-                      const prop = getPreviewProps(item);
-                      const key = Object.keys(prop)[0] as keyof PreviewProps;
-                      const value = prop[key]!;
-                      const isSelected = key === 'accessoryId'
-                        ? (Array.isArray(preview.accessoryId)
-                            ? preview.accessoryId.includes(value)
-                            : preview.accessoryId === value)
-                        : preview[key] === value;
-                      return (
-                        <TouchableOpacity
-                          style={[styles.card, isSelected && styles.cardSelected]}
-                          onPress={() => setPreview(prev => {
-                            // Special handling for accessories: allow toggling up to 2
-                            if (key === 'accessoryId') {
-                              const curr = prev.accessoryId;
-                              const arr = Array.isArray(curr) ? curr : curr ? [curr] : [];
-                              if (arr.includes(value)) {
-                                // remove
-                                const newArr = arr.filter(v => v !== value);
-                                return { ...prev, accessoryId: newArr.length > 1 ? newArr : newArr[0] };
-                              } else if (arr.length < 2) {
-                                // add
-                                return { ...prev, accessoryId: [...arr, value] };
-                              }
-                              return prev;
-                            }
-                            // Default single-selection for other categories
-                            if (prev[key] === value) {
-                              const { [key]: _, ...rest } = prev;
-                              return rest;
-                            }
-                            return { ...prev, [key]: value };
-                          })}
-                          activeOpacity={0.8}
-                        >
-                          <ImageBackground
-                            source={paneBg}
-                            style={styles.cardPaneBg}
-                            imageStyle={styles.cardPaneImg}
-                            resizeMode="contain"
-                          >
-                            {item.category === 'aura' ? (
-                              <View style={styles.cardVerticalContent}>
-                                {/* Aura image at the very back */}
-                                {imgSrc && (
-                                  <Image source={imgSrc} style={[styles.cardImageAbsolute, { zIndex: 0 }]} resizeMode="contain" />
-                                )}
-                                {/* Silhouette always in front of aura */}
-                                <Image source={baseSilhouette} style={[styles.cardImageAbsolute, { opacity: 0.18, zIndex: 1 }]} resizeMode="contain" />
-                              </View>
-                            ) : (
-                              <View style={styles.cardVerticalContent}>
-                                <View style={styles.cardImageContainer}>
-                                  <Image source={baseSilhouette} style={[styles.cardImageAbsolute, { opacity: 0.18 }]} resizeMode="contain" />
-                                  {imgSrc && (
-                                    <Image source={imgSrc} style={styles.cardImageAbsolute} resizeMode="contain" />
-                                  )}
-                                </View>
-                              </View>
-                            )}
-                            <Text style={styles.cardName}>{item.name}</Text>
-                            <Text style={styles.cardPrice}>{item.price} 💰</Text>
-                          </ImageBackground>
-                        </TouchableOpacity>
-                      );
-                    }}
-                  />
-                </View>
-              ) : null
-            ))}
-          </ScrollView>
+          <SectionList
+            sections={sections}
+            keyExtractor={(_, idx) => String(idx)}
+            renderSectionHeader={({ section: { title } }) => (
+              <Text style={styles.sectionHeader}>{title}</Text>
+            )}
+            renderItem={({ item: row }) => (
+              <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                {row.map((item, colIdx) => {
+                  const imgKey = item.image?.replace(/^.*[\\/]/, '');
+                  const imgSrc = cosmeticImages[imgKey];
+                  const prop = getPreviewProps(item);
+                  const key = Object.keys(prop)[0] as keyof PreviewProps;
+                  const value = prop[key]!;
+                  const isSelected = key === 'accessoryId'
+                    ? (Array.isArray(preview.accessoryId)
+                        ? preview.accessoryId.includes(value)
+                        : preview.accessoryId === value)
+                    : preview[key] === value;
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.card, isSelected && styles.cardSelected]}
+                      onPress={() => setPreview(prev => {
+                        // Special handling for accessories: allow toggling up to 2
+                        if (key === 'accessoryId') {
+                          const curr = prev.accessoryId;
+                          const arr = Array.isArray(curr) ? curr : curr ? [curr] : [];
+                          if (arr.includes(value)) {
+                            // remove
+                            const newArr = arr.filter(v => v !== value);
+                            return { ...prev, accessoryId: newArr.length > 1 ? newArr : newArr[0] };
+                          } else if (arr.length < 2) {
+                            // add
+                            return { ...prev, accessoryId: [...arr, value] };
+                          }
+                          return prev;
+                        }
+                        // Default single-selection for other categories
+                        if (prev[key] === value) {
+                          const { [key]: _, ...rest } = prev;
+                          return rest;
+                        }
+                        return { ...prev, [key]: value };
+                      })}
+                      activeOpacity={0.8}
+                    >
+                      <ImageBackground
+                        source={paneBg}
+                        style={styles.cardPaneBg}
+                        imageStyle={styles.cardPaneImg}
+                        resizeMode="contain"
+                      >
+                        {item.category === 'aura' ? (
+                          <View style={styles.cardVerticalContent}>
+                            <View style={styles.cardImageContainer}>
+                              {/* Aura image at the very back */}
+                              {imgSrc && (
+                                <Image source={imgSrc} style={[styles.cardImageAbsolute, { zIndex: 0 }]} resizeMode="contain" />
+                              )}
+                              {/* Silhouette always in front of aura */}
+                              <Image source={baseSilhouette} style={[styles.cardImageAbsolute, { opacity: 0.18, zIndex: 1 }]} resizeMode="contain" />
+                            </View>
+                          </View>
+                        ) : (
+                          <View style={styles.cardVerticalContent}>
+                            <View style={styles.cardImageContainer}>
+                              <Image source={baseSilhouette} style={[styles.cardImageAbsolute, { opacity: 0.18 }]} resizeMode="contain" />
+                              {imgSrc && (
+                                <Image source={imgSrc} style={styles.cardImageAbsolute} resizeMode="contain" />
+                              )}
+                            </View>
+                          </View>
+                        )}
+                        <Text style={styles.cardName}>{item.name}</Text>
+                        <Text style={styles.cardPrice}>{item.price} 💰</Text>
+                      </ImageBackground>
+                    </TouchableOpacity>
+                  );
+                })}
+                {/* If odd number of items, add a spacer to keep grid alignment */}
+                {row.length === 1 && <View style={[styles.card, { backgroundColor: 'transparent', elevation: 0, shadowOpacity: 0 }]} />}
+              </View>
+            )}
+            contentContainerStyle={{ paddingBottom: 32 }}
+            ListHeaderComponent={
+              <View style={styles.previewContainer}>
+                <MiniZenni size="large" {...preview} />
+                {isPreviewUnequipped() && (
+                  <TouchableOpacity
+                    style={styles.equipButton}
+                    onPress={() => equipCosmetics(preview)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.equipButtonText}>Equip</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            }
+            stickySectionHeadersEnabled={false}
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+          />
         </View>
       </SafeAreaView>
     </ImageBackground>
@@ -341,6 +435,24 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  equipButton: {
+    marginTop: 16,
+    backgroundColor: '#FF8C42',
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    alignSelf: 'center',
+    elevation: 2,
+  },
+  equipButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  equipButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+    letterSpacing: 0.5,
   },
 });
 

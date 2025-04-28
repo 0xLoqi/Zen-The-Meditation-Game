@@ -74,6 +74,8 @@ yarn install
 npm start
 # or
 yarn start
+# or
+npx expo start
 ```
 
 4. Follow the Expo CLI instructions to run on your desired platform (iOS/Android)

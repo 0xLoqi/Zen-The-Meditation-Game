@@ -9,6 +9,8 @@ import { getFriendCode, setFriendCode } from '../../firebase/user';
 // import { generateReferralCode } from '../../firebase/auth'; // Uncomment if using generateReferralCode
 import { useNavigation } from '@react-navigation/native';
 // import LinearGradient from 'react-native-linear-gradient'; // Uncomment if using gradients
+import MiniZenni from '../../components/MiniZenni';
+import { useUserStore } from '../../store/userStore';
 
 // Placeholder assets
 const miniZenni = require('../../../assets/images/minizenni.png');
@@ -39,6 +41,7 @@ const ProfileScreen = () => {
   const [modal, setModal] = useState({ visible: false, title: '', description: '' });
   const [friendCode, setFriendCodeState] = useState('');
   const navigation = useNavigation();
+  const userData = useUserStore((s) => s.userData);
   useEffect(() => {
     // Replace with actual user ID logic if available
     const userId = 'demoUserId';
@@ -76,16 +79,24 @@ const ProfileScreen = () => {
       />
       <FloatingLeaves count={6} style={styles.leavesBackground} />
       <View style={[styles.container, { backgroundColor: 'transparent', zIndex: 1 }]}>
-        <TouchableOpacity style={styles.backArrow} onPress={() => navigation.goBack()} accessibilityLabel="Back" accessible>
-          <Ionicons name="chevron-back" size={36} color="#FF8C42" style={styles.backArrowIcon} />
+        <TouchableOpacity style={[styles.backArrow, { backgroundColor: '#232014' }]} onPress={() => navigation.goBack()} accessibilityLabel="Back" accessible>
+          <Ionicons name="chevron-back" size={36} color="#FFD580" style={styles.backArrowIcon} />
         </TouchableOpacity>
         <ScrollView contentContainerStyle={styles.scrollContentWithBackArrow}>
           {/* 1. Hero Pane */}
           <View style={styles.heroPaneCentered}>
-            <Image source={miniZenni} style={styles.profileZenniLargeModern} />
+            <MiniZenni
+              size="large"
+              outfitId={userData?.cosmetics?.equipped?.outfit}
+              headgearId={userData?.cosmetics?.equipped?.headgear}
+              auraId={userData?.cosmetics?.equipped?.aura}
+              faceId={userData?.cosmetics?.equipped?.face}
+              accessoryId={userData?.cosmetics?.equipped?.accessory}
+              companionId={userData?.cosmetics?.equipped?.companion}
+            />
           </View>
           <View style={styles.userNamePill}>
-            <Text style={styles.userNameModern}>{userData.username}</Text>
+            <Text style={styles.userNameModern}>{userData?.username || 'ZenUser'}</Text>
           </View>
           {friendCode ? (
             <View style={styles.friendCodePill}>

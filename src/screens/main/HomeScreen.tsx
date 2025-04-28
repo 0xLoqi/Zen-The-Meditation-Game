@@ -9,6 +9,7 @@ import {
   Image,
   Platform,
   Dimensions,
+  ImageBackground,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -25,9 +26,12 @@ import { getFriendCode, setFriendCode } from '../../firebase/user';
 // import { generateReferralCode } from '../../firebase/auth';
 import PatternBackground from '../../components/PatternBackground';
 import FloatingLeaves from '../../components/FloatingLeaves';
-import FriendBar from '../../components/FriendBar';
+import FriendDen from '../../components/FriendBar';
 import Leaderboard from '../../components/Leaderboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MiniZenni from '../../components/MiniZenni';
+import { getXPForNextLevel } from '../../firebase/meditation';
+import * as Animatable from 'react-native-animatable';
 
 type HomeScreenNavigationProp = StackNavigationProp<MainStackParamList, 'Home'>;
 
@@ -42,6 +46,19 @@ const badgeImages = {
 
 const PROFILE_CARD_HEIGHT = 110;
 const PROFILE_CARD_WIDTH = Math.round(Dimensions.get('window').width * 0.9);
+
+// Helper to get streak badge color
+const getStreakColors = (streak: number) => {
+  if (streak <= 0) {
+    return { bg: '#E0E0E0', color: '#A0A0A0' };
+  } else if (streak < 4) {
+    return { bg: '#FFF3B0', color: '#FFD580' };
+  } else if (streak < 8) {
+    return { bg: '#FFE0B2', color: '#FFB300' };
+  } else {
+    return { bg: '#FFE0E0', color: '#FF5722' };
+  }
+};
 
 const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
@@ -142,8 +159,14 @@ const HomeScreen = () => {
 
   try {
     const scrollContentTopMargin = PROFILE_CARD_HEIGHT + insets.top + SPACING.m;
+    const homeBg = require('../../../assets/images/backgrounds/home_screen_bg_2.png');
+    // Calculate XP progress
+    const currentXP = userData.xp || 0;
+    const currentLevel = userData.level || 1;
+    const xpForNextLevel = getXPForNextLevel(currentLevel - 1); // Level is 1-based, formula expects 0-based
+    const xpProgress = Math.min(currentXP / xpForNextLevel, 1);
     return (
-      <PatternBackground>
+      <ImageBackground source={homeBg} style={{ flex: 1 }} resizeMode="cover">
         <FloatingLeaves count={12} style={styles.leavesBackground} />
         <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}> 
           {/* Sticky Profile Card */}
@@ -159,26 +182,47 @@ const HomeScreen = () => {
               </View>
               <TouchableOpacity style={styles.profileCardTouchable} onPress={() => navigation.navigate('Profile')} activeOpacity={0.8} accessibilityLabel="View profile" accessible>
                 <View style={styles.profileHeader} pointerEvents="box-none">
-                  <Image 
-                    source={require('../../../assets/images/minizenni.png')} 
-                    style={styles.profileImage}
+                  <MiniZenni
+                    size="small"
+                    outfitId={userData?.cosmetics?.equipped?.outfit}
+                    headgearId={userData?.cosmetics?.equipped?.headgear}
+                    auraId={userData?.cosmetics?.equipped?.aura}
+                    faceId={userData?.cosmetics?.equipped?.face}
+                    accessoryId={userData?.cosmetics?.equipped?.accessory}
+                    companionId={userData?.cosmetics?.equipped?.companion}
+                    style={{ marginLeft: -15 }}
                   />
                   <View style={styles.profileInfo}>
                     <View style={styles.usernameRow}>
                       <Text style={styles.username}>{userData?.username || 'ZenUser'}</Text>
-                      <View style={styles.streakBadge}>
-                        <Ionicons name="flame" size={16} color={COLORS.accent} style={{ marginRight: 2 }} />
-                        <Text style={styles.streakBadgeText}>{userData?.streak || 7}</Text>
-                      </View>
+                      {(() => {
+                        // Simulate streak as 15 for demo
+                        const streak = 15;
+                        const { bg, color } = getStreakColors(streak);
+                        const Badge = (
+                          <View style={[styles.streakBadge, { backgroundColor: bg }]}> 
+                            <Ionicons name="flame" size={16} color={color} style={{ marginRight: 2 }} />
+                            <Text style={[styles.streakBadgeText, { color }]}>{streak}</Text>
+                          </View>
+                        );
+                        if (streak >= 14) {
+                          return (
+                            <Animatable.View animation="pulse" iterationCount="infinite" duration={900} easing="ease-in-out">
+                              {Badge}
+                            </Animatable.View>
+                          );
+                        }
+                        return Badge;
+                      })()}
                     </View>
                     <View style={styles.levelBadge}>
                       <Text style={styles.levelText}>Level {userData?.level || 1}</Text>
                     </View>
                     <View style={styles.xpContainer}>
                       <View style={styles.xpBarContainer}>
-                        <View style={[styles.xpBar, { width: '87.5%' }]} />
+                        <View style={[styles.xpBar, { width: `${xpProgress * 100}%` }]} />
                       </View>
-                      <Text style={styles.xpText}>350/400 XP</Text>
+                      <Text style={styles.xpText}>{currentXP}/{xpForNextLevel} XP</Text>
                     </View>
                   </View>
                 </View>
@@ -189,10 +233,8 @@ const HomeScreen = () => {
             style={styles.mainContent} contentContainerStyle={styles.scrollContentWithStickyProfile}
           >
             <View style={{ marginTop: 50 }}>
-              <FriendBar />
+              <FriendDen />
             </View>
-            {/* Leaderboard */}
-            <Leaderboard />
             {/* Start Meditation Button */}
             <TouchableOpacity 
               style={styles.meditateButton}
@@ -226,7 +268,7 @@ const HomeScreen = () => {
               })}
             </View>
             {/* Achievements Section */}
-            <Text style={styles.sectionTitle}>Closest Achievements</Text>
+            <Text style={styles.sectionTitle}>Achievements</Text>
             <View style={styles.achievementsContainer}>
               {(() => {
                 const unlocked = useGameStore.getState().achievements.unlocked || [];
@@ -245,10 +287,11 @@ const HomeScreen = () => {
                 ));
               })()}
             </View>
+            <Leaderboard />
           </ScrollView>
           <FloatingLeaves count={12} style={styles.leavesOverlay} />
         </SafeAreaView>
-      </PatternBackground>
+      </ImageBackground>
     );
   } catch (e) {
     console.log('Render error in HomeScreen:', e);

@@ -3,6 +3,9 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Share } from 'rea
 import { useGameStore } from '../store';
 import { COLORS } from '../constants/theme';
 import { setFriendCode } from '../firebase/user';
+import MiniZenni from './MiniZenni';
+import cosmetics from '../../assets/data/cosmetics.json';
+import { cosmeticImages } from './Store/cosmeticImages';
 
 const shareReferral = async () => {
   // For demo: use a static userId, in real app use auth
@@ -18,86 +21,139 @@ const shareReferral = async () => {
   }
 };
 
-const FriendBar = () => {
-  const friends = useGameStore((s) => s.friends);
+function getRandomCosmeticId(category) {
+  const filtered = cosmetics.filter((c) => c.category === category);
+  if (!filtered.length) return undefined;
+  return filtered[Math.floor(Math.random() * filtered.length)].id;
+}
 
-  if (!friends || friends.length === 0) {
-    return (
-      <TouchableOpacity style={styles.addFriendContainer} onPress={shareReferral}>
-        <Text style={styles.addFriendPlus}>+</Text>
-        <Text style={styles.addFriendText}>Add a friend!</Text>
-      </TouchableOpacity>
-    );
-  }
+function getRandomFriendProps() {
+  return {
+    outfitId: getRandomCosmeticId('outfit'),
+    headgearId: getRandomCosmeticId('headgear'),
+    auraId: getRandomCosmeticId('aura'),
+    faceId: getRandomCosmeticId('face'),
+    accessoryId: getRandomCosmeticId('accessory'),
+    companionId: getRandomCosmeticId('companion'),
+  };
+}
+
+const MOCK_NAMES = ['Milo', 'Nova', 'Echo'];
+
+const FriendDen = () => {
+  const friends = useGameStore((s) => s.friends);
+  const hasRealFriends = friends && friends.length > 0;
+  const mockFriends = Array.from({ length: 3 }).map((_, i) => ({
+    ...getRandomFriendProps(),
+    name: MOCK_NAMES[i] || `Friend${i + 1}`,
+  }));
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bar}>
-      {friends.map((friend) => (
-        <View key={friend.id} style={styles.friendBubble}>
-          <Text style={styles.friendInitial}>{friend.name[0]}</Text>
-          <Text style={styles.friendName}>{friend.name}</Text>
+    <View style={styles.denRowBg}>
+      <View style={styles.denRow}>
+        {hasRealFriends
+          ? friends.map((friend) => (
+              <View key={friend.id} style={styles.friendCol}>
+                <View style={styles.avatarCircle}>
+                  <Text style={styles.friendInitial}>{friend.name[0]}</Text>
+                </View>
+                <Text style={styles.friendName}>{friend.name}</Text>
+              </View>
+            ))
+          : mockFriends.map((f, i) => (
+              <View key={f.name} style={styles.friendCol}>
+                <View style={[styles.avatarCircle, styles.mockAvatarCircle]}>
+                  <MiniZenni {...f} size="small" style={{ opacity: 0.45 }} />
+                </View>
+                <Text style={[styles.friendName, styles.mockName]}>{f.name}</Text>
+              </View>
+            ))}
+        <View style={styles.friendCol}>
+          <TouchableOpacity style={{ alignItems: 'center' }}>
+            <View style={styles.addCircle}>
+              <Text style={styles.addPlus}>+</Text>
+            </View>
+          </TouchableOpacity>
+          <Text style={[styles.friendName, { opacity: 0 }]}>Add</Text>
         </View>
-      ))}
-      <TouchableOpacity style={styles.addFriendBubble} onPress={shareReferral}>
-        <Text style={styles.addFriendPlus}>+</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  bar: {
+  denRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: COLORS.background,
-  },
-  friendBubble: {
     alignItems: 'center',
-    marginRight: 16,
-    backgroundColor: COLORS.primary,
-    borderRadius: 24,
-    width: 48,
-    height: 48,
+    paddingHorizontal: 12,
+    paddingVertical: 0,
+    backgroundColor: 'transparent',
+    marginBottom: 8,
+  },
+  friendCol: {
+    alignItems: 'center',
+    marginRight: 18,
+  },
+  avatarCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#232014',
+    alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  mockAvatarCircle: {
+    backgroundColor: '#232014',
+    borderWidth: 1,
+    borderColor: '#FFD580',
   },
   friendInitial: {
-    color: COLORS.white,
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  friendName: {
-    color: COLORS.white,
-    fontSize: 10,
-  },
-  addFriendBubble: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.success,
-    borderRadius: 24,
-    width: 48,
-    height: 48,
-  },
-  addFriendPlus: {
-    color: COLORS.white,
+    color: '#FFD580',
     fontSize: 28,
     fontWeight: 'bold',
   },
-  addFriendContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: COLORS.success,
-    borderRadius: 24,
-    margin: 12,
-    justifyContent: 'center',
-  },
-  addFriendText: {
-    color: COLORS.white,
-    fontSize: 16,
-    marginLeft: 8,
+  friendName: {
+    color: '#FFD580',
+    fontSize: 13,
     fontWeight: 'bold',
+    marginTop: 2,
+  },
+  mockName: {
+    opacity: 0.6,
+  },
+  addCol: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 2,
+  },
+  addCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#FFD580',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  addPlus: {
+    color: '#232014',
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginTop: -2,
+  },
+  denRowBg: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 18,
+    marginHorizontal: 4,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
 });
 
-export default FriendBar; 
+export default FriendDen; 

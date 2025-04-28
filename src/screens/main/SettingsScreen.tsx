@@ -18,7 +18,7 @@ import * as Haptics from 'expo-haptics';
 
 const SettingsScreen = () => {
   const navigation = useNavigation();
-  const { signOut } = useAuthStore();
+  const { signOut, user } = useAuthStore();
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [soundEnabled, setSoundEnabled] = React.useState(true);
   const [hapticsEnabled, setHapticsEnabled] = React.useState(true);
@@ -121,6 +121,12 @@ const SettingsScreen = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
+          {user?.email && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 }}>
+              <Ionicons name="mail-outline" size={18} color={COLORS.primary} style={{ marginRight: 8 }} />
+              <Text style={{ color: COLORS.neutralDark, fontSize: 15 }}>{user.email}</Text>
+            </View>
+          )}
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
