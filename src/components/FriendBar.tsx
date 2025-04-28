@@ -6,6 +6,7 @@ import { setFriendCode } from '../firebase/user';
 import MiniZenni from './MiniZenni';
 import cosmetics from '../../assets/data/cosmetics.json';
 import { cosmeticImages } from './Store/cosmeticImages';
+import { Ionicons } from '@expo/vector-icons';
 
 const shareReferral = async () => {
   // For demo: use a static userId, in real app use auth
@@ -38,36 +39,47 @@ function getRandomFriendProps() {
   };
 }
 
-const MOCK_NAMES = ['Milo', 'Nova', 'Echo'];
+const MOCK_NAMES = ['Alex', 'Sam', 'Milo'];
+function generateMockFriends() {
+  return MOCK_NAMES.map((name, i) => ({
+    name,
+    level: Math.floor(Math.random() * 10) + 1,
+    streak: Math.floor(Math.random() * 20) + 1,
+    hasMeditatedToday: Math.random() > 0.5,
+    ...getRandomFriendProps(),
+  }));
+}
 
 const FriendDen = () => {
   const friends = useGameStore((s) => s.friends);
   const hasRealFriends = friends && friends.length > 0;
-  const mockFriends = Array.from({ length: 3 }).map((_, i) => ({
-    ...getRandomFriendProps(),
-    name: MOCK_NAMES[i] || `Friend${i + 1}`,
-  }));
+  const mockFriends = generateMockFriends();
 
   return (
     <View style={styles.denRowBg}>
       <View style={styles.denRow}>
-        {hasRealFriends
-          ? friends.map((friend) => (
-              <View key={friend.id} style={styles.friendCol}>
-                <View style={styles.avatarCircle}>
-                  <Text style={styles.friendInitial}>{friend.name[0]}</Text>
-                </View>
-                <Text style={styles.friendName}>{friend.name}</Text>
-              </View>
-            ))
-          : mockFriends.map((f, i) => (
-              <View key={f.name} style={styles.friendCol}>
-                <View style={[styles.avatarCircle, styles.mockAvatarCircle]}>
-                  <MiniZenni {...f} size="small" style={{ opacity: 0.45 }} />
-                </View>
-                <Text style={[styles.friendName, styles.mockName]}>{f.name}</Text>
-              </View>
-            ))}
+        {(hasRealFriends ? friends : mockFriends).map((f, i) => (
+          <View key={f.name} style={styles.friendCol}>
+            <View style={styles.avatarCircle}>
+              <MiniZenni
+                outfitId={f.outfitId}
+                headgearId={f.headgearId}
+                auraId={f.auraId}
+                faceId={f.faceId}
+                accessoryId={f.accessoryId}
+                companionId={f.companionId}
+                size="small"
+                style={{ opacity: 0.95, transform: [{ scale: 0.7 }] }}
+              />
+            </View>
+            <Text style={styles.friendName}>{f.name}</Text>
+            <View style={styles.levelStreakRow}>
+              <Text style={styles.levelText}>Lvl {f.level}</Text>
+              <Ionicons name="flame" size={13} color={f.hasMeditatedToday ? '#FFB300' : '#A0A0A0'} style={{ marginLeft: 10, marginRight: 2 }} />
+              <Text style={[styles.streakNum, { color: f.hasMeditatedToday ? '#232014' : '#A0A0A0' }]}>{f.streak}</Text>
+            </View>
+          </View>
+        ))}
         <View style={styles.friendCol}>
           <TouchableOpacity style={{ alignItems: 'center' }}>
             <View style={styles.addCircle}>
@@ -95,14 +107,11 @@ const styles = StyleSheet.create({
     marginRight: 18,
   },
   avatarCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#232014',
+    width: 24,
+    height: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
-    overflow: 'hidden',
+    marginBottom: 10,
   },
   mockAvatarCircle: {
     backgroundColor: '#232014',
@@ -110,15 +119,15 @@ const styles = StyleSheet.create({
     borderColor: '#FFD580',
   },
   friendInitial: {
-    color: '#FFD580',
+    color: '#cd8500',
     fontSize: 28,
     fontWeight: 'bold',
   },
   friendName: {
-    color: '#FFD580',
+    color: '#cd8500',
     fontSize: 13,
     fontWeight: 'bold',
-    marginTop: 2,
+    marginTop: 8,
   },
   mockName: {
     opacity: 0.6,
@@ -148,11 +157,29 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     marginHorizontal: 4,
     marginBottom: 12,
+    marginTop: 15,
+    paddingVertical: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 2,
+  },
+  levelStreakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  levelText: {
+    color: '#232014',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginRight: 2,
+  },
+  streakNum: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 

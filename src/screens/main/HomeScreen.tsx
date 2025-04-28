@@ -32,6 +32,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MiniZenni from '../../components/MiniZenni';
 import { getXPForNextLevel } from '../../firebase/meditation';
 import * as Animatable from 'react-native-animatable';
+import { LinearGradient } from 'expo-linear-gradient';
+import Sparkle from '../../components/Sparkle';
+import FloatyAnimation from '../../components/FloatyAnimation';
+
+// Register custom animations
+Animatable.initializeRegistryWithDefinitions({
+  float: {
+    0: { translateY: 0 },
+    0.5: { translateY: -8 },
+    1: { translateY: 0 },
+  },
+});
 
 type HomeScreenNavigationProp = StackNavigationProp<MainStackParamList, 'Home'>;
 
@@ -160,6 +172,8 @@ const HomeScreen = () => {
   try {
     const scrollContentTopMargin = PROFILE_CARD_HEIGHT + insets.top + SPACING.m;
     const homeBg = require('../../../assets/images/backgrounds/home_screen_bg_2.png');
+    // cast to any to access Firestore cosmetics shape
+    const equipped = (userData as any)?.cosmetics?.equipped || {};
     // Calculate XP progress
     const currentXP = userData.xp || 0;
     const currentLevel = userData.level || 1;
@@ -184,12 +198,12 @@ const HomeScreen = () => {
                 <View style={styles.profileHeader} pointerEvents="box-none">
                   <MiniZenni
                     size="small"
-                    outfitId={userData?.cosmetics?.equipped?.outfit}
-                    headgearId={userData?.cosmetics?.equipped?.headgear}
-                    auraId={userData?.cosmetics?.equipped?.aura}
-                    faceId={userData?.cosmetics?.equipped?.face}
-                    accessoryId={userData?.cosmetics?.equipped?.accessory}
-                    companionId={userData?.cosmetics?.equipped?.companion}
+                    outfitId={equipped.outfit}
+                    headgearId={equipped.headgear}
+                    auraId={equipped.aura}
+                    faceId={equipped.face}
+                    accessoryId={equipped.accessory}
+                    companionId={equipped.companion}
                     style={{ marginLeft: -15 }}
                   />
                   <View style={styles.profileInfo}>
@@ -232,28 +246,56 @@ const HomeScreen = () => {
           <ScrollView
             style={styles.mainContent} contentContainerStyle={styles.scrollContentWithStickyProfile}
           >
-            <View style={{ marginTop: 50 }}>
+            {/* Start Meditation Button */}
+            <Animatable.View
+              animation="pulse"
+              iterationCount="infinite"
+              duration={2200}
+              easing="ease-in-out"
+              style={styles.meditateButtonPulse}
+            >
+              <TouchableOpacity 
+                style={styles.meditateButton}
+                onPress={handleMeditatePress}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={["#FFD580", "#FFB300", "#FF8C42"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.meditateButtonGradient}
+                >
+                  {/* Sparkles */}
+                  <FloatyAnimation style={styles.sparkle1} duration={3200} intensity="gentle">
+                    <Sparkle size={18} color="#fff8e1" />
+                  </FloatyAnimation>
+                  <FloatyAnimation style={styles.sparkle2} duration={2600} intensity="medium">
+                    <Sparkle size={14} color="#fffde7" />
+                  </FloatyAnimation>
+                  <FloatyAnimation style={styles.sparkle3} duration={4000} intensity="strong">
+                    <Sparkle size={22} color="#fff" />
+                  </FloatyAnimation>
+                  <View style={styles.meditateButtonContent}>
+                    <FloatyAnimation animation="float" duration={2200} intensity="gentle">
+                      <View style={styles.meditateIconContainer}>
+                        <MaterialCommunityIcons name="meditation" size={44} color={COLORS.white} />
+                      </View>
+                    </FloatyAnimation>
+                    <View style={styles.meditateTextContainer}>
+                      <Text style={styles.meditateButtonTitle}>Start Meditation</Text>
+                      <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={28} color={COLORS.white} />
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animatable.View>
+            <View style={{ marginTop: 0 }}>
+              <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>Friend Den</Text></View>
               <FriendDen />
             </View>
-            {/* Start Meditation Button */}
-            <TouchableOpacity 
-              style={styles.meditateButton}
-              onPress={handleMeditatePress}
-              activeOpacity={0.8}
-            >
-              <View style={styles.meditateButtonContent}>
-                <View style={styles.meditateIconContainer}>
-                  <MaterialCommunityIcons name="meditation" size={32} color={COLORS.white} />
-                </View>
-                <View style={styles.meditateTextContainer}>
-                  <Text style={styles.meditateButtonTitle}>Start Meditation</Text>
-                  <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={24} color={COLORS.white} />
-              </View>
-            </TouchableOpacity>
             {/* Quests Section */}
-            <Text style={styles.sectionTitle}>Today's Quests</Text>
+            <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>Today's Quests</Text></View>
             <View style={styles.questsContainer}>
               {useGameStore.getState().quests.dailyQuests.map((quest) => {
                 const complete = useGameStore.getState().quests.progress[quest.id];
@@ -268,7 +310,7 @@ const HomeScreen = () => {
               })}
             </View>
             {/* Achievements Section */}
-            <Text style={styles.sectionTitle}>Achievements</Text>
+            <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>Achievements</Text></View>
             <View style={styles.achievementsContainer}>
               {(() => {
                 const unlocked = useGameStore.getState().achievements.unlocked || [];
@@ -287,13 +329,16 @@ const HomeScreen = () => {
                 ));
               })()}
             </View>
-            <Leaderboard />
+            <View style={styles.leaderboardContainer}>
+              <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>🌍 Global Leaderboard</Text></View>
+              <Leaderboard />
+            </View>
           </ScrollView>
           <FloatingLeaves count={12} style={styles.leavesOverlay} />
         </SafeAreaView>
       </ImageBackground>
     );
-  } catch (e) {
+  } catch (e: any) {
     console.log('Render error in HomeScreen:', e);
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -425,15 +470,29 @@ const styles = StyleSheet.create({
   streakBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF3E0', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8 },
   streakBadgeText: { color: COLORS.accent, fontWeight: 'bold', fontSize: 14 },
   meditateButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: SIZES.radiusMedium,
+    backgroundColor: 'transparent',
+    borderRadius: 20,
     marginVertical: SPACING.m,
-    ...SHADOWS.medium,
+    marginTop: 60,
+  },
+  meditateButtonGradient: {
+    flex: 1,
+    borderRadius: 20,
+    padding: 6,
+    backgroundColor: 'linear-gradient(90deg, #FFD580 0%, #FF8C42 100%)', // fallback for web, will be overridden below
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.7)',
+    shadowColor: '#FFB300',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
   },
   meditateButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.m,
+    paddingVertical: 24,
+    paddingHorizontal: 18,
   },
   meditateIconContainer: {
     width: 48,
@@ -449,8 +508,11 @@ const styles = StyleSheet.create({
   },
   meditateButtonTitle: {
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 22,
     color: COLORS.white,
+    textShadowColor: 'rgba(0,0,0,0.18)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   meditateButtonSubtitle: {
     fontWeight: 'normal',
@@ -572,6 +634,59 @@ const styles = StyleSheet.create({
   mainContent: {
     flex: 1,
     marginTop: PROFILE_CARD_HEIGHT + SPACING.m,
+  },
+  sectionTitlePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(35,32,20,0.7)',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginBottom: 8,
+    marginLeft: 2,
+  },
+  sectionTitlePillText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    letterSpacing: 0.2,
+  },
+  leaderboardContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  meditateButtonPulse: {
+    shadowColor: '#FFD580',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 32,
+    elevation: 16,
+    borderRadius: 24,
+  },
+  sparkle1: {
+    position: 'absolute',
+    top: 8,
+    left: 32,
+    zIndex: 2,
+  },
+  sparkle2: {
+    position: 'absolute',
+    top: 18,
+    right: 32,
+    zIndex: 2,
+  },
+  sparkle3: {
+    position: 'absolute',
+    bottom: 12,
+    left: 60,
+    zIndex: 2,
   },
 });
 
