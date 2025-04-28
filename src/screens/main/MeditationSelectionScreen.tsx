@@ -16,6 +16,7 @@ import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { useMeditationStore } from '../../store/meditationStore';
+import { useGameStore } from '../../store';
 import { MeditationType, MeditationDuration } from '../../types';
 import FloatingLeaves from '../../components/FloatingLeaves';
 import { useUserStore } from '../../store/userStore';
@@ -25,6 +26,7 @@ import MoodScale from '../../components/MoodScale';
 const MeditationSelectionScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
   const { selectMeditationSettings } = useMeditationStore();
+  const completeQuest = useGameStore((s) => s.completeQuest);
   const username = useUserStore((s) => s.userData?.username);
   const insets = useSafeAreaInsets();
   
@@ -42,6 +44,8 @@ const MeditationSelectionScreen = () => {
   // Start meditation session
   const startMeditation = () => {
     if (selectedDuration) {
+      // Complete first reflection quest when beginning meditation
+      completeQuest('daily_checkin_start');
       selectMeditationSettings(null, selectedDuration);
       navigation.navigate('MeditationSession');
     }
