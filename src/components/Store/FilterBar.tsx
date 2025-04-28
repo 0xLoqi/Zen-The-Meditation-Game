@@ -51,16 +51,16 @@ const FilterBar = ({ selectedRarities, sort, onChange }: any) => {
           ))}
         </select>
       ) : (
-        <Picker
-          selectedValue={localSort}
-          style={styles.picker}
-          onValueChange={changeSort}
-          mode="dropdown"
-        >
-          {SORTS.map((s) => (
-            <Picker.Item key={s.value} label={s.label} value={s.value} />
-          ))}
-        </Picker>
+      <Picker
+        selectedValue={localSort}
+        style={styles.picker}
+        onValueChange={changeSort}
+        mode="dropdown"
+      >
+        {SORTS.map((s) => (
+          <Picker.Item key={s.value} label={s.label} value={s.value} />
+        ))}
+      </Picker>
       )}
     </View>
   );

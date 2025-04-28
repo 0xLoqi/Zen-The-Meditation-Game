@@ -12,6 +12,7 @@ import LootBagCard from '../../components/LootBagCard';
 import { setUserData } from '../../firebase/user';
 import { useAuthStore } from '../../store/authStore';
 import { useUserStore } from '../../store/userStore';
+import { Audio } from 'expo-av';
 
 const MODULAR_CATEGORIES = ['outfit', 'headgear', 'aura', 'face', 'accessory', 'companion'];
 const storeBg = require('../../../assets/images/backgrounds/store_background.png');
@@ -83,12 +84,10 @@ async function equipCosmetics(preview) {
   try {
     const { user } = useAuthStore.getState();
     if (!user || !user.uid) throw new Error('Not signed in');
-    // Fetch current user data (could use a selector/store if available)
-    // We'll do a minimal merge update
     const equipped = mapPreviewToEquipped(preview);
-    // Only update cosmetics.equipped, preserve all other fields
     await setUserData(user.uid, { cosmetics: { equipped } });
-    Alert.alert('Equipped!', 'Your cosmetics have been updated.');
+    useUserStore.getState().getUserData();
+    // No UI logic here
   } catch (e) {
     Alert.alert('Error', e.message || 'Failed to equip cosmetics');
   }
@@ -99,6 +98,8 @@ const StoreScreen = () => {
   const navigation = useNavigation();
   const userData = useUserStore((s) => s.userData);
   const equipped = userData?.cosmetics?.equipped || {};
+  const [showToast, setShowToast] = useState(false);
+  const [justEquipped, setJustEquipped] = useState(false);
 
   // Map equipped cosmetics to preview state
   function equippedToPreview(equipped) {
@@ -167,109 +168,131 @@ const StoreScreen = () => {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
           </TouchableOpacity>
-          <SectionList
-            sections={sections}
-            keyExtractor={(_, idx) => String(idx)}
-            renderSectionHeader={({ section: { title } }) => (
-              <Text style={styles.sectionHeader}>{title}</Text>
-            )}
-            renderItem={({ item: row }) => (
-              <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                {row.map((item, colIdx) => {
-                  const imgKey = item.image?.replace(/^.*[\\/]/, '');
-                  const imgSrc = cosmeticImages[imgKey];
-                  const prop = getPreviewProps(item);
-                  const key = Object.keys(prop)[0] as keyof PreviewProps;
-                  const value = prop[key]!;
-                  const isSelected = key === 'accessoryId'
-                    ? (Array.isArray(preview.accessoryId)
-                        ? preview.accessoryId.includes(value)
-                        : preview.accessoryId === value)
-                    : preview[key] === value;
-                  return (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={[styles.card, isSelected && styles.cardSelected]}
-                      onPress={() => setPreview(prev => {
-                        // Special handling for accessories: allow toggling up to 2
-                        if (key === 'accessoryId') {
-                          const curr = prev.accessoryId;
-                          const arr = Array.isArray(curr) ? curr : curr ? [curr] : [];
-                          if (arr.includes(value)) {
-                            // remove
-                            const newArr = arr.filter(v => v !== value);
-                            return { ...prev, accessoryId: newArr.length > 1 ? newArr : newArr[0] };
-                          } else if (arr.length < 2) {
-                            // add
-                            return { ...prev, accessoryId: [...arr, value] };
-                          }
-                          return prev;
-                        }
-                        // Default single-selection for other categories
-                        if (prev[key] === value) {
-                          const { [key]: _, ...rest } = prev;
-                          return rest;
-                        }
-                        return { ...prev, [key]: value };
-                      })}
-                      activeOpacity={0.8}
-                    >
-                      <ImageBackground
-                        source={paneBg}
-                        style={styles.cardPaneBg}
-                        imageStyle={styles.cardPaneImg}
-                        resizeMode="contain"
-                      >
-                        {item.category === 'aura' ? (
-                          <View style={styles.cardVerticalContent}>
-                            <View style={styles.cardImageContainer}>
-                              {/* Aura image at the very back */}
-                              {imgSrc && (
-                                <Image source={imgSrc} style={[styles.cardImageAbsolute, { zIndex: 0 }]} resizeMode="contain" />
-                              )}
-                              {/* Silhouette always in front of aura */}
-                              <Image source={baseSilhouette} style={[styles.cardImageAbsolute, { opacity: 0.18, zIndex: 1 }]} resizeMode="contain" />
-                            </View>
-                          </View>
-                        ) : (
-                          <View style={styles.cardVerticalContent}>
-                            <View style={styles.cardImageContainer}>
-                              <Image source={baseSilhouette} style={[styles.cardImageAbsolute, { opacity: 0.18 }]} resizeMode="contain" />
-                              {imgSrc && (
-                                <Image source={imgSrc} style={styles.cardImageAbsolute} resizeMode="contain" />
-                              )}
-                            </View>
-                          </View>
-                        )}
-                        <Text style={styles.cardName}>{item.name}</Text>
-                        <Text style={styles.cardPrice}>{item.price} 💰</Text>
-                      </ImageBackground>
-                    </TouchableOpacity>
-                  );
-                })}
-                {/* If odd number of items, add a spacer to keep grid alignment */}
-                {row.length === 1 && <View style={[styles.card, { backgroundColor: 'transparent', elevation: 0, shadowOpacity: 0 }]} />}
-              </View>
-            )}
-            contentContainerStyle={{ paddingBottom: 32 }}
-            ListHeaderComponent={
-              <View style={styles.previewContainer}>
-                <MiniZenni size="large" {...preview} />
-                {isPreviewUnequipped() && (
-                  <TouchableOpacity
-                    style={styles.equipButton}
-                    onPress={() => equipCosmetics(preview)}
-                    activeOpacity={0.8}
-                  >
+          {/* Main vertical layout: preview+equip, then scrollable list */}
+          <View style={{ flex: 1 }}>
+            <View style={styles.previewContainerFixed}>
+              <MiniZenni size="large" {...preview} />
+              {isPreviewUnequipped() && (
+                <TouchableOpacity
+                  style={[styles.equipButton, justEquipped && styles.equipButtonEquipped]}
+                  onPress={async () => {
+                    await equipCosmetics(preview);
+                    // Play sound effect (swap silence.mp3 for your own sound file)
+                    const { sound } = await Audio.Sound.createAsync(
+                      require('../../../assets/audio/ambient/silence.mp3')
+                    );
+                    await sound.playAsync();
+                    sound.setOnPlaybackStatusUpdate((status) => {
+                      if (status.isLoaded && status.didJustFinish) {
+                        sound.unloadAsync();
+                      }
+                    });
+                    setJustEquipped(true);
+                    setTimeout(() => setJustEquipped(false), 1500);
+                  }}
+                  activeOpacity={0.8}
+                  disabled={justEquipped}
+                >
+                  {justEquipped ? (
+                    <Text style={styles.equipButtonCheck}>✓</Text>
+                  ) : (
                     <Text style={styles.equipButtonText}>Equip</Text>
-                  </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={{ flex: 1, maxHeight: Dimensions.get('window').height / 2, marginTop: 8 }}>
+              <SectionList
+                sections={sections}
+                keyExtractor={(_, idx) => String(idx)}
+                renderSectionHeader={({ section: { title } }) => (
+                  <Text style={styles.sectionHeader}>{title}</Text>
                 )}
-              </View>
-            }
-            stickySectionHeadersEnabled={false}
-            showsVerticalScrollIndicator={false}
-            style={{ flex: 1 }}
-          />
+                renderItem={({ item: row }) => (
+                  <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                    {row.map((item, colIdx) => {
+                      const imgKey = item.image?.replace(/^.*[\\/]/, '');
+                      const imgSrc = cosmeticImages[imgKey];
+                      const prop = getPreviewProps(item);
+                      const key = Object.keys(prop)[0] as keyof PreviewProps;
+                      const value = prop[key]!;
+                      const isSelected = key === 'accessoryId'
+                        ? (Array.isArray(preview.accessoryId)
+                            ? preview.accessoryId.includes(value)
+                            : preview.accessoryId === value)
+                        : preview[key] === value;
+                      return (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={[styles.card, isSelected && styles.cardSelected]}
+                          onPress={() => setPreview(prev => {
+                            // Special handling for accessories: allow toggling up to 2
+                            if (key === 'accessoryId') {
+                              const curr = prev.accessoryId;
+                              const arr = Array.isArray(curr) ? curr : curr ? [curr] : [];
+                              if (arr.includes(value)) {
+                                // remove
+                                const newArr = arr.filter(v => v !== value);
+                                return { ...prev, accessoryId: newArr.length > 1 ? newArr : newArr[0] };
+                              } else if (arr.length < 2) {
+                                // add
+                                return { ...prev, accessoryId: [...arr, value] };
+                              }
+                              return prev;
+                            }
+                            // Default single-selection for other categories
+                            if (prev[key] === value) {
+                              const { [key]: _, ...rest } = prev;
+                              return rest;
+                            }
+                            return { ...prev, [key]: value };
+                          })}
+                          activeOpacity={0.8}
+                        >
+                          <ImageBackground
+                            source={paneBg}
+                            style={styles.cardPaneBg}
+                            imageStyle={styles.cardPaneImg}
+                            resizeMode="contain"
+                          >
+                            {item.category === 'aura' ? (
+                              <View style={styles.cardVerticalContent}>
+                                <View style={styles.cardImageContainer}>
+                                  {/* Aura image at the very back */}
+                                  {imgSrc && (
+                                    <Image source={imgSrc} style={[styles.cardImageAbsolute, { zIndex: 0 }]} resizeMode="contain" />
+                                  )}
+                                  {/* Silhouette always in front of aura */}
+                                  <Image source={baseSilhouette} style={[styles.cardImageAbsolute, { opacity: 0.18, zIndex: 1 }]} resizeMode="contain" />
+                                </View>
+                              </View>
+                            ) : (
+                              <View style={styles.cardVerticalContent}>
+                                <View style={styles.cardImageContainer}>
+                                  <Image source={baseSilhouette} style={[styles.cardImageAbsolute, { opacity: 0.18 }]} resizeMode="contain" />
+                                  {imgSrc && (
+                                    <Image source={imgSrc} style={styles.cardImageAbsolute} resizeMode="contain" />
+                                  )}
+                                </View>
+                              </View>
+                            )}
+                            <Text style={styles.cardName}>{item.name}</Text>
+                            <Text style={styles.cardPrice}>{item.price} 💰</Text>
+                          </ImageBackground>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    {/* If odd number of items, add a spacer to keep grid alignment */}
+                    {row.length === 1 && <View style={[styles.card, { backgroundColor: 'transparent', elevation: 0, shadowOpacity: 0 }]} />}
+                  </View>
+                )}
+                contentContainerStyle={{ paddingBottom: 32 }}
+                stickySectionHeadersEnabled={false}
+                showsVerticalScrollIndicator={false}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
         </View>
       </SafeAreaView>
     </ImageBackground>
@@ -297,7 +320,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  previewContainer: { alignItems: 'center', marginBottom: 8 },
+  previewContainerFixed: {
+    alignItems: 'center',
+    marginBottom: 8,
+    minHeight: 220,
+    justifyContent: 'flex-end',
+  },
   list: { paddingBottom: 32 },
   card: {
     borderRadius: 16,
@@ -453,6 +481,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     letterSpacing: 0.5,
+  },
+  equipButtonEquipped: {
+    backgroundColor: '#3CB371', // green
+  },
+  equipButtonCheck: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 22,
   },
 });
 

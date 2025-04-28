@@ -96,14 +96,14 @@ const ColorSelectionScreen = () => {
           <View style={styles.content}>
             <View style={styles.headerContainer}>
               <Animated.View style={{ transform: [{ translateY: floatAnim }] }}>
-                <Image
-                  source={require('../../../assets/images/minizenni.png')}
-                  style={[
-                    styles.miniZenniImage,
-                    { tintColor: selectedColor.primary }
-                  ]}
-                  resizeMode="contain"
-                />
+              <Image
+                source={require('../../../assets/images/minizenni.png')}
+                style={[
+                  styles.miniZenniImage,
+                  { tintColor: selectedColor.primary }
+                ]}
+                resizeMode="contain"
+              />
               </Animated.View>
               <Text style={styles.title}>Choose Your Element</Text>
               <Text style={styles.description}>

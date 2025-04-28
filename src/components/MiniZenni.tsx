@@ -157,19 +157,19 @@ const MiniZenni = ({
       </Animated.View>
       <Animated.View style={[animatedStyle, dimensions]}>
         {layers.map((src, idx) => (
-          <RNImage
+        <RNImage
             key={idx}
             source={src}
-            style={[
-              styles.image,
-              dimensions,
+          style={[
+            styles.image,
+            dimensions,
               colorScheme && idx === 0 && {
-                tintColor: colorScheme.primary,
-              },
+              tintColor: colorScheme.primary,
+            },
               // Optionally add zIndex if needed
-            ]}
-            resizeMode="contain"
-          />
+          ]}
+          resizeMode="contain"
+        />
         ))}
       </Animated.View>
     </RNView>

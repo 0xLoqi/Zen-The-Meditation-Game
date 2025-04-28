@@ -9,7 +9,7 @@ const Leaderboard = () => {
   // Add self to leaderboard
   const leaderboard = [
     ...friends,
-    { id: 'me', name: user.name || 'You', xp: 1000 }, // Replace 1000 with real XP if available
+    { id: 'me', name: user.name || 'You', xp: user.xp, level: user.level }, // Use real XP and level
   ].sort((a, b) => (b.xp || 0) - (a.xp || 0));
 
   return (
@@ -19,7 +19,7 @@ const Leaderboard = () => {
         <View key={entry.id} style={styles.row}>
           <Text style={styles.rank}>{idx + 1}.</Text>
           <Text style={styles.name}>{entry.name}</Text>
-          <Text style={styles.xp}>{entry.xp || 0} XP</Text>
+          <Text style={styles.xp}>Level {entry.level || 1}</Text>
         </View>
       ))}
     </View>

@@ -78,14 +78,14 @@ const FriendDen = () => {
               <Ionicons name="flame" size={13} color={f.hasMeditatedToday ? '#FFB300' : '#A0A0A0'} style={{ marginLeft: 10, marginRight: 2 }} />
               <Text style={[styles.streakNum, { color: f.hasMeditatedToday ? '#232014' : '#A0A0A0' }]}>{f.streak}</Text>
             </View>
-          </View>
-        ))}
+        </View>
+      ))}
         <View style={styles.friendCol}>
           <TouchableOpacity style={{ alignItems: 'center' }}>
             <View style={styles.addCircle}>
               <Text style={styles.addPlus}>+</Text>
             </View>
-          </TouchableOpacity>
+      </TouchableOpacity>
           <Text style={[styles.friendName, { opacity: 0 }]}>Add</Text>
         </View>
       </View>
@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 0,
+    marginTop: 20,
     backgroundColor: 'transparent',
     marginBottom: 8,
   },
@@ -154,16 +155,16 @@ const styles = StyleSheet.create({
   },
   denRowBg: {
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderRadius: 18,
+    borderRadius: 30,
     marginHorizontal: 4,
-    marginBottom: 12,
-    marginTop: 15,
-    paddingVertical: 16,
+    marginBottom: 15,
+    marginTop: 10,
+    paddingVertical: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 10,
   },
   levelStreakRow: {
     flexDirection: 'row',

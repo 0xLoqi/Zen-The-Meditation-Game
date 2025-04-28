@@ -5,7 +5,7 @@
     "category": "outfit",
     "rarity": "legendary",
     "image": "ember_robe.png",
-    "price": 1000
+    "price": 1200
   },
   {
     "id": "prism_cloak",
@@ -13,7 +13,7 @@
     "category": "outfit",
     "rarity": "epic",
     "image": "prism_cloak.png",
-    "price": 800
+    "price": 600
   },
   {
     "id": "nap_hoodie",
@@ -21,7 +21,7 @@
     "category": "outfit",
     "rarity": "rare",
     "image": "nap_hoodie.png",
-    "price": 500
+    "price": 250
   },
   {
     "id": "warm_beanie",
@@ -29,7 +29,7 @@
     "category": "headgear",
     "rarity": "common",
     "image": "warm_beanie.png",
-    "price": 200
+    "price": 80
   },
   {
     "id": "royal_crown",
@@ -37,7 +37,7 @@
     "category": "headgear",
     "rarity": "epic",
     "image": "royal_crown.png",
-    "price": 700
+    "price": 550
   },
   {
     "id": "leaf_crown",
@@ -45,7 +45,7 @@
     "category": "headgear",
     "rarity": "rare",
     "image": "Leaf Crown.png",
-    "price": 400
+    "price": 250
   },
   {
     "id": "auric_bloom",
@@ -53,7 +53,7 @@
     "category": "aura",
     "rarity": "rare",
     "image": "auric_bloom.png",
-    "price": 400
+    "price": 300
   },
   {
     "id": "focus_spiral",
@@ -61,7 +61,7 @@
     "category": "aura",
     "rarity": "epic",
     "image": "focus_spiral.png",
-    "price": 700
+    "price": 500
   },
   {
     "id": "verdant_halo",
@@ -69,7 +69,7 @@
     "category": "aura",
     "rarity": "rare",
     "image": "verdant_halo.png",
-    "price": 400
+    "price": 300
   },
   {
     "id": "glowpuff_aura",
@@ -77,7 +77,7 @@
     "category": "aura",
     "rarity": "epic",
     "image": "Glowpuff_Aura.png",
-    "price": 700
+    "price": 550
   },
   {
     "id": "whorled_staff",
@@ -85,7 +85,7 @@
     "category": "accessory",
     "rarity": "rare",
     "image": "whorled_staff.png",
-    "price": 350
+    "price": 250
   },
   {
     "id": "you_blink_first_mask",
@@ -93,7 +93,7 @@
     "category": "accessory",
     "rarity": "epic",
     "image": "you_blink_first_mask.png",
-    "price": 600
+    "price": 500
   },
   {
     "id": "true_stoic_mask",
@@ -101,7 +101,7 @@
     "category": "accessory",
     "rarity": "epic",
     "image": "true_stoic_mask.png",
-    "price": 600
+    "price": 500
   },
   {
     "id": "satchel_of_stillness",
@@ -109,7 +109,7 @@
     "category": "accessory",
     "rarity": "rare",
     "image": "satchel_of_stillness.png",
-    "price": 350
+    "price": 250
   },
   {
     "id": "cozy_owl",
@@ -117,15 +117,15 @@
     "category": "companion",
     "rarity": "rare",
     "image": "cozy_owl.png",
-    "price": 500
+    "price": 300
   },
   {
     "id": "busy_bee",
     "name": "Busy Bee",
     "category": "companion",
-    "rarity": "common",
+    "rarity": "epic",
     "image": "busy_bee.png",
-    "price": 200
+    "price": 1000
   },
   {
     "id": "baby_echo",
@@ -133,7 +133,7 @@
     "category": "companion",
     "rarity": "epic",
     "image": "baby_echo.png",
-    "price": 800
+    "price": 650
   },
   {
     "id": "messenger_sprite",
@@ -141,7 +141,7 @@
     "category": "companion",
     "rarity": "legendary",
     "image": "messenger_sprite.png",
-    "price": 1200
+    "price": 1500
   },
   {
     "id": "angry",
@@ -149,7 +149,7 @@
     "category": "face",
     "rarity": "common",
     "image": "angry.png",
-    "price": 100
+    "price": 50
   },
   {
     "id": "shook",
@@ -157,7 +157,7 @@
     "category": "face",
     "rarity": "rare",
     "image": "shook.png",
-    "price": 200
+    "price": 150
   },
   {
     "id": "wink",
@@ -165,7 +165,7 @@
     "category": "face",
     "rarity": "rare",
     "image": "wink.png",
-    "price": 200
+    "price": 150
   },
   {
     "id": "worried",
@@ -173,7 +173,7 @@
     "category": "face",
     "rarity": "common",
     "image": "worried.png",
-    "price": 100
+    "price": 50
   },
   {
     "id": "sad",
@@ -181,6 +181,6 @@
     "category": "face",
     "rarity": "common",
     "image": "sad.png",
-    "price": 100
+    "price": 50
   }
 ]

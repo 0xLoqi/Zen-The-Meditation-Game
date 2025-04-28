@@ -217,7 +217,7 @@ const HomeScreen = () => {
                           <View style={[styles.streakBadge, { backgroundColor: bg }]}> 
                             <Ionicons name="flame" size={16} color={color} style={{ marginRight: 2 }} />
                             <Text style={[styles.streakBadgeText, { color }]}>{streak}</Text>
-                          </View>
+                      </View>
                         );
                         if (streak >= 14) {
                           return (
@@ -254,11 +254,11 @@ const HomeScreen = () => {
               easing="ease-in-out"
               style={styles.meditateButtonPulse}
             >
-              <TouchableOpacity 
-                style={styles.meditateButton}
-                onPress={handleMeditatePress}
-                activeOpacity={0.8}
-              >
+            <TouchableOpacity 
+              style={styles.meditateButton}
+              onPress={handleMeditatePress}
+              activeOpacity={0.8}
+            >
                 <LinearGradient
                   colors={["#FFD580", "#FFB300", "#FF8C42"]}
                   start={{ x: 0, y: 0 }}
@@ -275,20 +275,20 @@ const HomeScreen = () => {
                   <FloatyAnimation style={styles.sparkle3} duration={4000} intensity="strong">
                     <Sparkle size={22} color="#fff" />
                   </FloatyAnimation>
-                  <View style={styles.meditateButtonContent}>
+              <View style={styles.meditateButtonContent}>
                     <FloatyAnimation animation="float" duration={2200} intensity="gentle">
-                      <View style={styles.meditateIconContainer}>
+                <View style={styles.meditateIconContainer}>
                         <MaterialCommunityIcons name="meditation" size={44} color={COLORS.white} />
-                      </View>
+                </View>
                     </FloatyAnimation>
-                    <View style={styles.meditateTextContainer}>
-                      <Text style={styles.meditateButtonTitle}>Start Meditation</Text>
-                      <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
-                    </View>
+                <View style={styles.meditateTextContainer}>
+                  <Text style={styles.meditateButtonTitle}>Start Meditation</Text>
+                  <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
+                </View>
                     <Ionicons name="chevron-forward" size={28} color={COLORS.white} />
-                  </View>
+              </View>
                 </LinearGradient>
-              </TouchableOpacity>
+            </TouchableOpacity>
             </Animatable.View>
             <View style={{ marginTop: 0 }}>
               <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>Friend Den</Text></View>
@@ -329,8 +329,8 @@ const HomeScreen = () => {
                 ));
               })()}
             </View>
+            <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>🌍 Global Leaderboard</Text></View>
             <View style={styles.leaderboardContainer}>
-              <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>🌍 Global Leaderboard</Text></View>
               <Leaderboard />
             </View>
           </ScrollView>
@@ -653,7 +653,6 @@ const styles = StyleSheet.create({
   leaderboardContainer: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 16,
     marginBottom: 16,
     marginTop: 8,
     shadowColor: '#000',
