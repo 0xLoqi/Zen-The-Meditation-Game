@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -28,7 +28,7 @@ import { useMeditationStore } from '../../store/meditationStore';
 import { useUserStore } from '../../store/userStore';
 import { formatTime } from '../../utils/formatters';
 import { triggerHapticFeedback } from '../../utils/haptics';
-import { useGameStore } from '../../store/index';
+import { useGameStore } from '../../store';
 import { maybeDropGlowbag, grant } from '../../services/CosmeticsService';
 import { analytics } from '../../firebase';
 import { requestNotificationPermission, scheduleReminder, cancelAllReminders } from '../../lib/notifications';
@@ -226,6 +226,10 @@ const MeditationSessionScreen = () => {
       addXP(xp);
       incrementStreak();
       unlockAchievement('first_meditation');
+      // Complete the 'Daily Glow' quest if session >=5 minutes
+      if (selectedDuration && selectedDuration >= 5) {
+        useGameStore.getState().completeQuest('first_meditation');
+      }
       // T07: Grant Glowbag on first meditation
       if (!firstMeditationRewarded) {
         grant('glowbag_rare');
