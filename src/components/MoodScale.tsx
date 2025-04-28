@@ -14,9 +14,11 @@ interface MoodScaleProps {
   onRatingSelected: (rating: number) => void;
   initialRating?: number;
   style?: ViewStyle;
+  labelStyle?: any;
+  iconStyle?: any;
 }
 
-const MoodScale = ({ onRatingSelected, initialRating, style }: MoodScaleProps) => {
+const MoodScale = ({ onRatingSelected, initialRating, style, labelStyle, iconStyle }: MoodScaleProps) => {
   const [selectedRating, setSelectedRating] = useState<number | null>(initialRating || null);
   
   // Emoji and color for each mood level
@@ -53,13 +55,14 @@ const MoodScale = ({ onRatingSelected, initialRating, style }: MoodScaleProps) =
             >
               <Ionicons
                 name={mood.emoji as any}
-                size={36}
-                color={isSelected ? mood.color : COLORS.neutralMedium}
-                style={styles.moodIcon}
+                size={28}
+                color={isSelected ? mood.color : COLORS.text}
+                style={[styles.moodIcon, iconStyle]}
               />
               <Text
                 style={[
                   styles.moodLabel,
+                  labelStyle,
                   isSelected && { color: mood.color, fontWeight: 'bold' },
                 ]}
               >
@@ -84,15 +87,26 @@ const styles = StyleSheet.create({
   },
   moodOption: {
     alignItems: 'center',
-    padding: SPACING.xs,
-    borderRadius: 12,
-    minWidth: 60,
+    paddingVertical: 2,
+    paddingHorizontal: SPACING.s,
+    borderRadius: 14,
+    minWidth: 32,
+    backgroundColor: COLORS.white,
+    marginHorizontal: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   moodIcon: {
     marginBottom: SPACING.xxs,
   },
   moodLabel: {
-    ...FONTS.body.tiny,
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.small,
     color: COLORS.neutralMedium,
     textAlign: 'center',
   },

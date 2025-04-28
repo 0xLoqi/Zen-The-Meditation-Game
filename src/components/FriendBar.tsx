@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Share } from 'react-native';
 import { useGameStore } from '../store';
-import { COLORS } from '../constants/theme';
+import { COLORS, SIZES } from '../constants/theme';
 import { setFriendCode } from '../firebase/user';
 import MiniZenni from './MiniZenni';
 import cosmetics from '../../assets/data/cosmetics.json';
@@ -155,10 +155,10 @@ const styles = StyleSheet.create({
   },
   denRowBg: {
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderRadius: 30,
+    borderRadius: SIZES.radiusLarge,
     marginHorizontal: 4,
     marginBottom: 15,
-    marginTop: 10,
+    marginTop: 0,
     paddingVertical: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

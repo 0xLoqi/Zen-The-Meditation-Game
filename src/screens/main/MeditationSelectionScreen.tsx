@@ -6,11 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   ImageBackground,
+  TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
@@ -19,66 +20,29 @@ import { MeditationType, MeditationDuration } from '../../types';
 import FloatingLeaves from '../../components/FloatingLeaves';
 import { useUserStore } from '../../store/userStore';
 import * as Animatable from 'react-native-animatable';
+import MoodScale from '../../components/MoodScale';
 
 const MeditationSelectionScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
   const { selectMeditationSettings } = useMeditationStore();
   const username = useUserStore((s) => s.userData?.username);
+  const insets = useSafeAreaInsets();
   
-  const [selectedType, setSelectedType] = useState<MeditationType | null>(null);
-  const [selectedDuration, setSelectedDuration] = useState<MeditationDuration | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
   const [encouragement, setEncouragement] = useState('');
   
-  // Meditation types with icons and descriptions
-  const meditationTypes: {
-    type: MeditationType;
-    icon: string;
-    title: string;
-    description: string;
-    encouragement: string;
-  }[] = [
-    {
-      type: 'calm',
-      icon: 'weather-sunset',
-      title: 'Calm',
-      description: 'Relax your mind and find peace in the present moment.',
-      encouragement: 'Ready to get calm?',
-    },
-    {
-      type: 'focus',
-      icon: 'target',
-      title: 'Focus',
-      description: 'Sharpen your concentration and mental clarity.',
-      encouragement: "Let's focus together!",
-    },
-    {
-      type: 'sleep',
-      icon: 'moon-waning-crescent',
-      title: 'Sleep',
-      description: 'Prepare your body and mind for restful sleep.',
-      encouragement: 'Drift into deep rest.',
-    },
-  ];
-  
   // Meditation durations
-  const durations: MeditationDuration[] = [5, 10, 15, 20];
-  
-  // Handle type selection
-  const handleTypeSelect = (type: MeditationType) => {
-    setSelectedType(type);
-    const found = meditationTypes.find((t) => t.type === type);
-    setEncouragement(found?.encouragement || '');
-  };
-  
-  // Handle duration selection
-  const handleDurationSelect = (duration: MeditationDuration) => {
-    setSelectedDuration(duration);
-  };
+  const durations = [
+    { value: 5, xp: 50, tokens: 0, spin: true },
+    { value: 10, xp: 120, tokens: 5, spin: true },
+    { value: 15, xp: 200, tokens: 10, spin: true },
+    { value: 20, xp: 300, tokens: 15, spin: true },
+  ];
   
   // Start meditation session
   const startMeditation = () => {
-    if (selectedType && selectedDuration) {
-      selectMeditationSettings(selectedType, selectedDuration);
+    if (selectedDuration) {
+      selectMeditationSettings(null, selectedDuration);
       navigation.navigate('MeditationSession');
     }
   };
@@ -94,69 +58,50 @@ const MeditationSelectionScreen = () => {
     >
       <FloatingLeaves count={6} style={styles.leavesBackground} />
       {/* Back Button - absolutely positioned at the top left */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <MaterialCommunityIcons name="arrow-left" size={28} color="#B68900" />
+      <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { top: insets.top + 10 }]}>
+        <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
       </TouchableOpacity>
       <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>
-            How would you like to meditate today?
-          </Text>
-          <Text style={styles.subtitle}>
-            {encouragement || 'Select a practice that suits your current needs'}
+        {/* Value Statement */}
+        <View style={{ alignItems: 'center', marginBottom: 18, marginTop: 16 }}>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', textAlign: 'center', backgroundColor: 'rgba(35,32,20,0.7)', borderRadius: 12, padding: 8 }}>
+            Earn XP, tokens, and a free spin for your first meditation each day!
           </Text>
         </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Type</Text>
-          <View style={{ width: '100%', alignItems: 'center', marginBottom: 8 }}>
-            <View style={styles.typesContainer}>
-              {meditationTypes.map((item) => (
-                <Animatable.View
-                  key={item.type}
-                  animation={selectedType === item.type ? 'pulse' : undefined}
-                  duration={300}
-                  useNativeDriver
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.typeCard,
-                      selectedType === item.type && styles.selectedTypeCard,
-                    ]}
-                    onPress={() => handleTypeSelect(item.type)}
-                    activeOpacity={0.8}
-                  >
-                    <MaterialCommunityIcons
-                      name={item.icon as any}
-                      size={32}
-                      color={selectedType === item.type ? '#fff' : '#B68900'}
-                    />
-                    <Text
-                      style={[
-                        styles.typeTitle,
-                        selectedType === item.type && styles.selectedTypeText,
-                      ]}
-                    >
-                      {item.title}
-                    </Text>
-                  </TouchableOpacity>
-                </Animatable.View>
-              ))}
-            </View>
+        {/* MoodScale and Reflection Input (copy from DailyCheckInScreen, minus MiniZenni) */}
+        <View style={{ marginBottom: 18 }}>
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 6 }}>How are you feeling?</Text>
+            <MoodScale
+              onRatingSelected={() => {}}
+              iconStyle={{ textShadowColor: '#000', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}
+              labelStyle={{ color: '#fff', fontSize: 14, fontWeight: 'bold', textAlign: 'center', textShadowColor: '#000', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}
+            />
+          </View>
+          <View style={{ marginBottom: 8 }}>
+            <TextInput
+              style={{ height: 80, borderWidth: 1, borderColor: '#B68900', borderRadius: 16, padding: 12, color: '#fff', backgroundColor: 'rgba(35,32,20,0.5)', fontSize: 16, minHeight: 80, maxHeight: 200 }}
+              placeholder="What's on your mind? (Optional)"
+              placeholderTextColor="#FFD580"
+              multiline
+              maxLength={1000}
+              textAlignVertical="top"
+              // value/onChangeText to be wired up
+            />
           </View>
         </View>
-        
+        {/* Duration Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Duration</Text>
+          <View style={styles.sectionTitleBg}><Text style={styles.sectionTitle}>Duration</Text></View>
           <View style={styles.durationsContainer}>
-            {durations.map((duration) => (
+            {durations.map((d) => (
               <Animatable.View
-                key={duration}
-                animation={selectedDuration === duration ? 'pulse' : undefined}
+                key={d.value}
+                animation={selectedDuration === d.value ? 'pulse' : undefined}
                 duration={300}
                 useNativeDriver
                 style={{ flex: 1 }}
@@ -164,30 +109,44 @@ const MeditationSelectionScreen = () => {
                 <TouchableOpacity
                   style={[
                     styles.durationCard,
-                    selectedDuration === duration && styles.selectedDurationCard,
+                    selectedDuration === d.value && styles.selectedDurationCard,
                   ]}
-                  onPress={() => handleDurationSelect(duration)}
+                  onPress={() => setSelectedDuration(d.value)}
                   activeOpacity={0.8}
                 >
                   <Text
                     style={[
                       styles.durationText,
-                      selectedDuration === duration && styles.selectedDurationText,
+                      selectedDuration === d.value && styles.selectedDurationText,
                     ]}
                   >
-                    {duration}
+                    {d.value}
                   </Text>
                   <Text
                     style={[
                       styles.durationLabel,
-                      selectedDuration === duration && styles.selectedDurationText,
+                      selectedDuration === d.value && styles.selectedDurationText,
                     ]}
                   >
                     min
                   </Text>
-                  {duration >= 10 && (
-                    <View style={styles.bonusBadge}>
-                      <Text style={styles.bonusBadgeText}>+{duration} XP</Text>
+                  {/* XP Reward */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                    <MaterialCommunityIcons name="star-circle" size={18} color="#FFD700" style={{ marginRight: 2 }} />
+                    <Text style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 13 }}>{d.xp} XP</Text>
+                  </View>
+                  {/* Token Bonus */}
+                  {d.tokens > 0 && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                      <MaterialCommunityIcons name="coin" size={16} color="#FFD580" style={{ marginRight: 2 }} />
+                      <Text style={{ color: '#FFD580', fontWeight: 'bold', fontSize: 12 }}>+{d.tokens} Tokens</Text>
+                    </View>
+                  )}
+                  {/* Spin Reward */}
+                  {d.spin && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                      <MaterialCommunityIcons name="sync" size={15} color="#B68900" style={{ marginRight: 2 }} />
+                      <Text style={{ color: '#B68900', fontSize: 11 }}>1st/day: +1 Spin</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -199,9 +158,9 @@ const MeditationSelectionScreen = () => {
       {/* Sticky Start Button */}
       <View style={styles.stickyStartButtonContainer}>
         <Button
-          title={selectedType && selectedDuration ? `Begin ${selectedDuration} min ${selectedType} Meditation` : 'Begin Meditation'}
+          title={selectedDuration ? `Begin ${selectedDuration} min Meditation` : 'Begin Meditation'}
           onPress={startMeditation}
-          disabled={!selectedType || !selectedDuration}
+          disabled={!selectedDuration}
           style={styles.startButton}
         />
       </View>
@@ -219,8 +178,8 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   header: {
-    marginBottom: 24,
-    marginTop: 52,
+    marginBottom: 0,
+    marginTop: 0,
   },
   title: {
     fontSize: 24,
@@ -230,7 +189,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#FFF9E3',
+    color: '#fff',
   },
   section: {
     marginBottom: 24,
@@ -238,7 +197,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF9E3',
+    color: '#fff',
     marginBottom: 16,
   },
   typesContainer: {
@@ -359,10 +318,36 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 58,
-    left: 8,
+    top: 18,
+    left: 18,
     zIndex: 20,
-    padding: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  headerBg: {
+    backgroundColor: 'rgba(35,32,20,0.7)',
+    borderRadius: 18,
+    padding: 10,
+    marginBottom: 10,
+    marginTop: 16,
+    alignSelf: 'stretch',
+  },
+  sectionTitleBg: {
+    backgroundColor: 'rgba(35,32,20,0.7)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
   },
 });
 

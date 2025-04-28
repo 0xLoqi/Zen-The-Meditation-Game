@@ -127,6 +127,14 @@ const MiniZenni = ({
   const dimensions = getDimensions();
   const sparkleSize = dimensions.width * 1.5;
 
+  // Determine accessory IDs supporting array, string, or comma-separated string (fallback to equipped)
+  const rawAccessory = accessoryId !== undefined ? accessoryId : equipped.accessory;
+  const accessoryIds = Array.isArray(rawAccessory)
+    ? rawAccessory
+    : typeof rawAccessory === 'string'
+      ? rawAccessory.split(',').map(id => id.trim()).filter(Boolean)
+      : [];
+
   // Build layers with aura behind the base
   const layers = [
     // Aura behind everything
@@ -137,11 +145,8 @@ const MiniZenni = ({
     cosmeticImages[outfitId || equipped.outfit] || null,
     cosmeticImages[faceId || equipped.face] || null,
     cosmeticImages[headgearId || equipped.headgear] || null,
-    // Handle up to two accessories
-    ...(Array.isArray(accessoryId)
-      ? accessoryId.map(id => cosmeticImages[id] || null)
-      : [cosmeticImages[accessoryId || equipped.accessory] || null]
-    ),
+    // Accessories (support multiple)
+    ...accessoryIds.map(id => cosmeticImages[id] || null),
     // Companion on top
     cosmeticImages[companionId || equipped.companion] || null,
   ].filter(Boolean);

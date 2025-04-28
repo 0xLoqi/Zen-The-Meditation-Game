@@ -146,6 +146,13 @@ const HomeScreen = () => {
     await signOut();
   };
 
+  const handleQuestPress = (quest) => {
+    if (quest.id === 'daily_checkin_start' || quest.id === 'daily_checkin_end') {
+      navigation.navigate('DailyCheckIn');
+    }
+    // Optionally: handle other quest types here
+  };
+
   if (isLoadingUser) {
     return (
       <SafeAreaView style={styles.container}>
@@ -300,12 +307,14 @@ const HomeScreen = () => {
               {useGameStore.getState().quests.dailyQuests.map((quest) => {
                 const complete = useGameStore.getState().quests.progress[quest.id];
                 return (
-                  <View key={quest.id} style={[styles.questRow, complete && styles.questRowComplete]}>
-                    <View style={styles.questTextStack}>
-                      <Text style={[styles.questName, complete && styles.questNameComplete]}>{quest.name} {complete ? '✔️' : ''}</Text>
-                      <Text style={styles.questDescription}>{quest.description}</Text>
+                  <TouchableOpacity key={quest.id} onPress={() => handleQuestPress(quest)} activeOpacity={0.8}>
+                    <View style={[styles.questRow, complete && styles.questRowComplete]}>
+                      <View style={styles.questTextStack}>
+                        <Text style={[styles.questName, complete && styles.questNameComplete]}>{quest.name} {complete ? '✔️' : ''}</Text>
+                        <Text style={styles.questDescription}>{quest.description}</Text>
+                      </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>
@@ -319,7 +328,10 @@ const HomeScreen = () => {
                 return locked.slice(0, 3).map((ach) => (
                   <View key={ach.id} style={styles.achievementCard}>
                     {badgeImages[ach.id] && (
-                      <Image source={badgeImages[ach.id]} style={styles.achievementIcon} />
+                      <Image 
+                        source={badgeImages[ach.id]} 
+                        style={[styles.achievementIcon, !unlocked.includes(ach.id) && { opacity: 0.4 }]} 
+                      />
                     )}
                     <View style={styles.achievementTextStack}>
                       <Text style={styles.achievementName}>{ach.name}</Text>

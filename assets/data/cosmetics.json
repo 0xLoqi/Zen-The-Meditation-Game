@@ -53,7 +53,7 @@
     "category": "aura",
     "rarity": "rare",
     "image": "auric_bloom.png",
-    "price": 300
+    "price": 800
   },
   {
     "id": "focus_spiral",
@@ -61,7 +61,7 @@
     "category": "aura",
     "rarity": "epic",
     "image": "focus_spiral.png",
-    "price": 500
+    "price": 1000
   },
   {
     "id": "verdant_halo",
@@ -69,7 +69,7 @@
     "category": "aura",
     "rarity": "rare",
     "image": "verdant_halo.png",
-    "price": 300
+    "price": 800
   },
   {
     "id": "glowpuff_aura",
@@ -117,7 +117,7 @@
     "category": "companion",
     "rarity": "rare",
     "image": "cozy_owl.png",
-    "price": 300
+    "price": 800
   },
   {
     "id": "busy_bee",
