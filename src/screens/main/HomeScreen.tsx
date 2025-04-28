@@ -147,10 +147,12 @@ const HomeScreen = () => {
   };
 
   const handleQuestPress = (quest) => {
+    triggerHapticFeedback('selection');
     if (quest.id === 'daily_checkin_start' || quest.id === 'daily_checkin_end') {
       navigation.navigate('DailyCheckIn');
+    } else if (quest.id === 'first_meditation') {
+      navigation.navigate('MeditationSelection');
     }
-    // Optionally: handle other quest types here
   };
 
   if (isLoadingUser) {
