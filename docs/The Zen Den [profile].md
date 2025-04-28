@@ -1,16 +1,10 @@
----
-description: 
-globs: 
-alwaysApply: false
----
 ✨ Profile Screen — “Zen Den” (Re-imagined from first principles)
 
 Zone	Purpose	Key elements	Monetization hooks
 1. Hero Pane	Instant emotional connection	- Full-body Mini Zenni rendered over subtle animated backdrop (last equipped Aura).
 - Tap Zenni → opens “Change Look” bottom-sheet (Outfit, Headgear, Aura tabs).	- “New!” badge on tabs with un-equipped cosmetics.
 - Glowbag icon top-right showing unread count.
-2. Progress Ring	Showcase growth & habit strength	- Circular ring encircling Zenni: inner gradient fills with XP toward next level.
-- Number in center: Level 12.
+2. Progress Ring	Showcase growth & habit strength	- Circular ring encircling Zenni: inner gradient fills with XP toward next level
 - Tiny flame icon + streak count under ring.	- When streak breaks, ring grays out → subtle “Restore Streak (20 Zen Tokens)” tooltip.
 3. Stats & Badges Bar	Bragging rights, social proof	- Horizontal scroll of unlockable Achievement badges (tap to view requirements).
 - Friend count chip (tap → Friends screen).	- Locked badges show silhouette → “How to unlock” sheet nudges meditation / quests.

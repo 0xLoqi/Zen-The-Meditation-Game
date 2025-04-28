@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StatusBar,
   AppState,
+  ImageBackground,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -31,8 +32,8 @@ import { useGameStore } from '../../store/index';
 import { maybeDropGlowbag, grant } from '../../services/CosmeticsService';
 import { analytics } from '../../firebase';
 import { requestNotificationPermission, scheduleReminder, cancelAllReminders } from '../../lib/notifications';
-import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import { playAmbient, stopAmbient } from '../../services/audio';
 
 const MeditationSessionScreen = () => {
@@ -335,11 +336,10 @@ const MeditationSessionScreen = () => {
   }
   
   return (
-    <LinearGradient
-      colors={['#f8e7c9', '#e6e1f7', '#c9e7f8']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <ImageBackground
+      source={require('../../../assets/images/backgrounds/meditation_bg.png')}
       style={{ flex: 1 }}
+      resizeMode="cover"
     >
       <Animated.View style={[styles.container, fadeAnimStyle, { backgroundColor: 'transparent' }]}> 
         <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
@@ -461,7 +461,7 @@ const MeditationSessionScreen = () => {
           </View>
         </View>
       </Animated.View>
-    </LinearGradient>
+    </ImageBackground>
   );
 };
 

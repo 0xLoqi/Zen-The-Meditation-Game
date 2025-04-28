@@ -5,6 +5,7 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -15,7 +16,6 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { useMeditationStore } from '../../store/meditationStore';
 import { MeditationType, MeditationDuration } from '../../types';
-import PatternBackground from '../../components/PatternBackground';
 import FloatingLeaves from '../../components/FloatingLeaves';
 import { useUserStore } from '../../store/userStore';
 import * as Animatable from 'react-native-animatable';
@@ -87,7 +87,11 @@ const MeditationSelectionScreen = () => {
   const showBonus = selectedDuration && selectedDuration >= 10;
   
   return (
-    <PatternBackground>
+    <ImageBackground
+      source={require('../../../assets/images/backgrounds/pre_meditation_bg.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
       <FloatingLeaves count={6} style={styles.leavesBackground} />
       {/* Back Button - absolutely positioned at the top left */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -202,7 +206,7 @@ const MeditationSelectionScreen = () => {
         />
       </View>
     </SafeAreaView>
-    </PatternBackground>
+    </ImageBackground>
   );
 };
 
@@ -221,12 +225,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#B68900',
+    color: '#fff',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B4F1D',
+    color: '#FFF9E3',
   },
   section: {
     marginBottom: 24,
@@ -234,7 +238,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#6B4F1D',
+    color: '#FFF9E3',
     marginBottom: 16,
   },
   typesContainer: {
@@ -267,7 +271,7 @@ const styles = StyleSheet.create({
   typeTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#6B4F1D',
+    color: '#B68900',
     marginTop: 8,
     marginBottom: 4,
     textAlign: 'center',
@@ -304,11 +308,11 @@ const styles = StyleSheet.create({
   durationText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#6B4F1D',
+    color: '#B68900',
   },
   durationLabel: {
     fontSize: 16,
-    color: '#6B4F1D',
+    color: '#B68900',
   },
   selectedDurationText: {
     color: '#fff',
