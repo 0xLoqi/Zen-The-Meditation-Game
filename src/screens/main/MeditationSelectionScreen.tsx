@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ImageBackground,
   TextInput,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -54,6 +55,36 @@ const MeditationSelectionScreen = () => {
   // Bonus badge logic
   const showBonus = selectedDuration && selectedDuration >= 10;
   
+  // FlatList header for value statement, mood scale, and reflection input
+  const renderHeader = () => (
+    <>
+      <View style={{ paddingTop: insets.top, marginBottom: 18 }}>
+        {/* Removed XP/tokens banner */}
+      </View>
+      <View style={{ marginBottom: 18 }}>
+        <View style={{ marginBottom: 12 }}>
+          <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 6 }}>Quick check-in?</Text>
+          <MoodScale
+            onRatingSelected={() => {}}
+            iconStyle={{}}
+            labelStyle={{ color: '#fff', fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}
+          />
+        </View>
+        <View style={{ marginBottom: 8 }}>
+          <TextInput
+            style={{ height: 80, borderWidth: 1, borderColor: '#B68900', borderRadius: 16, padding: 12, color: '#fff', backgroundColor: 'rgba(35,32,20,0.5)', fontSize: 16, minHeight: 80, maxHeight: 200 }}
+            placeholder="What's on your mind? (Optional)"
+            placeholderTextColor="#FFD580"
+            multiline
+            maxLength={1000}
+            textAlignVertical="top"
+            // value/onChangeText to be wired up
+          />
+        </View>
+      </View>
+    </>
+  );
+
   return (
     <ImageBackground
       source={require('../../../assets/images/backgrounds/pre_meditation_bg.png')}
@@ -66,109 +97,72 @@ const MeditationSelectionScreen = () => {
         <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
       </TouchableOpacity>
       <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Value Statement */}
-        <View style={{ alignItems: 'center', marginBottom: 18, marginTop: 16 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', textAlign: 'center', backgroundColor: 'rgba(35,32,20,0.7)', borderRadius: 12, padding: 8 }}>
-            Earn XP, tokens, and a free spin for your first meditation each day!
-          </Text>
-        </View>
-        {/* MoodScale and Reflection Input (copy from DailyCheckInScreen, minus MiniZenni) */}
-        <View style={{ marginBottom: 18 }}>
-          <View style={{ marginBottom: 12 }}>
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 6 }}>How are you feeling?</Text>
-            <MoodScale
-              onRatingSelected={() => {}}
-              iconStyle={{ textShadowColor: '#000', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}
-              labelStyle={{ color: '#fff', fontSize: 14, fontWeight: 'bold', textAlign: 'center', textShadowColor: '#000', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}
-            />
-          </View>
-          <View style={{ marginBottom: 8 }}>
-            <TextInput
-              style={{ height: 80, borderWidth: 1, borderColor: '#B68900', borderRadius: 16, padding: 12, color: '#fff', backgroundColor: 'rgba(35,32,20,0.5)', fontSize: 16, minHeight: 80, maxHeight: 200 }}
-              placeholder="What's on your mind? (Optional)"
-              placeholderTextColor="#FFD580"
-              multiline
-              maxLength={1000}
-              textAlignVertical="top"
-              // value/onChangeText to be wired up
-            />
-          </View>
-        </View>
-        {/* Duration Selection */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleBg}><Text style={styles.sectionTitle}>Duration</Text></View>
-          <View style={styles.durationsContainer}>
-            {durations.map((d) => (
-              <Animatable.View
-                key={d.value}
-                animation={selectedDuration === d.value ? 'pulse' : undefined}
-                duration={300}
-                useNativeDriver
-                style={{ flex: 1 }}
+        <FlatList
+          data={durations}
+          numColumns={2}
+          keyExtractor={(item) => item.value.toString()}
+          contentContainerStyle={styles.durationsContainer}
+          columnWrapperStyle={{ justifyContent: 'center' }}
+          ListHeaderComponent={renderHeader}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.durationCardGrid,
+                selectedDuration === item.value && styles.selectedDurationCard,
+              ]}
+              onPress={() => setSelectedDuration(item.value)}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                  color: '#B68900',
+                }}
               >
-                <TouchableOpacity
-                  style={[
-                    styles.durationCard,
-                    selectedDuration === d.value && styles.selectedDurationCard,
-                  ]}
-                  onPress={() => setSelectedDuration(d.value)}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    style={[
-                      styles.durationText,
-                      selectedDuration === d.value && styles.selectedDurationText,
-                    ]}
-                  >
-                    {d.value}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.durationLabel,
-                      selectedDuration === d.value && styles.selectedDurationText,
-                    ]}
-                  >
-                    min
-                  </Text>
-                  {/* XP Reward */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-                    <MaterialCommunityIcons name="star-circle" size={18} color="#FFD700" style={{ marginRight: 2 }} />
-                    <Text style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 13 }}>{d.xp} XP</Text>
-                  </View>
-                  {/* Token Bonus */}
-                  {d.tokens > 0 && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                      <MaterialCommunityIcons name="coin" size={16} color="#FFD580" style={{ marginRight: 2 }} />
-                      <Text style={{ color: '#FFD580', fontWeight: 'bold', fontSize: 12 }}>+{d.tokens} Tokens</Text>
-                    </View>
-                  )}
-                  {/* Spin Reward */}
-                  {d.spin && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                      <MaterialCommunityIcons name="sync" size={15} color="#B68900" style={{ marginRight: 2 }} />
-                      <Text style={{ color: '#B68900', fontSize: 11 }}>1st/day: +1 Spin</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </Animatable.View>
-            ))}
-          </View>
-        </View>
-      </ScrollView>
-      {/* Sticky Start Button */}
-      <View style={styles.stickyStartButtonContainer}>
-        <Button
-          title={selectedDuration ? `Begin ${selectedDuration} min Meditation` : 'Begin Meditation'}
-          onPress={startMeditation}
-          disabled={!selectedDuration}
-          style={styles.startButton}
+                {item.value}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: '#6B5E4E',
+                  marginBottom: 2,
+                }}
+              >
+                min
+              </Text>
+              {/* XP Reward */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                <MaterialCommunityIcons name="star-circle" size={18} color="#E6B800" style={{ marginRight: 2 }} />
+                <Text style={{ color: '#E6B800', fontWeight: 'bold', fontSize: 13 }}>{item.xp} XP</Text>
+              </View>
+              {/* Token Bonus */}
+              {item.tokens > 0 && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                  <MaterialCommunityIcons name="currency-usd" size={16} color="#2CB67D" style={{ marginRight: 2 }} />
+                  <Text style={{ color: '#2CB67D', fontWeight: 'bold', fontSize: 12 }}>+{item.tokens} Tokens</Text>
+                </View>
+              )}
+              {/* Spin Reward */}
+              {item.spin && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                  <MaterialCommunityIcons name="sync" size={15} color="#6B5E4E" style={{ marginRight: 2 }} />
+                  <Text style={{ color: '#6B5E4E', fontSize: 11 }}>1st/day: +1 Spin</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
         />
-      </View>
-    </SafeAreaView>
+        {/* Sticky Start Button */}
+        <View style={styles.stickyStartButtonContainer}>
+          <Button
+            title={selectedDuration ? `Begin ${selectedDuration} min Meditation` : 'Begin Meditation'}
+            onPress={startMeditation}
+            disabled={!selectedDuration}
+            style={styles.startButton}
+          />
+        </View>
+      </SafeAreaView>
     </ImageBackground>
   );
 };
@@ -246,24 +240,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
+    alignItems: 'flex-start',
     maxWidth: 400,
     alignSelf: 'center',
+    paddingTop: 8,
+    paddingBottom: 16,
+    paddingHorizontal: 24,
   },
-  durationCard: {
+  durationCardGrid: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 8,
-    marginBottom: 12,
-    width: 80,
-    height: 100,
+    flexBasis: '45%',
+    maxWidth: '45%',
+    margin: '2.5%',
+    aspectRatio: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 2,
+    padding: 10,
   },
   selectedDurationCard: {
     backgroundColor: '#B68900',
@@ -316,8 +314,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     paddingTop: 8,
     paddingBottom: 48,
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingHorizontal: 24,
     zIndex: 10,
   },
   backButton: {
