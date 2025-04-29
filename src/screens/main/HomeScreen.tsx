@@ -149,7 +149,7 @@ const HomeScreen = () => {
   const handleQuestPress = (quest) => {
     triggerHapticFeedback('selection');
     if (quest.id === 'daily_checkin_start' || quest.id === 'daily_checkin_end') {
-      navigation.navigate('DailyCheckIn');
+      navigation.navigate('DailyCheckIn', { questId: quest.id });
     } else if (quest.id === 'first_meditation') {
       navigation.navigate('MeditationSelection');
     }
@@ -326,27 +326,31 @@ const HomeScreen = () => {
             </View>
             {/* Achievements Section */}
             <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>Achievements</Text></View>
-            <View style={styles.achievementsContainer}>
-              {(() => {
-                const unlocked = useGameStore.getState().achievements.unlocked || [];
-                const achievementsData = require('../../../assets/data/achievements.json');
-                const locked = achievementsData.filter((a) => !unlocked.includes(a.id));
-                return locked.slice(0, 3).map((ach) => (
-                  <View key={ach.id} style={styles.achievementCard}>
-                    {badgeImages[ach.id] && (
-                      <Image 
-                        source={badgeImages[ach.id]} 
-                        style={[styles.achievementIcon, !unlocked.includes(ach.id) && { opacity: 0.4 }]} 
-                      />
-                    )}
-                    <View style={styles.achievementTextStack}>
-                      <Text style={styles.achievementName}>{ach.name}</Text>
-                      <Text style={styles.achievementDescription}>{ach.description}</Text>
-                    </View>
-                  </View>
-                ));
-              })()}
-            </View>
+            <TouchableOpacity activeOpacity={0.85} onPress={handleAchievementsPress} style={{flex:1}}>
+              <View style={styles.achievementsContainer}>
+                {(() => {
+                  const unlocked = useGameStore.getState().achievements.unlocked || [];
+                  const achievementsData = require('../../../assets/data/achievements.json');
+                  const locked = achievementsData.filter((a) => !unlocked.includes(a.id));
+                  return locked.slice(0, 3).map((ach) => (
+                    <TouchableOpacity key={ach.id} activeOpacity={0.85} onPress={handleAchievementsPress} style={{flex:1}}>
+                      <View style={styles.achievementCard}>
+                        {badgeImages[ach.id] && (
+                          <Image 
+                            source={badgeImages[ach.id]} 
+                            style={[styles.achievementIcon, !unlocked.includes(ach.id) && { opacity: 0.4 }]} 
+                          />
+                        )}
+                        <View style={styles.achievementTextStack}>
+                          <Text style={styles.achievementName}>{ach.name}</Text>
+                          <Text style={styles.achievementDescription}>{ach.description}</Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ));
+                })()}
+              </View>
+            </TouchableOpacity>
             <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>🌍 Global Leaderboard</Text></View>
             <View style={styles.leaderboardContainer}>
               <Leaderboard />

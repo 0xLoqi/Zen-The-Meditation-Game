@@ -62,7 +62,7 @@ const MeditationSelectionScreen = () => {
     >
       <FloatingLeaves count={6} style={styles.leavesBackground} />
       {/* Back Button - absolutely positioned at the top left */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { top: insets.top + 10 }]}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { top: insets.top + 18, left: insets.left + 18 }]}>
         <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
       </TouchableOpacity>
       <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>

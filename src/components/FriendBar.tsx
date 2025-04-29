@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Share } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MainStackParamList } from '../navigation/MainNavigator';
 import { useGameStore } from '../store';
 import { COLORS, SIZES } from '../constants/theme';
 import { setFriendCode } from '../firebase/user';
@@ -42,7 +45,7 @@ function getRandomFriendProps() {
 const MOCK_NAMES = ['Alex', 'Sam', 'Milo'];
 function generateMockFriends() {
   return MOCK_NAMES.map((name, i) => ({
-    name,
+    id: `mock-${i}`,
     level: Math.floor(Math.random() * 10) + 1,
     streak: Math.floor(Math.random() * 20) + 1,
     hasMeditatedToday: Math.random() > 0.5,
@@ -51,15 +54,21 @@ function generateMockFriends() {
 }
 
 const FriendDen = () => {
+  const navigation = useNavigation<StackNavigationProp<MainStackParamList, 'Profile'>>();
   const friends = useGameStore((s) => s.friends);
   const hasRealFriends = friends && friends.length > 0;
-  const mockFriends = generateMockFriends();
+  const [mockFriends] = useState(() => generateMockFriends());
 
   return (
     <View style={styles.denRowBg}>
       <View style={styles.denRow}>
-        {(hasRealFriends ? friends : mockFriends).map((f, i) => (
-          <View key={f.name} style={styles.friendCol}>
+        {(hasRealFriends ? friends : mockFriends).map((f) => (
+          <TouchableOpacity
+            key={f.id}
+            style={styles.friendCol}
+            onPress={() => navigation.navigate('Profile', { friend: f })}
+            activeOpacity={0.8}
+          >
             <View style={styles.avatarCircle}>
               <MiniZenni
                 outfitId={f.outfitId}
@@ -78,14 +87,14 @@ const FriendDen = () => {
               <Ionicons name="flame" size={13} color={f.hasMeditatedToday ? '#FFB300' : '#A0A0A0'} style={{ marginLeft: 10, marginRight: 2 }} />
               <Text style={[styles.streakNum, { color: f.hasMeditatedToday ? '#232014' : '#A0A0A0' }]}>{f.streak}</Text>
             </View>
-        </View>
-      ))}
+          </TouchableOpacity>
+        ))}
         <View style={styles.friendCol}>
           <TouchableOpacity style={{ alignItems: 'center' }}>
             <View style={styles.addCircle}>
               <Text style={styles.addPlus}>+</Text>
             </View>
-      </TouchableOpacity>
+          </TouchableOpacity>
           <Text style={[styles.friendName, { opacity: 0 }]}>Add</Text>
         </View>
       </View>

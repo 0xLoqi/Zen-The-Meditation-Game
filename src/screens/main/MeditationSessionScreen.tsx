@@ -178,7 +178,7 @@ const MeditationSessionScreen = () => {
         if (prevTime <= 1) {
           // Session complete
           clearInterval(intervalRef.current!);
-          handleSessionComplete();
+          handleSessionComplete(true);
           return 0;
         }
         return prevTime - 1;
@@ -205,7 +205,7 @@ const MeditationSessionScreen = () => {
         if (prevTime <= 1) {
           // Session complete
           clearInterval(intervalRef.current!);
-          handleSessionComplete();
+          handleSessionComplete(true);
           return 0;
         }
         return prevTime - 1;
@@ -214,7 +214,7 @@ const MeditationSessionScreen = () => {
   };
   
   // Handle session complete
-  const handleSessionComplete = async () => {
+  const handleSessionComplete = async (autoComplete = false) => {
     triggerHapticFeedback('success');
     fadeAnim.value = withTiming(0, {
       duration: 500,
@@ -226,8 +226,8 @@ const MeditationSessionScreen = () => {
       addXP(xp);
       incrementStreak();
       unlockAchievement('first_meditation');
-      // Complete the 'Daily Glow' quest if session >=5 minutes
-      if (selectedDuration && selectedDuration >= 5) {
+      // Only complete the 'Daily Glow' quest on natural timer finish for sessions >=5 min
+      if (autoComplete && selectedDuration && selectedDuration >= 5) {
         useGameStore.getState().completeQuest('first_meditation');
       }
       // T07: Grant Glowbag on first meditation
@@ -286,12 +286,12 @@ const MeditationSessionScreen = () => {
           },
           {
             text: 'End Session',
-            onPress: handleSessionComplete,
+            onPress: () => handleSessionComplete(false),
           },
         ]
       );
     } else {
-      handleSessionComplete();
+      handleSessionComplete(false);
     }
   };
   

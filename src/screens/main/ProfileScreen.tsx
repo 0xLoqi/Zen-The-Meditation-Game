@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable, Modal, TouchableWithoutFeedback, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable, Modal, TouchableWithoutFeedback, ImageBackground, SafeAreaView } from 'react-native';
 import { Video } from 'expo-av';
 import PatternBackground from '../../components/PatternBackground';
 import FloatingLeaves from '../../components/FloatingLeaves';
@@ -7,10 +7,16 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { getFriendCode, setFriendCode } from '../../firebase/user';
 // import { generateReferralCode } from '../../firebase/auth'; // Uncomment if using generateReferralCode
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 // import LinearGradient from 'react-native-linear-gradient'; // Uncomment if using gradients
 import MiniZenni from '../../components/MiniZenni';
 import { useUserStore } from '../../store/userStore';
+import ProfileHeader from '../../components/profile/ProfileHeader';
+import AchievementsCard from '../../components/profile/AchievementsCard';
+import GlowPointButton from '../../components/profile/GlowPointButton';
+import TopFriendsRow from '../../components/profile/TopFriendsRow';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getXPForNextLevel } from '../../firebase/meditation';
 
 // Placeholder assets
 const miniZenni = require('../../../assets/images/minizenni.png');
@@ -18,6 +24,7 @@ const glowbagIcon = require('../../../assets/images/glowbags/Glowbag_common.png'
 const badgeIcon = require('../../../assets/images/badges/locked_achievement.png');
 const editIcon = require('../../../assets/images/minizenni.png'); // fallback to Zenni image for now
 const animatedBg = require('../../../assets/images/backgrounds/animated_darkmode_bg.mp4');
+const bgImg = require('../../../assets/images/backgrounds/home_screen_bg_3.png');
 
 const userData = { username: 'ZenMaster' }; // Placeholder for user data
 
@@ -37,152 +44,9 @@ const InfoModal = ({ visible, onClose, title, description }) => (
   </Modal>
 );
 
-const ProfileScreen = () => {
-  const [modal, setModal] = useState({ visible: false, title: '', description: '' });
-  const [friendCode, setFriendCodeState] = useState('');
-  const navigation = useNavigation();
-  const userData = useUserStore((s) => s.userData);
-  useEffect(() => {
-    // Replace with actual user ID logic if available
-    const userId = 'demoUserId';
-    getFriendCode(userId).then(code => {
-      if (code) {
-        setFriendCodeState(code);
-      } else {
-        // const newCode = generateReferralCode();
-        // setFriendCode(userId, newCode).then(() => setFriendCodeState(newCode));
-      }
-    });
-  }, []);
-  const showModal = (title, description) => setModal({ visible: true, title, description });
-  const closeModal = () => setModal({ ...modal, visible: false });
-
-  const handleEditAvatar = () => {
-    alert('Edit avatar coming soon!');
-  };
-  const handleFriendsPress = () => {
-    alert('Friends screen coming soon!');
-  };
-  const handleCopyCode = () => {
-    Clipboard.setStringAsync(friendCode);
-  };
-  return (
-    <View style={styles.container}>
-      <Video
-        source={animatedBg}
-        style={styles.animatedBg}
-        resizeMode="cover"
-        shouldPlay
-        isLooping
-        isMuted
-        ignoreSilentSwitch="obey"
-      />
-      <FloatingLeaves count={6} style={styles.leavesBackground} />
-      <View style={[styles.container, { backgroundColor: 'transparent', zIndex: 1 }]}>
-        <TouchableOpacity style={[styles.backArrow, { backgroundColor: '#232014' }]} onPress={() => navigation.goBack()} accessibilityLabel="Back" accessible>
-          <Ionicons name="chevron-back" size={36} color="#FFD580" style={styles.backArrowIcon} />
-        </TouchableOpacity>
-        <ScrollView contentContainerStyle={styles.scrollContentWithBackArrow}>
-          {/* 1. Hero Pane */}
-          <View style={styles.heroPaneCentered}>
-            <MiniZenni
-              size="large"
-              outfitId={userData?.cosmetics?.equipped?.outfit}
-              headgearId={userData?.cosmetics?.equipped?.headgear}
-              auraId={userData?.cosmetics?.equipped?.aura}
-              faceId={userData?.cosmetics?.equipped?.face}
-              accessoryId={userData?.cosmetics?.equipped?.accessory}
-              companionId={userData?.cosmetics?.equipped?.companion}
-            />
-          </View>
-          <View style={styles.userNamePill}>
-            <Text style={styles.userNameModern}>{userData?.username || 'ZenUser'}</Text>
-          </View>
-          {friendCode ? (
-            <View style={styles.friendCodePill}>
-              <Text style={styles.friendCodeLabelModern}>Friend Code:</Text>
-              <Text style={styles.friendCodeValueModern}>{friendCode}</Text>
-              <TouchableOpacity onPress={handleCopyCode} style={styles.copyButtonModern} accessibilityLabel="Copy friend code" accessible>
-                <Ionicons name="copy-outline" size={16} color="#FF8C42" />
-              </TouchableOpacity>
-            </View>
-          ) : null}
-
-          {/* 2. Progress Ring */}
-          <View style={styles.statsCard}>
-            <View style={styles.statItemModern}>
-              <Ionicons name="flame" size={22} color="#FF8C42" />
-              <Text style={styles.statValueModern}>21</Text>
-              <Text style={styles.statLabelModern}>Streak</Text>
-            </View>
-            <View style={styles.statItemModern}>
-              <Ionicons name="medal-outline" size={22} color="#FFD580" />
-              <Text style={styles.statValueModern}>12</Text>
-              <Text style={styles.statLabelModern}>Level</Text>
-            </View>
-            <View style={styles.statItemModern}>
-              <Ionicons name="wallet-outline" size={22} color="#FFD580" />
-              <Text style={styles.statValueModern}>120</Text>
-              <Text style={styles.statLabelModern}>Tokens</Text>
-            </View>
-          </View>
-
-          {/* 3. Stats & Badges Bar */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesBar}>
-            {[...Array(5)].map((_, i) => (
-              <TouchableOpacity key={i} style={styles.badgeTouchable} activeOpacity={0.7} onPress={() => showModal('Locked Badge', 'Unlock this badge by completing special achievements!')} accessibilityLabel="Locked badge info" accessible>
-                <Image source={badgeIcon} style={styles.badgeIcon} />
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity style={styles.friendChip} onPress={handleFriendsPress} activeOpacity={0.7} accessibilityLabel="Friends list" accessible>
-              <Text style={styles.friendChipText}>Friends: 3</Text>
-            </TouchableOpacity>
-          </ScrollView>
-
-          {/* 4. Daily Quest Panel */}
-          <View style={styles.questPanelModern}>
-            <Text style={styles.questTitleModern}>Today's Quests</Text>
-            {[...Array(3)].map((_, i) => {
-              const claimable = i === 0; // Only first quest is claimable for demo
-              return (
-                <View key={i} style={styles.questRowModern}>
-                  <Text style={styles.questTextModern}>Quest {i + 1}</Text>
-                  <View style={styles.progressBarModern}><View style={styles.progressFillModern} /></View>
-                  <TouchableOpacity style={[styles.claimButtonModern, claimable && styles.claimButtonActive]} activeOpacity={0.7} onPress={() => showModal('Quest Claimed', 'You have claimed your quest reward!')} accessibilityLabel="Claim quest reward" accessible>
-                    <Text style={[styles.claimTextModern, claimable && styles.claimTextActive]}>Claim</Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
-          </View>
-
-          {/* 5. Customize Button */}
-          <View style={styles.customizeButtonContainerBottom}>
-            <TouchableOpacity style={styles.customizeButton} activeOpacity={0.8} onPress={() => alert('Open customization screen/modal here!')} accessibilityLabel="Customize your Zenni and profile" accessible>
-              <Ionicons name="color-palette-outline" size={28} color="#FFD580" style={{ marginRight: 8 }} />
-              <Text style={styles.customizeButtonLabel}>Customize</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-
-        {/* 6. Settings & Subscription Footer */}
-        {/* Footer removed */}
-        <InfoModal {...modal} onClose={closeModal} />
-      </View>
-    </View>
-  );
-};
-
-const CARD_RADIUS = 16;
-const SHADOW = {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.08,
-  shadowRadius: 8,
-  elevation: 3,
-};
-
 const styles = StyleSheet.create({
+  customizeBtn: { flexDirection:'row', alignItems:'center', backgroundColor:'#FFD580', borderRadius:18, padding:14, marginTop:8, alignSelf:'center' },
+  customizeBtnText: { color:'#232014', fontWeight:'bold', fontSize:18 },
   container: {
     flex: 1,
     // backgroundColor: '#FFF8E9', // REMOVE or comment out this line
@@ -276,7 +140,6 @@ const styles = StyleSheet.create({
   friendCodeLabelModern: { color: '#7A5C00', fontWeight: 'bold', marginRight: 4 },
   friendCodeValueModern: { color: '#FF8C42', fontWeight: 'bold', marginRight: 6 },
   copyButtonModern: { padding: 2 },
-  statsCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(35,32,20,0.95)', borderRadius: 18, padding: 18, marginVertical: 12, marginHorizontal: 2, ...SHADOW },
   statItemModern: { alignItems: 'center', flex: 1 },
   statValueModern: { fontWeight: 'bold', fontSize: 20, color: '#FFD580', marginTop: 2 },
   statLabelModern: { fontSize: 12, color: '#F5E9D0', marginTop: 2 },
@@ -309,6 +172,118 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  backButton: {
+    position: 'absolute',
+    top: 18,
+    left: 18,
+    zIndex: 50,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  pillCard: {},
 });
+
+const pillCard = [
+  styles.pillCard,
+  { backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 18, padding: 18, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 }
+];
+
+const ProfileScreen = () => {
+  const [modal, setModal] = useState({ visible: false, title: '', description: '' });
+  const [friendCode, setFriendCodeState] = useState('');
+  const navigation = useNavigation();
+  const route = useRoute();
+  const insets = useSafeAreaInsets();
+  const userData = useUserStore((s) => s.userData);
+  const isOwn = !route.params?.friend;
+  const profile = isOwn ? userData : route.params.friend;
+  const globalRank = profile?.globalRank || '#1234';
+  const darkMode = true; // Hardcoded for now
+
+  useEffect(() => {
+    // Replace with actual user ID logic if available
+    const userId = 'demoUserId';
+    getFriendCode(userId).then(code => {
+      if (code) {
+        setFriendCodeState(code);
+      } else {
+        // const newCode = generateReferralCode();
+        // setFriendCode(userId, newCode).then(() => setFriendCodeState(newCode));
+      }
+    });
+  }, []);
+  const showModal = (title, description) => setModal({ visible: true, title, description });
+  const closeModal = () => setModal({ ...modal, visible: false });
+
+  const handleEditAvatar = () => {
+    alert('Edit avatar coming soon!');
+  };
+  const handleFriendsPress = () => {
+    alert('Friends screen coming soon!');
+  };
+  const handleCopyCode = () => {
+    Clipboard.setStringAsync(friendCode);
+  };
+
+  // Pills: dark or light mode
+  const pillCard = [
+    styles.pillCard,
+    darkMode
+      ? { backgroundColor: 'rgba(35,32,20,0.95)', borderRadius: 18, padding: 18, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 }
+      : { backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 18, padding: 18, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 }
+  ];
+
+  if (!profile) return <View style={{flex:1,justifyContent:'center',alignItems:'center'}}><Text>Loading...</Text></View>;
+
+  return (
+    <ImageBackground source={bgImg} style={{flex:1}} resizeMode="cover">
+      <SafeAreaView style={{flex:1, paddingTop: insets.top, paddingBottom: insets.bottom}}>
+        {/* Back Button */}
+        <TouchableOpacity style={[styles.backButton, { top: insets.top + 18, left: insets.left + 18 }]} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={28} color={darkMode ? '#FFD580' : '#232014'} />
+        </TouchableOpacity>
+        <ScrollView contentContainerStyle={{padding:20, paddingTop: 32}} showsVerticalScrollIndicator={false}>
+          <ProfileHeader
+            profile={profile}
+            isOwn={isOwn}
+            streak={profile.streak}
+            level={profile.level}
+            xp={profile.xp}
+            xpForNext={getXPForNextLevel(profile.level - 1)}
+            globalRank={globalRank}
+            lastMeditationDate={profile.lastMeditationDate}
+          />
+          <AchievementsCard achievements={profile.achievements} darkMode={darkMode} />
+          <GlowPointButton profile={profile} isOwn={isOwn} darkMode={darkMode} />
+          <TopFriendsRow friends={profile.topFriends} darkMode={darkMode} />
+          {isOwn && (
+            <TouchableOpacity style={styles.customizeBtn} onPress={()=>navigation.navigate('Store')}>
+              <Ionicons name="settings-outline" size={24} color="#232014" style={{marginRight:8}} />
+              <Text style={styles.customizeBtnText}>Customize</Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </ImageBackground>
+  );
+};
+
+const CARD_RADIUS = 16;
+const SHADOW = {
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 8,
+  elevation: 3,
+};
 
 export default ProfileScreen; 

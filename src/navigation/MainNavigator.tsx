@@ -28,7 +28,7 @@ export type MainStackParamList = {
   Referral: undefined;
   Settings: undefined;
   Achievements: undefined;
-  Profile: undefined;
+  Profile: { friend?: any };
   Store: undefined;
   Paywall: undefined;
 };

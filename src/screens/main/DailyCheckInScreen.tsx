@@ -14,7 +14,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { COLORS, FONTS, SPACING, SIZES } from '../../constants/theme';
 import MoodScale from '../../components/MoodScale';
@@ -23,8 +23,10 @@ import { useUserStore } from '../../store/userStore';
 import MiniZenni from '../../components/MiniZenni';
 import { Ionicons } from '@expo/vector-icons';
 import FloatingLeaves from '../../components/FloatingLeaves';
+import { useGameStore } from '../../store';
 
 const DailyCheckInScreen = () => {
+  const route = useRoute<any>();
   const navigation = useNavigation<StackNavigationProp<any>>();
   const { submitDailyCheckIn, isLoadingCheckIn, checkInError, userData } = useUserStore();
   
@@ -57,6 +59,11 @@ const DailyCheckInScreen = () => {
     
     try {
       await submitDailyCheckIn(moodRating, reflection);
+      // mark quest complete based on questId
+      const questId = route.params?.questId;
+      if (questId) {
+        useGameStore.getState().completeQuest(questId);
+      }
       Alert.alert('Check-In Complete', 'Your daily reflection has been saved.', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
