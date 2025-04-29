@@ -3,13 +3,15 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Share } from 'rea
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MainStackParamList } from '../navigation/MainNavigator';
-import { useGameStore } from '../store';
+import { useGameStore, fetchAndSetFriendsFromFirestore } from '../store';
+import { ensureSignedIn } from '../firebase';
 import { COLORS, SIZES } from '../constants/theme';
 import { setFriendCode } from '../firebase/user';
 import MiniZenni from './MiniZenni';
 import cosmetics from '../../assets/data/cosmetics.json';
 import { cosmeticImages } from './Store/cosmeticImages';
 import { Ionicons } from '@expo/vector-icons';
+import * as Animatable from 'react-native-animatable';
 
 const shareReferral = async () => {
   // For demo: use a static userId, in real app use auth
@@ -53,8 +55,36 @@ function generateMockFriends() {
   }));
 }
 
+const FRIEND_IDS = ['jimmy-leaderboard', 'sean-leaderboard'];
+
+// Helper to get streak badge color and animation based on streak value
+function getStreakBadgeProps(streak) {
+  if (streak <= 0) {
+    return { bg: '#FFF', color: '#A0A0A0', border: '#FFD580', animation: null };
+  } else if (streak < 4) {
+    return { bg: '#FFF', color: '#FFD580', border: '#FFD580', animation: null };
+  } else if (streak < 8) {
+    return { bg: '#FFB300', color: '#FFF', border: '#FF8C42', animation: 'pulse', duration: 2200, intensity: 0.8 };
+  } else if (streak < 14) {
+    return { bg: '#FFE0E0', color: '#FF5722', border: '#FF8C42', animation: 'pulse', duration: 1400, intensity: 1.0 };
+  } else {
+    // Super streak: more intense pulse
+    return { bg: '#FFF8E1', color: '#FF3B30', border: '#FF8C42', animation: 'pulse', duration: 900, intensity: 1.2 };
+  }
+}
+
 const FriendDen = () => {
   const navigation = useNavigation<StackNavigationProp<MainStackParamList, 'Profile'>>();
+  React.useEffect(() => {
+    (async () => {
+      try {
+        await ensureSignedIn();
+        fetchAndSetFriendsFromFirestore(FRIEND_IDS);
+      } catch (err) {
+        console.error('Auth or fetch failed:', err);
+      }
+    })();
+  }, []);
   const friends = useGameStore((s) => s.friends);
   const hasRealFriends = friends && friends.length > 0;
   const [mockFriends] = useState(() => generateMockFriends());
@@ -71,12 +101,7 @@ const FriendDen = () => {
           >
             <View style={styles.avatarCircle}>
               <MiniZenni
-                outfitId={f.outfitId}
-                headgearId={f.headgearId}
-                auraId={f.auraId}
-                faceId={f.faceId}
-                accessoryId={f.accessoryId}
-                companionId={f.companionId}
+                {...(f.cosmetics?.equipped || f)}
                 size="small"
                 style={{ opacity: 0.95, transform: [{ scale: 0.7 }] }}
               />
@@ -84,8 +109,29 @@ const FriendDen = () => {
             <Text style={styles.friendName}>{f.name}</Text>
             <View style={styles.levelStreakRow}>
               <Text style={styles.levelText}>Lvl {f.level}</Text>
-              <Ionicons name="flame" size={13} color={f.hasMeditatedToday ? '#FFB300' : '#A0A0A0'} style={{ marginLeft: 10, marginRight: 2 }} />
-              <Text style={[styles.streakNum, { color: f.hasMeditatedToday ? '#232014' : '#A0A0A0' }]}>{f.streak}</Text>
+              {(() => {
+                const { bg, color, border, animation, duration, intensity } = getStreakBadgeProps(f.streak);
+                const badge = (
+                  <View style={[styles.streakBadge, { backgroundColor: bg, borderColor: border }]}> 
+                    <Ionicons name="flame" size={15} color={color} style={{ marginRight: 2 }} />
+                    <Text style={[styles.streakNum, { color }]}>{f.streak}</Text>
+                  </View>
+                );
+                if (animation) {
+                  return (
+                    <Animatable.View
+                      animation={animation}
+                      iterationCount="infinite"
+                      duration={duration}
+                      easing="ease-in-out"
+                      style={{ transform: [{ scale: intensity }] }}
+                    >
+                      {badge}
+                    </Animatable.View>
+                  );
+                }
+                return badge;
+              })()}
             </View>
           </TouchableOpacity>
         ))}
@@ -191,6 +237,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  streakBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8, borderWidth: 1 },
 });
 
 export default FriendDen; 

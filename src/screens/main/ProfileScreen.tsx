@@ -257,10 +257,10 @@ const ProfileScreen = () => {
           <ProfileHeader
             profile={profile}
             isOwn={isOwn}
-            streak={profile.streak}
+            streak={profile.streak ?? 0}
             level={profile.level}
             xp={profile.xp}
-            xpForNext={getXPForNextLevel(profile.level - 1)}
+            xpForNext={getXPForNextLevel((profile.level || 1) - 1)}
             globalRank={globalRank}
             lastMeditationDate={profile.lastMeditationDate}
           />

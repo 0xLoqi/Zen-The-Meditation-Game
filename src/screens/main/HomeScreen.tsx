@@ -72,6 +72,22 @@ const getStreakColors = (streak: number) => {
   }
 };
 
+// Helper to get streak badge color and animation based on streak value
+function getStreakBadgeProps(streak) {
+  if (streak <= 0) {
+    return { bg: '#FFF', color: '#A0A0A0', border: '#FFD580', animation: null };
+  } else if (streak < 4) {
+    return { bg: '#FFF', color: '#FFD580', border: '#FFD580', animation: null };
+  } else if (streak < 8) {
+    return { bg: '#FFB300', color: '#FFF', border: '#FF8C42', animation: 'pulse', duration: 2200, intensity: 0.8 };
+  } else if (streak < 14) {
+    return { bg: '#FFE0E0', color: '#FF5722', border: '#FF8C42', animation: 'pulse', duration: 1400, intensity: 1.0 };
+  } else {
+    // Super streak: more intense pulse
+    return { bg: '#FFF8E1', color: '#FF3B30', border: '#FF8C42', animation: 'pulse', duration: 900, intensity: 1.2 };
+  }
+}
+
 const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { signOut } = useAuthStore();
@@ -197,7 +213,22 @@ const HomeScreen = () => {
             <View style={styles.profileCard}>
               <View style={styles.headerButtons}>
                 <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Store')} accessibilityLabel="Store" accessible>
-                  <MaterialCommunityIcons name="store" size={24} color={COLORS.primary} />
+                  <View style={{ position: 'relative', justifyContent: 'center', alignItems: 'center' }}>
+                    <MaterialCommunityIcons name="store" size={31} color={COLORS.primary} />
+                    {/* Notification Dot */}
+                    <View style={{
+                      position: 'absolute',
+                      top: 2,
+                      right: 2,
+                      width: 12,
+                      height: 12,
+                      borderRadius: 6,
+                      backgroundColor: '#FF3B30',
+                      borderWidth: 2,
+                      borderColor: '#fff',
+                      zIndex: 2,
+                    }} />
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')} accessibilityLabel="Settings" accessible>
                   <Ionicons name="settings-outline" size={24} color={COLORS.primary} />
@@ -219,18 +250,23 @@ const HomeScreen = () => {
                     <View style={styles.usernameRow}>
                       <Text style={styles.username}>{userData?.username || 'ZenUser'}</Text>
                       {(() => {
-                        // Simulate streak as 15 for demo
-                        const streak = 15;
-                        const { bg, color } = getStreakColors(streak);
+                        const streak = userData?.streak ?? 0;
+                        const { bg, color, border, animation, duration, intensity } = getStreakBadgeProps(streak);
                         const Badge = (
-                          <View style={[styles.streakBadge, { backgroundColor: bg }]}> 
+                          <View style={[styles.streakBadge, { backgroundColor: bg, borderColor: border, borderWidth: 1 }]}> 
                             <Ionicons name="flame" size={16} color={color} style={{ marginRight: 2 }} />
                             <Text style={[styles.streakBadgeText, { color }]}>{streak}</Text>
-                      </View>
+                          </View>
                         );
-                        if (streak >= 14) {
+                        if (animation) {
                           return (
-                            <Animatable.View animation="pulse" iterationCount="infinite" duration={900} easing="ease-in-out">
+                            <Animatable.View
+                              animation={animation}
+                              iterationCount="infinite"
+                              duration={duration}
+                              easing="ease-in-out"
+                              style={{ transform: [{ scale: intensity }] }}
+                            >
                               {Badge}
                             </Animatable.View>
                           );
