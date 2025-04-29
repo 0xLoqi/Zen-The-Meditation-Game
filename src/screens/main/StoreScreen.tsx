@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, Dimensions, ImageBackground, TouchableOpacity, Modal, Pressable, SectionList, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, Image, Dimensions, ImageBackground, TouchableOpacity, Modal, Pressable, SectionList, Alert, Animated, Easing } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -154,15 +154,47 @@ const StoreScreen = () => {
     );
   }
 
+  // --- Animation for shake and confetti ---
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiColors = ['#FFD580', '#FF8C42', '#7A5C00', '#fff', '#FF3B30', '#34C759'];
+  useEffect(() => {
+    const interval = setInterval(() => {
+      Animated.sequence([
+        Animated.timing(shakeAnim, { toValue: 1, duration: 100, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -1, duration: 100, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 100, easing: Easing.linear, useNativeDriver: true }),
+      ]).start();
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 1200);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+  const shakeAnimInterpolate = shakeAnim.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-8deg', '8deg'],
+  });
+
   return (
     <ImageBackground source={storeBg} style={styles.bg} resizeMode="cover">
       <SafeAreaView style={styles.safeArea}>
         <View style={[styles.overlay, { paddingTop: insets.top, flex: 1 }]}>
           <View style={styles.topRightRow} pointerEvents="box-none">
-            <Image source={lootBagImg} style={styles.lootBagIcon} />
-            <Pressable style={styles.buyLootSmallBtn} onPress={() => {/* TODO: implement buy */}}>
-              <Text style={styles.buyLootSmallBtnText}>Buy</Text>
-            </Pressable>
+            {/* Animated Loot Bag with Red Dot and Confetti */}
+            <Animated.View style={{ position: 'relative', transform: [{ rotate: shakeAnimInterpolate }] }}>
+              <Image source={lootBagImg} style={styles.lootBagIconLarge} />
+              {/* Red Dot */}
+              <View style={styles.redDot} />
+              {/* Confetti (placeholder) */}
+              {showConfetti && (
+                <View style={styles.confettiContainer} pointerEvents="none">
+                  {/* Simple confetti dots, can be replaced with Lottie or a confetti lib */}
+                  {[...Array(12)].map((_, i) => (
+                    <View key={i} style={[styles.confettiDot, { left: Math.random()*40+10, top: Math.random()*30, backgroundColor: confettiColors[i%confettiColors.length] }]} />
+                  ))}
+                </View>
+              )}
+            </Animated.View>
             <TokenBalanceBar tokens={tokens} />
           </View>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -489,6 +521,39 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 22,
+  },
+  lootBagIconLarge: {
+    width: 48,
+    height: 48,
+    marginRight: 6,
+  },
+  redDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#FF3B30',
+    borderWidth: 2,
+    borderColor: '#fff',
+    zIndex: 2,
+  },
+  confettiContainer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: 60,
+    height: 40,
+    zIndex: 3,
+    pointerEvents: 'none',
+  },
+  confettiDot: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    opacity: 0.85,
   },
 });
 

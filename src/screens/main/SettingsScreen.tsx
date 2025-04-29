@@ -8,6 +8,7 @@ import {
   Switch,
   Alert,
   Platform,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,8 @@ import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 import * as Haptics from 'expo-haptics';
+
+const settingsBg = require('../../../assets/images/backgrounds/settings_bg.png');
 
 const SettingsScreen = () => {
   const navigation = useNavigation();
@@ -78,65 +81,67 @@ const SettingsScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="chevron-back" size={28} color={COLORS.neutralDark} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Settings</Text>
-      </View>
-
-      <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          {renderSettingItem(
-            'notifications-outline',
-            'Push Notifications',
-            notificationsEnabled,
-            setNotificationsEnabled,
-            'Get reminders for meditation and daily check-ins'
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Settings</Text>
-          {renderSettingItem(
-            'volume-medium-outline',
-            'Sound Effects',
-            soundEnabled,
-            setSoundEnabled,
-            'Play sound effects during meditation'
-          )}
-          {renderSettingItem(
-            'phone-portrait-outline',
-            'Haptic Feedback',
-            hapticsEnabled,
-            setHapticsEnabled,
-            'Enable vibration feedback'
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          {user?.email && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 }}>
-              <Ionicons name="mail-outline" size={18} color={COLORS.primary} style={{ marginRight: 8 }} />
-              <Text style={{ color: COLORS.neutralDark, fontSize: 15 }}>{user.email}</Text>
-            </View>
-          )}
+    <ImageBackground source={settingsBg} style={{ flex: 1 }} resizeMode="cover">
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
           <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            <Ionicons name="log-out-outline" size={24} color={COLORS.error} />
-            <Text style={styles.logoutText}>Logout</Text>
+            <Ionicons name="chevron-back" size={28} color={COLORS.neutralDark} />
           </TouchableOpacity>
+          <Text style={styles.title}>Settings</Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        <ScrollView style={styles.content}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Notifications</Text>
+            {renderSettingItem(
+              'notifications-outline',
+              'Push Notifications',
+              notificationsEnabled,
+              setNotificationsEnabled,
+              'Get reminders for meditation and daily check-ins'
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>App Settings</Text>
+            {renderSettingItem(
+              'volume-medium-outline',
+              'Sound Effects',
+              soundEnabled,
+              setSoundEnabled,
+              'Play sound effects during meditation'
+            )}
+            {renderSettingItem(
+              'phone-portrait-outline',
+              'Haptic Feedback',
+              hapticsEnabled,
+              setHapticsEnabled,
+              'Enable vibration feedback'
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Account</Text>
+            {user?.email && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 }}>
+                <Ionicons name="mail-outline" size={18} color={COLORS.primary} style={{ marginRight: 8 }} />
+                <Text style={{ color: COLORS.neutralDark, fontSize: 15 }}>{user.email}</Text>
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Ionicons name="log-out-outline" size={24} color={COLORS.error} />
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 

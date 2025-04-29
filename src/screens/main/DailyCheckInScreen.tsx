@@ -125,13 +125,6 @@ const DailyCheckInScreen = () => {
               )}
               <View style={styles.buttonsContainer}>
                 <Button
-                  title="Skip"
-                  variant="outlined"
-                  onPress={() => navigation.goBack()}
-                  style={styles.skipButton}
-                  textStyle={styles.skipButtonText}
-                />
-                <Button
                   title="Submit"
                   onPress={handleSubmit}
                   isLoading={isLoadingCheckIn}
@@ -212,25 +205,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 'auto',
   },
-  skipButton: {
-    flex: 1,
-    marginRight: SPACING.m,
-    backgroundColor: COLORS.white,
-    borderColor: COLORS.primary,
-    borderWidth: 1,
-    borderRadius: SIZES.radiusLarge,
-  },
-  skipButtonText: {
-    color: COLORS.primary,
-    fontWeight: 'bold',
-  },
   submitButton: {
-    flex: 1,
-    marginLeft: SPACING.m,
+    width: '80%',
   },
   backButton: {
     position: 'absolute',

@@ -99,10 +99,15 @@ const MoodScale = ({ onRatingSelected, initialRating, style, labelStyle, iconSty
               key={index}
               style={[
                 styles.moodOption,
-                isSelected && {
-                  backgroundColor: mood.color + '33', // 20%+ opacity for selected
-                  borderColor: mood.color,
-                  borderWidth: 2,
+                {
+                  backgroundColor: isSelected ? '#FF8C42' : '#fff',
+                  borderColor: isSelected ? '#FF8C42' : 'transparent',
+                  borderWidth: isSelected ? 2 : 1,
+                  shadowColor: '#000',
+                  shadowOpacity: 0.08,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 2 },
+                  elevation: 2,
                 },
               ]}
               onPress={() => handleRatingSelect(rating)}
@@ -170,14 +175,11 @@ const MoodScale = ({ onRatingSelected, initialRating, style, labelStyle, iconSty
                   style={[
                     styles.moodIcon,
                     iconStyle,
-                    // Neutral selected: black
-                    index === 2 && isSelected
-                      ? { fontSize: 32, color: '#000' }
-                      // Unselected: white and bold
-                      : !isSelected
+                    // Selected: white
+                    isSelected
                       ? { fontSize: 32, color: '#fff', fontWeight: 'bold' }
-                      // Default selected: mood color
-                      : { fontSize: 32, color: mood.color },
+                      // Unselected: cannon orange
+                      : { fontSize: 32, color: '#FF8C42', fontWeight: 'bold' },
                   ]}
                 >
                   {mood.emoji}
@@ -187,17 +189,9 @@ const MoodScale = ({ onRatingSelected, initialRating, style, labelStyle, iconSty
                 style={[
                   styles.moodLabel,
                   labelStyle,
-                  // Great selected: green and shiny
-                  index === 4 && isSelected
-                    ? { color: '#43D17A', fontWeight: 'bold' }
-                    // Neutral selected: black
-                    : index === 2 && isSelected
-                    ? { color: '#000', fontWeight: 'bold' }
-                    // Unselected: white and bold
-                    : !isSelected
+                  isSelected
                     ? { color: '#fff', fontWeight: 'bold' }
-                    // Default selected: mood color
-                    : { color: mood.color, fontWeight: 'bold' },
+                    : { color: '#FF8C42', fontWeight: 'bold' },
                 ]}
               >
                 {mood.label}
@@ -217,19 +211,27 @@ const styles = StyleSheet.create({
   scaleContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'stretch',
     width: '100%',
   },
   moodOption: {
+    flex: 1,
+    minWidth: 0,
+    maxWidth: 70,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 6,
-    paddingHorizontal: SPACING.s,
+    paddingHorizontal: 2,
     borderRadius: 14,
-    minWidth: 32,
-    backgroundColor: 'transparent', // Remove white background
-    marginHorizontal: 4, // More spacing between options
+    backgroundColor: '#fff',
+    marginHorizontal: 2,
     borderWidth: 1,
-    borderColor: 'transparent', // No border for unselected
-    // Remove shadow
+    borderColor: 'transparent',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   moodIcon: {
     marginBottom: SPACING.xxs,

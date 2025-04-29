@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -23,6 +23,22 @@ import FloatingLeaves from '../../components/FloatingLeaves';
 import { useUserStore } from '../../store/userStore';
 import * as Animatable from 'react-native-animatable';
 import MoodScale from '../../components/MoodScale';
+import MiniZenni from '../../components/MiniZenni';
+import { Animated, Easing } from 'react-native';
+
+// Strong, universal, curiosity-driven hooks
+const PLACEHOLDER_MESSAGES = [
+  "A single thought can change a day.",
+  "What's unspoken often matters most.",
+  "A pattern reveals itself in words.",
+  "A question, a wish, a memory—let it land.",
+  "The mind's weather, captured in a phrase.",
+  "A secret, a hope, a spark—set it free.",
+  "A moment of honesty, no audience.",
+  "A feeling, named, loses its grip.",
+  "A truth, once written, becomes lighter.",
+  "A story, waiting for its first line.",
+];
 
 const MeditationSelectionScreen = () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
@@ -33,6 +49,8 @@ const MeditationSelectionScreen = () => {
   
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
   const [encouragement, setEncouragement] = useState('');
+  const [moodRating, setMoodRating] = useState<number | null>(null);
+  const [reflection, setReflection] = useState('');
   
   // Meditation durations
   const durations = [
@@ -41,6 +59,76 @@ const MeditationSelectionScreen = () => {
     { value: 15, xp: 200, tokens: 10, spin: true },
     { value: 20, xp: 300, tokens: 15, spin: true },
   ];
+  
+  // Get user's equipped cosmetics for MiniZenni
+  const equipped = useGameStore((s) => s.cosmetics.equipped);
+  
+  // Animation for floating MiniZenni
+  const [floatAnim] = useState(new Animated.Value(0));
+  React.useEffect(() => {
+    let isMounted = true;
+    const animate = () => {
+      if (!isMounted) return;
+      const duration = 3500 + Math.random() * 2500; // 3.5s to 6s
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: duration * 0.7,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start(() => animate());
+    };
+    animate();
+    return () => { isMounted = false; };
+  }, [floatAnim]);
+  
+  // Interpolate for X and Y movement (float in/out)
+  const floatX = floatAnim.interpolate({ inputRange: [0, 1], outputRange: [120, -40] });
+  const floatY = floatAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -18, 0] });
+  
+  // Animated glow for TextInput
+  const [glowAnim] = useState(new Animated.Value(0));
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  useEffect(() => {
+    let glowInterval: NodeJS.Timeout;
+    let placeholderInterval: NodeJS.Timeout;
+    if (!reflection) {
+      // Pulse glow
+      const pulse = () => {
+        Animated.sequence([
+          Animated.timing(glowAnim, { toValue: 1, duration: 700, useNativeDriver: false }),
+          Animated.timing(glowAnim, { toValue: 0, duration: 700, useNativeDriver: false }),
+        ]).start(() => pulse());
+      };
+      pulse();
+      // Randomly rotate placeholder
+      placeholderInterval = setInterval(() => {
+        setPlaceholderIdx((idx) => {
+          let next;
+          do {
+            next = Math.floor(Math.random() * PLACEHOLDER_MESSAGES.length);
+          } while (next === idx && PLACEHOLDER_MESSAGES.length > 1);
+          return next;
+        });
+      }, 7000);
+    }
+    return () => {
+      glowAnim.stopAnimation();
+      clearInterval(glowInterval);
+      clearInterval(placeholderInterval);
+    };
+  }, [reflection]);
+  const glowColor = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#FFD580', '#FF8C42']
+  });
   
   // Start meditation session
   const startMeditation = () => {
@@ -56,7 +144,7 @@ const MeditationSelectionScreen = () => {
   const showBonus = selectedDuration && selectedDuration >= 10;
   
   // FlatList header for value statement, mood scale, and reflection input
-  const renderHeader = () => (
+  const renderHeader = useCallback(() => (
     <>
       <View style={{ paddingTop: insets.top, marginBottom: 18 }}>
         {/* Removed XP/tokens banner */}
@@ -65,25 +153,37 @@ const MeditationSelectionScreen = () => {
         <View style={{ marginBottom: 12 }}>
           <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 6 }}>Quick check-in?</Text>
           <MoodScale
-            onRatingSelected={() => {}}
+            onRatingSelected={setMoodRating}
+            selectedRating={moodRating}
             iconStyle={{}}
             labelStyle={{ color: '#fff', fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}
           />
         </View>
         <View style={{ marginBottom: 8 }}>
-          <TextInput
-            style={{ height: 80, borderWidth: 1, borderColor: '#B68900', borderRadius: 16, padding: 12, color: '#fff', backgroundColor: 'rgba(35,32,20,0.5)', fontSize: 16, minHeight: 80, maxHeight: 200 }}
-            placeholder="What's on your mind? (Optional)"
-            placeholderTextColor="#FFD580"
-            multiline
-            maxLength={1000}
-            textAlignVertical="top"
-            // value/onChangeText to be wired up
-          />
+          <Animated.View style={{
+            borderRadius: 16,
+            borderWidth: 2,
+            borderColor: reflection ? '#B68900' : glowColor,
+            shadowColor: reflection ? 'transparent' : '#FF8C42',
+            shadowOpacity: reflection ? 0 : 0.5,
+            shadowRadius: reflection ? 0 : 12,
+            shadowOffset: { width: 0, height: 0 },
+          }}>
+            <TextInput
+              style={{ height: 80, borderRadius: 14, padding: 12, color: '#fff', backgroundColor: 'rgba(35,32,20,0.5)', fontSize: 16, minHeight: 80, maxHeight: 200 }}
+              placeholder={PLACEHOLDER_MESSAGES[placeholderIdx]}
+              placeholderTextColor="#FFD580"
+              multiline
+              maxLength={1000}
+              textAlignVertical="top"
+              value={reflection}
+              onChangeText={setReflection}
+            />
+          </Animated.View>
         </View>
       </View>
     </>
-  );
+  ), [insets.top, moodRating, reflection, placeholderIdx, glowColor]);
 
   return (
     <ImageBackground
@@ -92,6 +192,31 @@ const MeditationSelectionScreen = () => {
       resizeMode="cover"
     >
       <FloatingLeaves count={6} style={styles.leavesBackground} />
+      {/* Animated MiniZenni floating in/out top right */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          top: insets.top + 8,
+          right: 0,
+          zIndex: 30,
+          transform: [
+            { translateX: floatX },
+            { translateY: floatY },
+          ],
+        }}
+        pointerEvents="none"
+      >
+        <MiniZenni
+          outfitId={equipped.outfit}
+          headgearId={equipped.headgear}
+          auraId={equipped.aura}
+          faceId={equipped.face}
+          accessoryId={equipped.accessory}
+          companionId={equipped.companion}
+          size="small"
+          animationState="idle"
+        />
+      </Animated.View>
       {/* Back Button - absolutely positioned at the top left */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { top: insets.top + 18, left: insets.left + 18 }]}>
         <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
@@ -117,7 +242,7 @@ const MeditationSelectionScreen = () => {
                 style={{
                   fontSize: 24,
                   fontWeight: 'bold',
-                  color: '#B68900',
+                  color: '#232014',
                 }}
               >
                 {item.value}
@@ -125,7 +250,7 @@ const MeditationSelectionScreen = () => {
               <Text
                 style={{
                   fontSize: 16,
-                  color: '#6B5E4E',
+                  color: '#232014',
                   marginBottom: 2,
                 }}
               >
@@ -264,7 +389,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   selectedDurationCard: {
-    backgroundColor: '#B68900',
+    backgroundColor: '#FF8C42',
   },
   durationText: {
     fontSize: 24,

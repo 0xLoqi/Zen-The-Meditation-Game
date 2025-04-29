@@ -180,7 +180,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -248,7 +247,10 @@ const ProfileScreen = () => {
     <ImageBackground source={bgImg} style={{flex:1}} resizeMode="cover">
       <SafeAreaView style={{flex:1, paddingTop: insets.top, paddingBottom: insets.bottom}}>
         {/* Back Button */}
-        <TouchableOpacity style={[styles.backButton, { top: insets.top + 18, left: insets.left + 18 }]} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={[styles.backButton, { top: insets.top + 18, left: insets.left + 18, backgroundColor: darkMode ? 'rgba(35,32,20,0.95)' : '#fff' }]}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="chevron-back" size={28} color={darkMode ? '#FFD580' : '#232014'} />
         </TouchableOpacity>
         <ScrollView contentContainerStyle={{padding:20, paddingTop: 32}} showsVerticalScrollIndicator={false}>
@@ -266,9 +268,12 @@ const ProfileScreen = () => {
           <GlowPointButton profile={profile} isOwn={isOwn} darkMode={darkMode} />
           <TopFriendsRow friends={profile.topFriends} darkMode={darkMode} />
           {isOwn && (
-            <TouchableOpacity style={styles.customizeBtn} onPress={()=>navigation.navigate('Store')}>
-              <Ionicons name="settings-outline" size={24} color="#232014" style={{marginRight:8}} />
-              <Text style={styles.customizeBtnText}>Customize</Text>
+            <TouchableOpacity
+              style={[styles.customizeBtn, { backgroundColor: darkMode ? '#000' : '#FFD580' }]}
+              onPress={()=>navigation.navigate('Store')}
+            >
+              <Ionicons name="settings-outline" size={24} color={darkMode ? '#FFD580' : '#232014'} style={{marginRight:8}} />
+              <Text style={[styles.customizeBtnText, { color: darkMode ? '#FFD580' : '#232014' }]}>Customize</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
