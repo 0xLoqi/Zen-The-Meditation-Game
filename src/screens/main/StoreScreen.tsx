@@ -19,6 +19,7 @@ const storeBg = require('../../../assets/images/backgrounds/store_background.png
 const paneBg = require('../../../assets/images/backgrounds/pane_background.png');
 const lootBagImg = require('../../../assets/images/loot_bag.png');
 const baseSilhouette = require('../../../assets/images/cosmetics/base/default_sillouhette.png');
+const coinImg = require('../../../assets/images/coin.png');
 const CARD_SIZE = Math.floor((Dimensions.get('window').width - 48) / 2);
 const PANE_SIZE = CARD_SIZE + 64;
 
@@ -238,7 +239,9 @@ const StoreScreen = () => {
                 sections={sections}
                 keyExtractor={(_, idx) => String(idx)}
                 renderSectionHeader={({ section: { title } }) => (
-                  <Text style={styles.sectionHeader}>{title}</Text>
+                  <View style={styles.sectionHeaderPill}>
+                    <Text style={styles.sectionHeader}>{title}</Text>
+                  </View>
                 )}
                 renderItem={({ item: row }) => (
                   <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
@@ -309,7 +312,10 @@ const StoreScreen = () => {
                               </View>
                             )}
                             <Text style={styles.cardName}>{item.name}</Text>
-                            <Text style={styles.cardPrice}>{item.price} 💰</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                              <Text style={styles.cardPrice}>{item.price}</Text>
+                              <Image source={coinImg} style={{ width: 18, height: 18, marginLeft: 4 }} resizeMode="contain" />
+                            </View>
                           </ImageBackground>
                         </TouchableOpacity>
                       );
@@ -383,7 +389,7 @@ const styles = StyleSheet.create({
     width: PANE_SIZE,
     height: PANE_SIZE,
     borderRadius: 16,
-    opacity: 0.85,
+    opacity: 1,
   },
   cardVerticalContent: {
     flex: 1,
@@ -405,7 +411,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   cardName: { fontWeight: 'bold', color: COLORS.primary, fontSize: 14, marginBottom: 2, textAlign: 'center' },
-  cardPrice: { color: COLORS.accent, fontSize: 12 },
+  cardPrice: { color: COLORS.accent, marginBottom: 20,fontSize: 14 },
   cardSelected: {
     borderWidth: 2,
     borderColor: COLORS.primary,
@@ -418,9 +424,18 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: COLORS.white,
+    marginBottom: 0,
+    marginLeft: 0,
+    letterSpacing: 0.5,
+  },
+  sectionHeaderPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
     marginBottom: 8,
     marginLeft: 8,
-    letterSpacing: 0.5,
   },
   tokenBarWrapper: {
     position: 'absolute',
