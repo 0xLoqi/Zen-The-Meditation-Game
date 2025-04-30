@@ -13,6 +13,7 @@ import AchievementsScreen from '../screens/main/AchievementsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import StoreScreen from '../screens/main/StoreScreen';
 import PaywallScreen from '../screens/PaywallScreen';
+import GlowCardTestScreen from '../screens/GlowCardTestScreen';
 
 export type MainStackParamList = {
   Home: undefined;
@@ -31,6 +32,7 @@ export type MainStackParamList = {
   Profile: { friend?: any };
   Store: undefined;
   Paywall: undefined;
+  GlowCardTest: undefined;
 };
 
 const MainStack = createStackNavigator<MainStackParamList>();
@@ -51,6 +53,7 @@ const MainNavigator = () => {
       <MainStack.Screen name="Profile" component={ProfileScreen} />
       <MainStack.Screen name="Store" component={StoreScreen} />
       <MainStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
+      <MainStack.Screen name="GlowCardTest" component={GlowCardTestScreen} />
     </MainStack.Navigator>
   );
 };

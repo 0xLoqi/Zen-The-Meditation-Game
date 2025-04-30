@@ -91,8 +91,8 @@ const MeditationSelectionScreen = () => {
   }, [floatAnim]);
   
   // Interpolate for X and Y movement (float in/out)
-  const floatX = floatAnim.interpolate({ inputRange: [0, 1], outputRange: [120, -40] });
-  const floatY = floatAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -18, 0] });
+  const floatX = floatAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 20] });
+  const floatY = floatAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 8, 0] });
   
   // Animated glow for TextInput
   const [glowAnim] = useState(new Animated.Value(0));
@@ -197,8 +197,8 @@ const MeditationSelectionScreen = () => {
       <Animated.View
         style={{
           position: 'absolute',
-          top: insets.top + 8,
-          right: 0,
+          top: insets.top + 2,
+          right: 16,
           zIndex: 30,
           transform: [
             { translateX: floatX },

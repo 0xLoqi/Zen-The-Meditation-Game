@@ -24,8 +24,10 @@ import { grant } from './services/CosmeticsService';
 import { handleInitialLink } from './services/referral';
 import { ToastProvider, showToast } from './components/Toasts';
 
-// Optional: hide yellow box warnings
-// LogBox.ignoreAllLogs();
+// Suppress flexWrap warning for VirtualizedList/FlatList
+LogBox.ignoreLogs([
+  '`flexWrap: `wrap`` is not supported with the `VirtualizedList` components',
+]);
 
 // Global error handler for debugging
 if (typeof ErrorUtils !== 'undefined' && ErrorUtils.setGlobalHandler) {

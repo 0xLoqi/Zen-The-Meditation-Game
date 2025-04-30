@@ -10,6 +10,7 @@ import {
   Platform,
   Dimensions,
   ImageBackground,
+  Button,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -387,6 +388,14 @@ const HomeScreen = () => {
             </View>
           </ScrollView>
           <FloatingLeaves count={12} style={styles.leavesOverlay} />
+          {__DEV__ && (
+            <View style={{ position: 'absolute', bottom: 24, left: 0, right: 0, alignItems: 'center', zIndex: 100 }}>
+              <Button
+                title="Test GlowCard Reveal"
+                onPress={() => navigation.navigate('GlowCardTest')}
+              />
+            </View>
+          )}
         </SafeAreaView>
       </ImageBackground>
     );
