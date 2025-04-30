@@ -76,12 +76,12 @@ function getStreakBadgeProps(streak) {
 function equippedToMiniZenniProps(equipped) {
   if (!equipped) return {};
   return {
-    outfitId: equipped.outfitId || equipped.outfit,
-    headgearId: equipped.headgearId || equipped.headgear,
-    auraId: equipped.auraId || equipped.aura,
-    faceId: equipped.faceId || equipped.face,
-    accessoryId: equipped.accessoryId || equipped.accessory,
-    companionId: equipped.companionId || equipped.companion,
+    outfitId: equipped.outfit,
+    headgearId: equipped.headgear,
+    auraId: equipped.aura,
+    faceId: equipped.face,
+    accessoryId: equipped.accessory,
+    companionId: equipped.companion,
   };
 }
 

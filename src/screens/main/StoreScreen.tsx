@@ -36,15 +36,14 @@ type PreviewProps = {
 function getPreviewProps(item: any): PreviewProps {
   if (!item) return {};
   const category = (item.category || '').toLowerCase();
-  // Use the image filename from data so it matches the mapping keys
-  const imageKey = item.image;
+  const idKey = item.id;
   switch (category) {
-    case 'outfit': return { outfitId: imageKey };
-    case 'headgear': return { headgearId: imageKey };
-    case 'aura': return { auraId: imageKey };
-    case 'face': return { faceId: imageKey };
-    case 'accessory': return { accessoryId: imageKey };
-    case 'companion': return { companionId: imageKey };
+    case 'outfit': return { outfitId: idKey };
+    case 'headgear': return { headgearId: idKey };
+    case 'aura': return { auraId: idKey };
+    case 'face': return { faceId: idKey };
+    case 'accessory': return { accessoryId: idKey };
+    case 'companion': return { companionId: idKey };
     default: return {};
   }
 }
