@@ -73,6 +73,18 @@ function getStreakBadgeProps(streak) {
   }
 }
 
+function equippedToMiniZenniProps(equipped) {
+  if (!equipped) return {};
+  return {
+    outfitId: equipped.outfitId || equipped.outfit,
+    headgearId: equipped.headgearId || equipped.headgear,
+    auraId: equipped.auraId || equipped.aura,
+    faceId: equipped.faceId || equipped.face,
+    accessoryId: equipped.accessoryId || equipped.accessory,
+    companionId: equipped.companionId || equipped.companion,
+  };
+}
+
 const FriendDen = () => {
   const navigation = useNavigation<StackNavigationProp<MainStackParamList, 'Profile'>>();
   React.useEffect(() => {
@@ -99,16 +111,16 @@ const FriendDen = () => {
             onPress={() => navigation.navigate('Profile', { friend: f })}
             activeOpacity={0.8}
           >
+            <Text style={styles.levelPill}>Lvl {f.level}</Text>
             <View style={styles.avatarCircle}>
               <MiniZenni
-                {...(f.cosmetics?.equipped || f)}
+                {...(f.cosmetics?.equipped ? equippedToMiniZenniProps(f.cosmetics.equipped) : f)}
                 size="small"
                 style={{ opacity: 0.95, transform: [{ scale: 0.7 }] }}
               />
             </View>
             <Text style={styles.friendName}>{f.name}</Text>
             <View style={styles.levelStreakRow}>
-              <Text style={styles.levelText}>Lvl {f.level}</Text>
               {(() => {
                 const { bg, color, border, animation, duration, intensity } = getStreakBadgeProps(f.streak);
                 const badge = (
@@ -212,9 +224,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: SIZES.radiusLarge,
     marginHorizontal: 4,
-    marginBottom: 15,
-    marginTop: 0,
-    paddingVertical: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -238,6 +247,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   streakBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8, borderWidth: 1 },
+  levelPill: {
+    alignSelf: 'center',
+    backgroundColor: '#FFD580',
+    color: '#232014',
+    fontWeight: 'bold',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginTop: -10,
+    paddingVertical: 2,
+    fontSize: 14,
+    overflow: 'hidden',
+    marginBottom: 25,
+  },
 });
 
 export default FriendDen; 

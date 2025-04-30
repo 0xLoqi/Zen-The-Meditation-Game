@@ -61,7 +61,8 @@ const MeditationSelectionScreen = () => {
   ];
   
   // Get user's equipped cosmetics for MiniZenni
-  const equipped = useGameStore((s) => s.cosmetics.equipped);
+  const userData = useUserStore((s) => s.userData);
+  const equipped = userData?.cosmetics?.equipped || {};
   
   // Animation for floating MiniZenni
   const [floatAnim] = useState(new Animated.Value(0));
@@ -207,12 +208,12 @@ const MeditationSelectionScreen = () => {
         pointerEvents="none"
       >
         <MiniZenni
-          outfitId={equipped.outfit}
-          headgearId={equipped.headgear}
-          auraId={equipped.aura}
-          faceId={equipped.face}
-          accessoryId={equipped.accessory}
-          companionId={equipped.companion}
+          outfitId={equipped.outfit || undefined}
+          headgearId={equipped.headgear || undefined}
+          auraId={equipped.aura || undefined}
+          faceId={equipped.face || undefined}
+          accessoryId={equipped.accessory || undefined}
+          companionId={equipped.companion || undefined}
           size="small"
           animationState="idle"
         />

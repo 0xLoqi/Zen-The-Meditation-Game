@@ -290,17 +290,13 @@ useGameStore.subscribe((state) => {
 
 // Fetch friends from Firestore by ID, including cosmetics
 export async function fetchAndSetFriendsFromFirestore(friendIds: string[]) {
-  console.log('Fetching friends from Firestore for IDs:', friendIds);
   const fetchedFriends: Friend[] = [];
   for (const id of friendIds) {
-    console.log(`Fetching friend doc for ID: ${id}`);
     try {
       const docRef = doc(db, 'users', id);
       const snap = await getDoc(docRef);
-      console.log(`Doc for ${id} exists:`, snap.exists());
       if (snap.exists()) {
         const data = snap.data();
-        console.log(`Data for ${id}:`, data);
         fetchedFriends.push({
           id,
           name: data.name,
@@ -311,9 +307,8 @@ export async function fetchAndSetFriendsFromFirestore(friendIds: string[]) {
         });
       }
     } catch (err) {
-      console.error(`Error fetching friend ${id}:`, err);
+      // Ignore Firestore errors for now
     }
   }
-  console.log('Setting fetched friends into store:', fetchedFriends);
   useGameStore.setState({ friends: fetchedFriends });
 }

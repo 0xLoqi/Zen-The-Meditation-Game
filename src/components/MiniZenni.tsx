@@ -136,19 +136,21 @@ const MiniZenni = ({
       : [];
 
   // Build layers with aura behind the base
+  const getImageKey = (id: string | undefined) =>
+    id ? (id.endsWith('.png') ? id : id + '.png') : undefined;
   const layers = [
     // Aura behind everything
-    cosmeticImages[auraId || equipped.aura] || null,
+    cosmeticImages[getImageKey(auraId || equipped.aura)] || null,
     // Base body
     cosmeticImages['default_base.png'] || defaultImage,
     // Outfit, face, headgear
-    cosmeticImages[outfitId || equipped.outfit] || null,
-    cosmeticImages[faceId || equipped.face] || null,
-    cosmeticImages[headgearId || equipped.headgear] || null,
+    cosmeticImages[getImageKey(outfitId || equipped.outfit)] || null,
+    cosmeticImages[getImageKey(faceId || equipped.face)] || null,
+    cosmeticImages[getImageKey(headgearId || equipped.headgear)] || null,
     // Accessories (support multiple)
-    ...accessoryIds.map(id => cosmeticImages[id] || null),
+    ...accessoryIds.map(id => cosmeticImages[getImageKey(id)] || null),
     // Companion on top
-    cosmeticImages[companionId || equipped.companion] || null,
+    cosmeticImages[getImageKey(companionId || equipped.companion)] || null,
   ].filter(Boolean);
 
   return (

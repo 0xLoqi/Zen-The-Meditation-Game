@@ -43,8 +43,6 @@ if (typeof global !== 'undefined') {
   };
 }
 
-console.log('App started');
-
 // Error boundary component
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
@@ -83,17 +81,11 @@ export default function App() {
   const motivation = useGameStore((s) => s.user.motivation || 'nerd');
 
   useEffect(() => {
-    console.log('App - Starting Firebase authentication check');
-
     const initializeApp = async () => {
       try {
-        console.log('Initializing Mini Zenni store...');
         await initializeMiniZenni();
-        console.log('Mini Zenni store initialized');
         
-        console.log('Checking authentication...');
         await checkAuth();
-        console.log('Authentication check complete');
 
         // Cloud backup: merge Firestore user doc if online and authenticated
         if (navigator.onLine && isAuthenticated && auth.currentUser) {

@@ -95,12 +95,6 @@ const HomeScreen = () => {
   const [friendCode, setFriendCodeState] = useState('');
   const insets = useSafeAreaInsets();
   
-  // Debug logs
-  // Only log once per mount for sanity
-  useEffect(() => {
-    console.log('Rendering HomeScreen', { userData, gameStore: useGameStore.getState() });
-  }, []);
-
   useEffect(() => {
     getUserData();
     getTodayCheckIn();
@@ -397,7 +391,6 @@ const HomeScreen = () => {
       </ImageBackground>
     );
   } catch (e: any) {
-    console.log('Render error in HomeScreen:', e);
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ color: 'red', fontSize: 18 }}>Render error: {e.message}</Text>

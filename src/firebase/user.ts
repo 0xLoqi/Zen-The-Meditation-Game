@@ -32,14 +32,11 @@ const friendCodes: Record<string, string> = {};
  * @returns User data object or null if not found
  */
 export const getUserData = async (uid: string, email?: string): Promise<User | null> => {
-  console.log('[getUserData] called with', { uid, email });
   const userRef = doc(db, 'users', uid);
   const snap = await getDoc(userRef);
   if (snap.exists()) {
-    console.log('[getUserData] user exists');
     return snap.data() as User;
   } else {
-    console.log('[getUserData] user does not exist, creating...');
     const newUser: User = {
       uid,
       username: email ? email.split('@')[0] : 'ZenUser',
@@ -54,7 +51,6 @@ export const getUserData = async (uid: string, email?: string): Promise<User | n
       createdAt: new Date().toISOString(),
     };
     await setDoc(userRef, newUser);
-    console.log('[getUserData] user created in Firestore');
     return newUser;
   }
 };
@@ -77,8 +73,6 @@ export const submitDailyCheckIn = async (rating: number, reflection?: string): P
     reflection: reflection || '',
     timestamp: new Date()
   };
-  
-  console.log('Check-in submitted:', mockCheckIn);
 };
 
 /**
@@ -101,7 +95,6 @@ export const equipOutfit = async (outfitId: OutfitId): Promise<void> => {
   await new Promise(resolve => setTimeout(resolve, 400));
   
   mockUser.equippedOutfit = outfitId;
-  console.log(`Equipped outfit: ${outfitId}`);
 };
 
 /**
