@@ -5,11 +5,11 @@ import Haptic from 'react-native-haptic-feedback';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
 // Placeholder asset imports (replace with actual assets)
-const CARD_BACK = require('../../assets/glowcard_back.png');
-const TOKEN_ICON = require('../../assets/token_icon.png');
-const GLOWBAG_COMMON_ICON = require('../../assets/glowbag_common_icon.png');
-const GLOWBAG_RARE_ICON = require('../../assets/glowbag_rare_icon.png');
-const STREAK_SAVER_ICON = require('../../assets/streak_saver_icon.png');
+const CARD_BACK = require('../../assets/images/glowcard_back.png');
+const TOKEN_ICON = require('../../assets/images/coin.png');
+const GLOWBAG_COMMON_ICON = require('../../assets/images/glowbags/Glowbag_common.png');
+const GLOWBAG_RARE_ICON = require('../../assets//images/glowbags/Glowbag_rare.png');
+const STREAK_SAVER_ICON = require('../../assets/images/streak_saver_icon.png');
 
 // Types for rewards
 export type RewardType =
