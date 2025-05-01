@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StatusBar,
   AppState,
+  AppStateStatus,
   ImageBackground,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -130,7 +131,7 @@ const MeditationSessionScreen = () => {
   
   // App switch guard (cheat-detection)
   useEffect(() => {
-    const handleAppStateChange = (nextAppState: string) => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
         // App is backgrounded
         if (isActive && !isPaused) {
@@ -159,7 +160,7 @@ const MeditationSessionScreen = () => {
   
   // Play ambient sound on session start and when soundPackId changes
   useEffect(() => {
-    if (isActive && !isPaused) {
+    if (isActive && !isPaused && soundPackId) {
       playAmbient(soundPackId);
     } else {
       stopAmbient();
@@ -259,14 +260,30 @@ const MeditationSessionScreen = () => {
         unlockAchievement('seven_day_streak');
       }
       const drop = await maybeDropGlowbag();
-      submitMeditationSession(breathScore, usingBreathTracking);
+
+      // Submit the session data
+      await submitMeditationSession(breathScore, usingBreathTracking);
+
+      // Get the result flags from the store *after* submission
+      const { sessionCompleted, isFirstMeditationOfDay } = useMeditationStore.getState();
+
       if (analytics && typeof analytics.logEvent === 'function') {
         analytics.logEvent('session_complete', {
           duration: selectedDuration ? selectedDuration * 60 : 0,
           xp,
         });
       }
-      navigation.replace('PostSessionSummary', { drop });
+
+      // Navigate based on whether it was the first meditation of the day
+      if (sessionCompleted && isFirstMeditationOfDay) {
+        navigation.replace('GlowCardRevealScreen', { drop }); // Pass drop param
+      } else if (sessionCompleted) {
+        navigation.replace('PostSessionSummary', { drop }); // Existing navigation
+      } else {
+        // Handle error case where session didn't complete properly?
+        console.error('Meditation session failed to complete in store.');
+        navigation.replace('Home'); // Fallback to Home
+      }
     }, 500);
   };
   
@@ -455,7 +472,7 @@ const MeditationSessionScreen = () => {
                   borderRadius: 20,
                   marginHorizontal: 4,
                 }}
-                onPress={() => setSoundPackId(id)}
+                onPress={() => setSoundPackId(id as any)}
               >
                 <Text style={{ color: soundPackId === id ? '#fff' : COLORS.primary, fontWeight: 'bold' }}>
                   {id.charAt(0).toUpperCase() + id.slice(1)}

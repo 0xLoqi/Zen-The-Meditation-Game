@@ -8,6 +8,7 @@ export interface MeditationResult {
   tokensEarned: number;
   streakUpdated: number;
   leveledUp: boolean;
+  isFirstMeditationOfDay: boolean;
 }
 
 // Keep track of the user's meditation sessions
@@ -26,7 +27,7 @@ export const submitMeditationSession = async (
   duration: MeditationDuration,
   breathScore: number,
   didUseBreathTracking: boolean
-): Promise<MeditationResult> => {
+): Promise<MeditationResult & { isFirstMeditationOfDay: boolean }> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
@@ -61,6 +62,7 @@ export const submitMeditationSession = async (
   // Check if we need to update streak
   const now = new Date();
   let newStreak = userData.streak;
+  let isFirst = false;
   
   // If there's a last meditation date and it's not today, check if we need to increment streak
   if (userData.lastMeditationDate) {
@@ -77,14 +79,19 @@ export const submitMeditationSession = async (
     // If the last meditation was yesterday, increment streak
     if (lastMedDate.getTime() === yesterday.getTime()) {
       newStreak = userData.streak + 1;
+      isFirst = true;
     } 
     // If the last meditation was before yesterday, reset streak to 1
     else if (lastMedDate.getTime() < yesterday.getTime()) {
       newStreak = 1;
+      isFirst = true;
+    } else {
+      isFirst = false;
     }
   } else {
     // First meditation ever, start streak at 1
     newStreak = 1;
+    isFirst = true;
   }
   
   // Calculate new XP and check for level up
@@ -108,6 +115,7 @@ export const submitMeditationSession = async (
     tokensEarned: result.tokensEarned,
     streakUpdated: newStreak,
     leveledUp,
+    isFirstMeditationOfDay: isFirst,
   };
 };
 
@@ -124,7 +132,7 @@ export const calculateSessionRewards = (
   duration: MeditationDuration,
   breathScore: number,
   currentStreak: number
-): MeditationResult => {
+): Omit<MeditationResult, 'isFirstMeditationOfDay'> => {
   // Base XP is determined by duration and type
   let baseXP = duration * 5;
   

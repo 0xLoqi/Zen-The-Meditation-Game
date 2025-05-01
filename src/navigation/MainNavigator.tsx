@@ -6,6 +6,7 @@ import MeditationSessionScreen from '../screens/main/MeditationSessionScreen';
 import PostSessionSummaryScreen from '../screens/main/PostSessionSummaryScreen';
 import DailyCheckInScreen from '../screens/main/DailyCheckInScreen';
 import WardrobeScreen from '../screens/main/WardrobeScreen';
+import GlowCardRevealScreen from '../screens/main/GlowCardRevealScreen';
 import GuruModeScreen from '../screens/main/GuruModeScreen';
 import ReferralScreen from '../screens/main/ReferralScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
@@ -33,6 +34,7 @@ export type MainStackParamList = {
   Store: undefined;
   Paywall: undefined;
   GlowCardTest: undefined;
+  GlowCardRevealScreen: { drop?: any };
 };
 
 const MainStack = createStackNavigator<MainStackParamList>();
@@ -54,6 +56,7 @@ const MainNavigator = () => {
       <MainStack.Screen name="Store" component={StoreScreen} />
       <MainStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
       <MainStack.Screen name="GlowCardTest" component={GlowCardTestScreen} />
+      <MainStack.Screen name="GlowCardRevealScreen" component={GlowCardRevealScreen} />
     </MainStack.Navigator>
   );
 };

@@ -18,6 +18,7 @@ interface MeditationState {
   didUseBreathTracking: boolean;
   sessionCompleted: boolean;
   microLesson: string;
+  isFirstMeditationOfDay: boolean | null;
   
   selectMeditationSettings: (type: MeditationType, duration: MeditationDuration) => void;
   submitMeditationSession: (breathScore: number, didUseBreathTracking: boolean) => Promise<void>;
@@ -37,6 +38,7 @@ export const useMeditationStore = create<MeditationState>((set, get) => ({
   didUseBreathTracking: false,
   sessionCompleted: false,
   microLesson: '',
+  isFirstMeditationOfDay: null,
   
   selectMeditationSettings: (type: MeditationType, duration: MeditationDuration) => {
     set({
@@ -73,6 +75,7 @@ export const useMeditationStore = create<MeditationState>((set, get) => ({
         leveledUp: result.leveledUp,
         didUseBreathTracking,
         sessionCompleted: true,
+        isFirstMeditationOfDay: result.isFirstMeditationOfDay,
       });
       
       // Update user data after meditation session
@@ -97,6 +100,7 @@ export const useMeditationStore = create<MeditationState>((set, get) => ({
       leveledUp: false,
       didUseBreathTracking: false,
       sessionCompleted: false,
+      isFirstMeditationOfDay: null,
       microLesson: '',
       error: null,
     });
