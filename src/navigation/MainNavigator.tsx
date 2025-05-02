@@ -1,4 +1,4 @@
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MeditationType, MeditationDuration } from '../types';
 import HomeScreen from '../screens/main/HomeScreen';
 import MeditationSelectionScreen from '../screens/main/MeditationSelectionScreen';
@@ -37,7 +37,7 @@ export type MainStackParamList = {
   GlowCardRevealScreen: { drop?: any };
 };
 
-const MainStack = createStackNavigator<MainStackParamList>();
+const MainStack = createNativeStackNavigator<MainStackParamList>();
 
 const MainNavigator = () => {
   return (

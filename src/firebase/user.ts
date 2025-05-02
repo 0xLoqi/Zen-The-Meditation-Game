@@ -39,7 +39,7 @@ export const getUserData = async (uid: string, email?: string): Promise<User | n
   } else {
     const newUser: User = {
       uid,
-      username: email ? email.split('@')[0] : 'ZenUser',
+      username: null,
       email: email || null,
       xp: 0,
       level: 1,
@@ -50,6 +50,7 @@ export const getUserData = async (uid: string, email?: string): Promise<User | n
       equippedOutfit: 'default',
       createdAt: new Date().toISOString(),
     };
+    console.log(`[Firestore] User doc created for ${uid}, username set to null.`);
     await setDoc(userRef, newUser);
     return newUser;
   }
@@ -195,7 +196,7 @@ export const getFriendCodeFirestore = async (uid: string): Promise<string | null
   return null;
 };
 
-export const setUserData = async (uid: string, data: User): Promise<void> => {
+export const setUserData = async (uid: string, data: Partial<User>): Promise<void> => {
   const userRef = doc(db, 'users', uid);
   await setDoc(userRef, data, { merge: true });
 };

@@ -312,3 +312,7 @@ export async function fetchAndSetFriendsFromFirestore(friendIds: string[]) {
   }
   useGameStore.setState({ friends: fetchedFriends });
 }
+
+export const resetGameStore = () => {
+  useGameStore.setState({ ...initialState });
+};

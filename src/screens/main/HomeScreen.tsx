@@ -99,6 +99,7 @@ const HomeScreen = () => {
   useEffect(() => {
     getUserData();
     getTodayCheckIn();
+    console.log('HomeScreen MOUNT: userData:', userData, 'isLoadingUser:', isLoadingUser, 'userError:', userError);
     if (userData?.uid) {
       getFriendCode(userData.uid).then(code => {
         if (code) {
@@ -111,6 +112,25 @@ const HomeScreen = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
+
+  useEffect(() => {
+    // Log changes to userData, isLoadingUser, userError
+    console.log('HomeScreen UPDATE: userData:', userData, 'isLoadingUser:', isLoadingUser, 'userError:', userError);
+  }, [userData, isLoadingUser, userError]);
+
+  if (!userData && !isLoadingUser && userError) {
+    // If loading is done but userData is missing, show error
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load user data: {userError}</Text>
+          <TouchableOpacity onPress={getUserData} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!userData) {
     return (
@@ -160,7 +180,7 @@ const HomeScreen = () => {
   const handleQuestPress = (quest) => {
     triggerHapticFeedback('selection');
     if (quest.id === 'daily_checkin_start' || quest.id === 'daily_checkin_end') {
-      navigation.navigate('DailyCheckIn', { questId: quest.id });
+      navigation.navigate('DailyCheckIn', undefined);
     } else if (quest.id === 'first_meditation') {
       navigation.navigate('MeditationSelection');
     }
@@ -171,19 +191,6 @@ const HomeScreen = () => {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (userError) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{userError}</Text>
-          <TouchableOpacity onPress={getUserData} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -229,7 +236,7 @@ const HomeScreen = () => {
                   <Ionicons name="settings-outline" size={24} color={COLORS.primary} />
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.profileCardTouchable} onPress={() => navigation.navigate('Profile')} activeOpacity={0.8} accessibilityLabel="View profile" accessible>
+              <TouchableOpacity style={styles.profileCardTouchable} onPress={() => navigation.navigate('Profile', {})} activeOpacity={0.8} accessibilityLabel="View profile" accessible>
                 <View style={styles.profileHeader} pointerEvents="box-none">
                   <MiniZenni
                     size="small"
