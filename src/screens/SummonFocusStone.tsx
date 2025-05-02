@@ -1,23 +1,59 @@
-import React from 'react';
-import { View, StyleSheet, ImageBackground } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, ImageBackground, Image } from 'react-native';
 import PulseStone from '../components/PulseStone'; // Assuming path
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Toast from 'react-native-toast-message'; // Import toast
+// Import animation and confetti
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import ConfettiCannon from 'react-native-confetti-cannon'; // Assuming this is installed
 
 // Define your stack param list if needed
 // type RootStackParamList = { ... SummonFocusStone: undefined; GlowcardReward: undefined; ... };
 // type SummonFocusStoneNavigationProp = StackNavigationProp<RootStackParamList, 'SummonFocusStone'>;
 type SummonFocusStoneNavigationProp = StackNavigationProp<any, 'SummonFocusStone'>; // Generic fallback
 
+// Define image paths
+const bgImage = require('../../assets/images/backgrounds/tablet_bg.png');
+const successImage = require('../../assets/images/UI/focus_tablet_success.png');
+
 const SummonFocusStone = () => {
   const navigation = useNavigation<SummonFocusStoneNavigationProp>();
+  const [isSuccessState, setIsSuccessState] = useState(false); // State for success view
+  const confettiRef = useRef<ConfettiCannon>(null); // Ref for confetti
+
+  // Animation values
+  const successOpacity = useSharedValue(0);
+  const successScale = useSharedValue(0.7); // Start smaller
+
+  // Animated style for the success image
+  const successImageStyle = useAnimatedStyle(() => {
+    return {
+      opacity: successOpacity.value,
+      transform: [{ scale: successScale.value }],
+    };
+  });
 
   const handleSuccess = () => {
-    // TODO: Trigger success animation/sound
     console.log('Hold successful!');
-    // Consider adding a slight delay or waiting for an animation before navigating
-    navigation.navigate('GlowcardReward');
+    setIsSuccessState(true); // Show success view elements
+
+    // Trigger animations
+    successOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.ease) });
+    successScale.value = withTiming(1, { duration: 800, easing: Easing.elastic(1) }); // Add a bounce
+
+    // Start confetti
+    confettiRef.current?.start();
+
+    // Navigate after a delay
+    setTimeout(() => {
+      navigation.navigate('GlowcardReward');
+    }, 2500); // Increased delay slightly for animation/confetti
   };
 
   const handleRetry = () => {
@@ -34,14 +70,31 @@ const SummonFocusStone = () => {
 
   return (
     <ImageBackground
-      source={require('../../assets/images/backgrounds/tablet_bg.png')} // Using meditation_bg as cave
+      source={bgImage} // Use defined variable
       style={styles.background}
       resizeMode="cover"
     >
       <View style={styles.container}>
-        <PulseStone onSuccess={handleSuccess} onRetry={handleRetry} />
+        {!isSuccessState ? (
+          // Show pulsing stone
+          <PulseStone onSuccess={handleSuccess} onRetry={handleRetry} />
+        ) : (
+           // Show success image with animation
+           <Animated.View style={[styles.successImageContainer, successImageStyle]}>
+             <Image source={successImage} style={styles.successImage} resizeMode="contain" />
+           </Animated.View>
+        )}
       </View>
-      {/* Make sure Toast is rendered at the root of your app */}
+      {/* Confetti Cannon - positioned absolutely */}
+      <ConfettiCannon
+        ref={confettiRef}
+        count={200} // Number of confetti pieces
+        origin={{ x: -10, y: 0 }} // Start from top left
+        fadeOut={true}
+        autoStart={false} // Don't start automatically
+        explosionSpeed={400}
+        fallSpeed={3000}
+      />
     </ImageBackground>
   );
 };
@@ -54,6 +107,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  successImageContainer: {
+     // Styles for the animated container if needed
+  },
+  successImage: {
+    width: 250, // Example size, adjust as needed
+    height: 250, // Example size, adjust as needed
   },
 });
 
