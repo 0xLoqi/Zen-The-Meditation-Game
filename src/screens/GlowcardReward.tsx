@@ -86,7 +86,20 @@ const getCosmeticImageSource = (cosmetic: RevealedCosmetic | null) => {
     'wink.png': require('../../assets/images/cosmetics/faces/wink.png'),
     // Add others...
 
-    // Add other categories/items if they can drop in onboarding
+    // *** ADD COMPANIONS HERE ***
+    'cozy_owl.png': require('../../assets/images/cosmetics/companions/cozy_owl.png'),
+    // Add other potential common/rare companions if they can drop
+    // e.g., 'baby_echo.png': require('../../assets/images/cosmetics/companions/baby_echo.png'),
+
+    // *** ADD ACCESSORIES HERE *** (Corrected folder name based on your attachment)
+    'whorled_staff.png': require('../../assets/images/cosmetics/accesories/whorled_staff.png'), // Note the 'accesories' typo folder
+    'satchel_of_stillness.png': require('../../assets/images/cosmetics/accesories/satchel_of_stillness.png'),
+    // Add others...
+
+    // *** ADD AURAS HERE ***
+    'auric_bloom.png': require('../../assets/images/cosmetics/auras/auric_bloom.png'),
+    'verdant_halo.png': require('../../assets/images/cosmetics/auras/verdant_halo.png'),
+     // Add others...
   };
 
   const imageSource = imageMap[cosmetic.imageFilename];
