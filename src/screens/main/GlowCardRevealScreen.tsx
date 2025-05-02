@@ -1,55 +1,49 @@
 import React from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
-import { useNavigation, StackActions, useRoute, RouteProp } from '@react-navigation/native';
+import { StyleSheet, View, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { GlowCardReveal } from '../../components/GlowCardReveal';
 import { useUserStore } from '../../store/userStore';
 import { useMeditationStore } from '../../store/meditationStore';
-import { RewardType } from '../../components/GlowCardReveal'; // Import RewardType
-import { MainStackParamList } from '../../navigation/MainNavigator'; // Import ParamList
+
+const CHOOSE_WISELY_IMAGE = require('../../../assets/images/Choose_wisely.png');
 
 const GlowCardRevealScreen = () => {
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<MainStackParamList, 'GlowCardRevealScreen'>>(); // Get route object
-  const drop = route.params?.drop; // Extract drop param
-  const { userData, addTokens, addStreakSaver } = useUserStore((state) => ({
-    userData: state.userData,
-    addTokens: state.addTokens,
-    addStreakSaver: state.addStreakSaver,
-  }));
+  const userData = useUserStore((state) => state.userData);
   const resetMeditation = useMeditationStore((state) => state.resetMeditationSession);
 
-  const handleRewardClaimed = (reward: RewardType) => {
+  const handleRewardClaimed = (reward) => {
     console.log('Reward claimed in GlowCardRevealScreen:', reward);
-    // Here you would typically integrate with inventory/backend if needed
-    // For Glowbags, etc. For now, we just log it.
-    if (reward.type === 'glowbag_common' || reward.type === 'glowbag_rare') {
-      Alert.alert('Glowbag Acquired!', `You received a ${reward.type}!`);
-    }
-    // Tokens and Streak Savers are handled directly by the component via callbacks
+    // No alert needed here anymore, handled visually in the component
   };
 
   const handleClose = () => {
-    resetMeditation(); // Reset meditation state
-    // Navigate back to Home or another appropriate screen, replacing the stack
-    navigation.dispatch(StackActions.replace('PostSessionSummary', { drop })); // Navigate to PostSessionSummary with drop
+    resetMeditation();
+    // TODO: Add navigation logic if needed
+    // navigation.dispatch(StackActions.replace('PostSessionSummary', { drop }));
   };
 
   if (!userData) {
-    // Handle case where user data isn't loaded yet, maybe show loading spinner
     return <View style={styles.loadingContainer} />;
   }
 
   return (
     <View style={styles.container}>
+      <View style={styles.topImageContainer}>
+        <Image 
+          source={CHOOSE_WISELY_IMAGE}
+          style={styles.topImage}
+          resizeMode="contain"
+        />
+      </View>
       <GlowCardReveal
         onRewardClaimed={handleRewardClaimed}
         userTokens={userData.tokens || 0}
-        isPlusUser={userData.isPlus || false}
-        streakSavers={userData.streakSavers || 0}
-        onUpdateTokens={addTokens} // Pass the store action directly
-        onUpdateStreakSavers={addStreakSaver} // Pass the store action directly
-        onClose={handleClose} // Pass the navigation handler
-        // localization can be passed here if needed
+        isPlusUser={false}
+        streakSavers={0}
+        onUpdateTokens={() => {}}
+        onUpdateStreakSavers={() => {}}
+        onClose={handleClose}
       />
     </View>
   );
@@ -63,6 +57,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  topImageContainer: {
+    height: 100,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  topImage: {
+    width: '80%',
+    height: '100%',
   },
 });
 

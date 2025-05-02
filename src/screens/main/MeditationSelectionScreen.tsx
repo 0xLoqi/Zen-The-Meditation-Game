@@ -47,13 +47,13 @@ const MeditationSelectionScreen = () => {
   const username = useUserStore((s) => s.userData?.username);
   const insets = useSafeAreaInsets();
   
-  const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<MeditationDuration | null>(null);
   const [encouragement, setEncouragement] = useState('');
   const [moodRating, setMoodRating] = useState<number | null>(null);
   const [reflection, setReflection] = useState('');
   
   // Meditation durations
-  const durations = [
+  const durations: Array<{value: MeditationDuration; xp: number; tokens: number; spin: boolean}> = [
     { value: 5, xp: 50, tokens: 0, spin: true },
     { value: 10, xp: 120, tokens: 5, spin: true },
     { value: 15, xp: 200, tokens: 10, spin: true },
@@ -98,7 +98,7 @@ const MeditationSelectionScreen = () => {
   const [glowAnim] = useState(new Animated.Value(0));
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   useEffect(() => {
-    let glowInterval: NodeJS.Timeout;
+    let glowInterval: NodeJS.Timeout | undefined;
     let placeholderInterval: NodeJS.Timeout;
     if (!reflection) {
       // Pulse glow
@@ -122,7 +122,7 @@ const MeditationSelectionScreen = () => {
     }
     return () => {
       glowAnim.stopAnimation();
-      clearInterval(glowInterval);
+      if (glowInterval) clearInterval(glowInterval);
       clearInterval(placeholderInterval);
     };
   }, [reflection]);
@@ -136,7 +136,8 @@ const MeditationSelectionScreen = () => {
     if (selectedDuration) {
       // Complete first reflection quest when beginning meditation
       completeQuest('daily_checkin_start');
-      selectMeditationSettings(null, selectedDuration);
+      // Use 'focus' as default type if none selected
+      selectMeditationSettings('focus', selectedDuration);
       navigation.navigate('MeditationSession');
     }
   };
@@ -155,7 +156,7 @@ const MeditationSelectionScreen = () => {
           <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 6 }}>Quick check-in?</Text>
           <MoodScale
             onRatingSelected={setMoodRating}
-            selectedRating={moodRating}
+            initialRating={moodRating || undefined}
             iconStyle={{}}
             labelStyle={{ color: '#fff', fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}
           />

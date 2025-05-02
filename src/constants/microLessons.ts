@@ -103,7 +103,10 @@ const MICRO_LESSONS: MicroLesson[] = [
  * @param type - Type of meditation
  * @returns A micro lesson text
  */
-export const getMicroLesson = (type: MeditationType): string => {
+export const getMicroLesson = (type: MeditationType | null): string => {
+  if (!type) {
+    return "Focus on your breath, letting each inhale and exhale guide you to the present moment.";
+  }
   const typeLessons = MICRO_LESSONS.filter(lesson => lesson.type.toLowerCase() === type.toLowerCase());
   const randomIndex = Math.floor(Math.random() * typeLessons.length);
   return typeLessons[randomIndex].text;

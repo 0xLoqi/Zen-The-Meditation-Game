@@ -21,6 +21,16 @@ export interface User {
   equippedOutfit: OutfitId;
   createdAt: string | Date;
   referralCode?: string; // Adding for compatibility
+  cosmetics?: {
+    equipped: {
+      outfit?: string;
+      headgear?: string;
+      aura?: string;
+      face?: string;
+      accessory?: string;
+      companion?: string;
+    };
+  };
 }
 
 // Meditation Types

@@ -4,14 +4,31 @@ import LinearGradient from 'react-native-linear-gradient';
 import Haptic from 'react-native-haptic-feedback';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
-// Placeholder asset imports (replace with actual assets)
+// Asset imports
 const CARD_BACK = require('../../assets/images/glowcard_back.png');
 const TOKEN_ICON = require('../../assets/images/coin.png');
 const GLOWBAG_COMMON_ICON = require('../../assets/images/glowbags/Glowbag_common.png');
-const GLOWBAG_RARE_ICON = require('../../assets//images/glowbags/Glowbag_rare.png');
+const GLOWBAG_RARE_ICON = require('../../assets/images/glowbags/Glowbag_rare.png');
 const STREAK_SAVER_ICON = require('../../assets/images/streak_saver_icon.png');
+const EXTRA_PICK_ICON = require('../../assets/images/extra_pick_icon.png'); // Assuming you have an icon for extra pick
 const BACKGROUND_IMAGE = require('../../assets/images/backgrounds/pick_a_card_bg.png');
-const PANE_BACKGROUND = require('../../assets/images/backgrounds/pane_background.png');
+const CHOOSE_WISELY_IMAGE = require('../../assets/images/Choose_wisely.png');
+const PANE_BACKGROUND = require('../../assets/images/backgrounds/pane_background.png'); // Import pane background
+
+// Load Cosmetics Data
+import cosmeticsData from '../../assets/data/cosmetics.json';
+
+interface Cosmetic {
+  id: string;
+  name: string;
+  category: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  image: string; // Assuming image name corresponds to file in assets
+  price: number;
+}
+
+// Filter high-tier cosmetics
+const highTierCosmetics = cosmeticsData.filter(c => c.rarity === 'epic' || c.rarity === 'legendary') as Cosmetic[];
 
 // Types for rewards
 export type RewardType =
@@ -19,7 +36,8 @@ export type RewardType =
   | { type: 'glowbag_common' }
   | { type: 'glowbag_rare' }
   | { type: 'streak_saver' }
-  | { type: 'extra_pick' };
+  | { type: 'extra_pick' }
+  | { type: 'cosmetic'; item: Cosmetic }; // Updated cosmetic type
 
 export interface GlowCardRevealProps {
   onRewardClaimed: (reward: RewardType) => void;
@@ -37,61 +55,94 @@ export interface GlowCardRevealProps {
 const CARD_COUNT = 6;
 const STREAK_SAVER_CAP = 3;
 const PAID_PICK_COST = 50;
+const AUTO_CLAIM_DELAY = 2500; // ms
 
+// Adjusted Probabilities (example, ensure they sum to 1 or handle default)
 function getRandomReward(): RewardType {
   const rand = Math.random();
-  if (rand < 0.45) {
-    // Tokens: 45%
+  if (rand < 0.40) { // Tokens: 40%
     const tokenOptions = [25, 35, 50];
     const amount = tokenOptions[Math.floor(Math.random() * tokenOptions.length)];
     return { type: 'tokens', amount };
-  } else if (rand < 0.65) {
-    // Common Glowbag: 20%
+  } else if (rand < 0.60) { // Common Glowbag: 20%
     return { type: 'glowbag_common' };
-  } else if (rand < 0.75) {
-    // Rare Glowbag: 10%
+  } else if (rand < 0.70) { // Rare Glowbag: 10%
     return { type: 'glowbag_rare' };
-  } else if (rand < 0.85) {
-    // Streak Saver: 10%
+  } else if (rand < 0.80) { // Streak Saver: 10%
     return { type: 'streak_saver' };
-  } else if (rand < 0.95) {
-    // Extra Free Pick: 10%
+  } else if (rand < 0.90) { // Extra Free Pick: 10%
     return { type: 'extra_pick' };
-  } else {
-    // Ultra Rare Cosmetic: 5%
-    return { type: 'glowbag_rare' }; // You'll need to add cosmetic types to RewardType
+  } else { // Cosmetic: 10% (example)
+    const availableCosmetics = cosmeticsData as Cosmetic[]; // Use all for actual reward for now
+    if (availableCosmetics.length > 0) {
+        const randomCosmetic = availableCosmetics[Math.floor(Math.random() * availableCosmetics.length)];
+        return { type: 'cosmetic', item: randomCosmetic };
+    } else {
+        // Fallback if cosmetics.json is empty
+        return { type: 'tokens', amount: 25 };
+    }
   }
 }
 
-const rewardIcon = (reward: RewardType) => {
+const COSMETIC_IMAGES: { [key: string]: any } = {
+  // Outfits
+  'ember_robe.png': require('../../assets/images/cosmetics/outfits/ember_robe.png'),
+  'prism_cloak.png': require('../../assets/images/cosmetics/outfits/prism_cloak.png'),
+  'nap_hoodie.png': require('../../assets/images/cosmetics/outfits/nap_hoodie.png'),
+  // Headgear
+  'warm_beanie.png': require('../../assets/images/cosmetics/headgear/warm_beanie.png'),
+  'royal_crown.png': require('../../assets/images/cosmetics/headgear/royal_crown.png'),
+  'Leaf Crown.png': require('../../assets/images/cosmetics/headgear/Leaf Crown.png'),
+  // Auras
+  'auric_bloom.png': require('../../assets/images/cosmetics/auras/auric_bloom.png'),
+  'focus_spiral.png': require('../../assets/images/cosmetics/auras/focus_spiral.png'),
+  'verdant_halo.png': require('../../assets/images/cosmetics/auras/verdant_halo.png'),
+  // Accessories
+  'whorled_staff.png': require('../../assets/images/cosmetics/accesories/whorled_staff.png'),
+  'you_blink_first_mask.png': require('../../assets/images/cosmetics/accesories/you_blink_first_mask.png'),
+  'true_stoic_mask.png': require('../../assets/images/cosmetics/accesories/true_stoic_mask.png'),
+  'satchel_of_stillness.png': require('../../assets/images/cosmetics/accesories/satchel_of_stillness.png'),
+  // Companions
+  'cozy_owl.png': require('../../assets/images/cosmetics/companions/cozy_owl.png'),
+  'busy_bee.png': require('../../assets/images/cosmetics/companions/busy_bee.png'),
+  'baby_echo.png': require('../../assets/images/cosmetics/companions/baby_echo.png'),
+  'messenger_sprite.png': require('../../assets/images/cosmetics/companions/messenger_sprite.png'),
+  // Faces
+  'angry.png': require('../../assets/images/cosmetics/faces/angry.png'),
+  'shook.png': require('../../assets/images/cosmetics/faces/shook.png'),
+  'wink.png': require('../../assets/images/cosmetics/faces/wink.png'),
+  'worried.png': require('../../assets/images/cosmetics/faces/worried.png'),
+  'sad.png': require('../../assets/images/cosmetics/faces/sad.png'),
+};
+
+const cosmeticImageRequire = (imageName: string) => {
+  return COSMETIC_IMAGES[imageName] || GLOWBAG_RARE_ICON;
+};
+
+const rewardIcon = (reward: RewardType | null) => {
+  if (!reward) return TOKEN_ICON;
   switch (reward.type) {
-    case 'tokens':
-      return TOKEN_ICON;
-    case 'glowbag_common':
-      return GLOWBAG_COMMON_ICON;
-    case 'glowbag_rare':
-      return GLOWBAG_RARE_ICON;
-    case 'streak_saver':
-      return STREAK_SAVER_ICON;
-    default:
-      return TOKEN_ICON;
+    case 'tokens': return TOKEN_ICON;
+    case 'glowbag_common': return GLOWBAG_COMMON_ICON;
+    case 'glowbag_rare': return GLOWBAG_RARE_ICON;
+    case 'streak_saver': return STREAK_SAVER_ICON;
+    case 'extra_pick': return EXTRA_PICK_ICON;
+    case 'cosmetic': return cosmeticImageRequire(reward.item.image); // Use cosmetic image
+    default: return TOKEN_ICON;
   }
 };
 
-const rewardText = (reward: RewardType, localization?: (key: string) => string): string => {
+const rewardText = (reward: RewardType | null, localization?: (key: string) => string): string => {
+  if (!reward) return '';
+  const loc = localization || ((key: string) => key); // Default localization
   switch (reward.type) {
-    case 'tokens':
-      return `${reward.amount} ${localization ? localization('Tokens') : 'Tokens'}`;
-    case 'glowbag_common':
-      return localization ? localization('Common Glowbag') : 'Common Glowbag';
-    case 'glowbag_rare':
-      return localization ? localization('Rare Glowbag') : 'Rare Glowbag';
-    case 'streak_saver':
-      return localization ? localization('Streak Saver') : 'Streak Saver';
-    case 'extra_pick':
-      return localization ? localization('Extra Free Pick') : 'Extra Free Pick';
-    default:
-      return '';
+    case 'tokens': return `${reward.amount} ${loc('Tokens')}`;
+    case 'glowbag_common': return loc('Common Glowbag');
+    case 'glowbag_rare': return loc('Rare Glowbag');
+    case 'streak_saver': return loc('Streak Saver');
+    case 'extra_pick': return loc('Extra Free Pick');
+    case 'cosmetic': return reward.item.name; // Use cosmetic name
+    default: return '';
   }
 };
 
@@ -107,7 +158,7 @@ export const GlowCardReveal: React.FC<GlowCardRevealProps> = ({
   onClose,
   localization,
 }) => {
-  const [cards, setCards] = useState(Array(CARD_COUNT).fill(null));
+  const [cards, setCards] = useState<(RewardType | null)[]>(Array(CARD_COUNT).fill(null));
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [reward, setReward] = useState<RewardType | null>(null);
   const [flipped, setFlipped] = useState(Array(CARD_COUNT).fill(false));
@@ -119,157 +170,204 @@ export const GlowCardReveal: React.FC<GlowCardRevealProps> = ({
   const [error, setError] = useState<string | null>(null);
   const rewardAppearAnimation = useRef(new Animated.Value(0)).current;
   const [isClaimed, setIsClaimed] = useState(false);
-  const [showPostClaimUI, setShowPostClaimUI] = useState(false);
+  const [showPostClaimUI, setShowPostClaimUI] = useState(false); // To control when "Done" appears
   const idleAnimation = useRef(new Animated.Value(0)).current;
-  const idleLoop = useRef(null); // Store the idle animation loop
+  const idleLoop = useRef<Animated.CompositeAnimation | null>(null); // Fix type
   const entranceAnimations = useRef(Array(CARD_COUNT).fill(0).map(() => new Animated.Value(0))).current;
   const [paidPickUsed, setPaidPickUsed] = useState(false);
   const shakeAnimations = useRef(Array(CARD_COUNT).fill(0).map(() => new Animated.Value(0))).current;
-  const shakeLoops = useRef([]); // Store shake animation loops
+  const shakeLoops = useRef<Animated.CompositeAnimation[]>([]); // Fix type
   const [otherRewards, setOtherRewards] = useState<(RewardType | null)[]>(Array(CARD_COUNT).fill(null));
+  const autoClaimTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoClaimTimer.current) {
+        clearTimeout(autoClaimTimer.current);
+      }
+      // Stop animations on unmount
+      idleLoop.current?.stop();
+      shakeLoops.current.forEach(loop => loop?.stop());
+    };
+  }, []);
 
   // Accessibility: Announce reward
-  React.useEffect(() => {
+  useEffect(() => {
     if (reward && selectedIndex !== null) {
       const msg = rewardText(reward, localization);
-      if (Platform.OS === 'ios' || Platform.OS === 'android') {
-        AccessibilityInfo.announceForAccessibility(msg);
+      if (msg) {
+          AccessibilityInfo.announceForAccessibility(msg);
       }
     }
-  }, [reward]);
+  }, [reward, selectedIndex, localization]);
 
   // Entrance Animation
   useEffect(() => {
     const animations = entranceAnimations.map(anim =>
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      })
+      Animated.timing(anim, { toValue: 1, duration: 400, useNativeDriver: true }) // Faster
     );
-    Animated.stagger(100, animations).start();
-  }, []);
+    Animated.stagger(80, animations).start(); // Faster
+  }, [entranceAnimations]);
 
   // Idle Floating Animation
   useEffect(() => {
-    idleLoop.current = Animated.loop(
-      Animated.sequence([
-        Animated.timing(idleAnimation, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(idleAnimation, {
-          toValue: 0,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    idleLoop.current.start();
-  }, []);
+      // Ensure previous loop is stopped before starting a new one
+      idleLoop.current?.stop();
+      idleLoop.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(idleAnimation, { toValue: 1, duration: 1500, useNativeDriver: true }),
+          Animated.timing(idleAnimation, { toValue: 0, duration: 1500, useNativeDriver: true }),
+        ])
+      );
+      idleLoop.current.start();
+  }, [idleAnimation]); // Add idleAnimation dependency
 
-  const handleCardPress = (i: number) => {
-    if (animating || selectedIndex !== null) return;
-    setAnimating(true);
-    setSelectedIndex(i);
+  const claimReward = (rewardToClaim: RewardType) => {
+      if (isClaimed) return; // Prevent double claim
 
-    // Generate rewards for all cards
-    const allRewards = Array(CARD_COUNT).fill(null).map(() => getRandomReward());
-    const assignedReward = allRewards[i];
-    setOtherRewards(allRewards);
+      console.log('Claiming reward:', rewardToClaim);
+      setIsClaimed(true);
+      setShowPostClaimUI(true); // Show "Done" button etc.
 
-    // Trigger flip animation
-    Animated.timing(flipAnimations[i], {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true, // Use native driver for performance
-    }).start(() => {
-      setReward(assignedReward); // Set reward after animation starts for smoother reveal
-      const updatedFlipped = [...flipped];
-      updatedFlipped[i] = true;
-      setFlipped(updatedFlipped); // Mark as logically flipped
-      setAnimating(false);
+      if (rewardToClaim.type === 'tokens') {
+          onUpdateTokens(rewardToClaim.amount);
+      } else if (rewardToClaim.type === 'streak_saver') {
+          onUpdateStreakSavers(1);
+      } // Add cosmetic handling if needed (e.g., add to inventory via store)
 
-      // Start reward appear animation
-      Animated.timing(rewardAppearAnimation, {
-        toValue: 1,
-        duration: 400, // Faster than flip
-        delay: 100, // Small delay after flip starts revealing back
-        useNativeDriver: true,
-      }).start();
-
-      if (assignedReward.type === 'glowbag_rare' || assignedReward.type === 'glowbag_common') {
-        setConfetti(true);
-        Haptic.trigger('impactHeavy');
-      } else if (assignedReward.type === 'extra_pick') {
-        Haptic.trigger('notificationSuccess');
+      // Trigger appropriate haptics & confetti
+      const isRare = rewardToClaim.type === 'glowbag_rare' || (rewardToClaim.type === 'cosmetic' && (rewardToClaim.item.rarity === 'epic' || rewardToClaim.item.rarity === 'legendary'));
+      if (isRare) {
+          setConfetti(true);
+          Haptic.trigger('impactHeavy');
+      } else if (rewardToClaim.type !== 'extra_pick') { // No success haptic for extra pick itself
+          Haptic.trigger('notificationSuccess');
       }
-    });
 
-    // Haptic feedback
-    Haptic.trigger('impactLight');
+      onRewardClaimed(rewardToClaim); // Notify parent screen
+
+      if (rewardToClaim.type === 'extra_pick') {
+          setPicks(prev => prev + 1);
+          // Optionally reset state to allow another pick immediately?
+          // Or wait for user interaction? For now, just increments pick count.
+          // Resetting might involve:
+          // setSelectedIndex(null); setReward(null); setFlipped(f.map(() => false)); setIsClaimed(false); setShowPostClaimUI(false);
+      }
   };
 
-  const handleClaim = () => {
-    if (!reward) return;
-    setIsClaimed(true);
 
-    // Flip all other cards with a slight delay for each
-    const newFlipped = [...flipped];
-    otherRewards.forEach((_, index) => {
-      if (index !== selectedIndex) {
-        setTimeout(() => {
-          setFlipped(prev => {
-            const updated = [...prev];
-            updated[index] = true;
-            return updated;
-          });
-          // Trigger flip animation for this card
-          Animated.timing(flipAnimations[index], {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }).start();
-        }, index * 100); // Stagger the reveals
-      }
-    });
+  const handleCardPress = (i: number) => {
+    if (animating || selectedIndex !== null || picks <= 0) return;
 
-    // Handle the reward
-    if (reward.type === 'tokens') {
-      onUpdateTokens(userTokens + reward.amount);
-    } else if (reward.type === 'glowbag_common' || reward.type === 'glowbag_rare') {
-      onRewardClaimed(reward);
-    } else if (reward.type === 'streak_saver') {
-      if (streakSavers < STREAK_SAVER_CAP) {
-        onUpdateStreakSavers(streakSavers + 1);
-      } else {
-        onUpdateTokens(userTokens + 25); // Overflow
-      }
-    } else if (reward.type === 'extra_pick') {
-      setPicks(prev => prev + 1);
-      // Show feedback that you got an extra pick
+    // Clear any pending auto-claim from previous potential picks if applicable
+    if (autoClaimTimer.current) clearTimeout(autoClaimTimer.current);
+
+    setAnimating(true);
+    setSelectedIndex(i);
+    setPicks(prev => prev - 1); // Decrement picks
+
+    // Generate rewards for all cards
+    let allRewards = Array(CARD_COUNT).fill(null).map(() => getRandomReward());
+    const assignedReward = allRewards[i];
+
+    // Ensure at least one "missed" reward is a high-tier cosmetic,
+    // UNLESS the assigned reward is an extra pick.
+    if (assignedReward?.type !== 'extra_pick' && highTierCosmetics.length > 0) {
+        let dummyPlaced = false;
+        while (!dummyPlaced) {
+            const randomIndex = Math.floor(Math.random() * CARD_COUNT);
+            if (randomIndex !== i) { // Don't replace the selected card
+                const randomHighTierCosmetic = highTierCosmetics[Math.floor(Math.random() * highTierCosmetics.length)];
+                allRewards[randomIndex] = { type: 'cosmetic', item: randomHighTierCosmetic };
+                dummyPlaced = true;
+            }
+        }
+    } else if (assignedReward?.type === 'extra_pick') {
+        // Ensure no dummy cosmetic is shown if extra pick is selected
+        allRewards = allRewards.map((r, index) => {
+            if (index !== i && r?.type === 'cosmetic' && highTierCosmetics.some(htc => htc.id === r.item.id)) {
+                // Replace dummy cosmetic with a standard reward if extra pick was chosen
+                return getRandomReward(); // Or a specific fallback like tokens
+            }
+            return r;
+        });
+    }
+
+
+    setOtherRewards(allRewards); // Set rewards *before* flip starts
+
+    // Stop idle animation during flip
+    idleLoop.current?.stop();
+
+    // Trigger flip animation (Faster)
+    Animated.timing(flipAnimations[i], {
+      toValue: 1,
+      duration: 400, // Faster flip
+      useNativeDriver: true,
+    }).start(() => {
+      setReward(assignedReward); // Set reward *during* animation for reveal
+      const updatedFlipped = [...flipped];
+      updatedFlipped[i] = true;
+      setFlipped(updatedFlipped);
+      setAnimating(false);
+
+      // Start reward appear animation (Faster)
+      Animated.timing(rewardAppearAnimation, {
+        toValue: 1,
+        duration: 300, // Faster
+        delay: 50, // Slight delay
+        useNativeDriver: true,
+      }).start(() => {
+          // Start auto-claim timer ONLY if it's not an extra pick
+          if (assignedReward && assignedReward.type !== 'extra_pick') {
+              autoClaimTimer.current = setTimeout(() => {
+                  claimReward(assignedReward);
+              }, AUTO_CLAIM_DELAY);
+          } else if (assignedReward?.type === 'extra_pick') {
+              // Handle extra pick immediately (or after short delay?)
+              claimReward(assignedReward); // Claim it to trigger +1 pick count
+              // Consider UI update to indicate another pick is available
+              console.log("Extra pick awarded!");
+              setShowPostClaimUI(true); // Show 'Done' button after extra pick reveal
+          }
+      });
+
+      // Haptic feedback for card flip itself
+      Haptic.trigger('impactLight');
+
+      // Reveal other cards slightly later
       setTimeout(() => {
-        setShowPostClaimUI(true);
-        Alert.alert(
-          localization ? localization('Extra Pick!') : 'Extra Pick!',
-          localization ? localization('You got an extra pick! Claim this reward first, then pick again!') : 'You got an extra pick! Claim this reward first, then pick again!'
-        );
-      }, 1000);
-      return; // Don't show post-claim UI yet for extra pick
-    }
+        const otherFlipAnimations = otherRewards.map((_, index) => {
+            if (index !== i) {
+                return Animated.timing(flipAnimations[index], {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                });
+            }
+            return null;
+        }).filter(Boolean); // Remove nulls
 
-    // Show confetti for rare items
-    if (reward.type === 'glowbag_rare' || reward.type === 'glowbag_common') {
-      setConfetti(true);
-      Haptic.trigger('impactHeavy');
-    } else if (reward.type === 'extra_pick') {
-      Haptic.trigger('notificationSuccess');
-    }
-
-    setTimeout(() => {
-      setShowPostClaimUI(true);
-    }, 1000);
+        if (otherFlipAnimations.length > 0) {
+           Animated.stagger(50, otherFlipAnimations as Animated.CompositeAnimation[]).start(() => {
+              const updatedFlipped = Array(CARD_COUNT).fill(true);
+              setFlipped(updatedFlipped); // Mark all as flipped visually
+              // Maybe restart idle anim here? Or wait for claim?
+              // Show paid pick option if applicable
+              setShowPostClaimUI(true); // Always show Done button once reveals are complete
+              if (!paidPickUsed && assignedReward?.type !== 'extra_pick') {
+                  // Clear auto-claim timer as user now has option to pick again
+                  if (autoClaimTimer.current) {
+                      clearTimeout(autoClaimTimer.current);
+                      autoClaimTimer.current = null;
+                  }
+                  setShowPaidPick(true);
+              }
+           });
+        }
+      }, 600); // Delay revealing others after the main card flip starts
+    });
   };
 
   const handlePaidPick = () => {
@@ -288,6 +386,7 @@ export const GlowCardReveal: React.FC<GlowCardRevealProps> = ({
 
     // Reset all states and animations
     onUpdateTokens(userTokens - PAID_PICK_COST);
+    setPicks(1); // Grant one pick for the paid attempt
     setPaidPickUsed(true);
     setShowPaidPick(false);
     setShowPostClaimUI(false);
@@ -308,6 +407,7 @@ export const GlowCardReveal: React.FC<GlowCardRevealProps> = ({
     // Stop shake and restart idle animation
     shakeLoops.current.forEach(loop => loop.stop && loop.stop());
     shakeAnimations.forEach(anim => anim.setValue(0));
+    idleAnimation.setValue(0); // Reset animation value before restarting
     if (idleLoop.current) idleLoop.current.start();
     
     // Reset cards array
@@ -325,124 +425,165 @@ export const GlowCardReveal: React.FC<GlowCardRevealProps> = ({
 
   const handleClose = () => {
     console.log('handleClose called');
+    // Clear timer if it exists
+    if (autoClaimTimer.current) {
+      clearTimeout(autoClaimTimer.current);
+      autoClaimTimer.current = null;
+    }
+
+    // Claim reward if not already claimed and a reward exists
+    if (reward && !isClaimed) {
+        claimReward(reward);
+    }
+
+    // Stop animations
+    idleLoop.current?.stop();
+    shakeLoops.current.forEach(loop => loop?.stop()); // Check if loop exists before stopping
+    shakeAnimations.forEach(anim => anim.setValue(0));
+
     if (onClose) {
-      if (shakeLoops.current) shakeLoops.current.forEach(loop => loop.stop && loop.stop());
-      shakeAnimations.forEach(anim => anim.setValue(0));
       onClose();
     }
   };
 
-  // Render
+  const cardScale = idleAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.03], // Subtle scale effect
+  });
+
+  const cardTranslateY = idleAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, -5], // Subtle float up effect
+  });
+
   return (
     <ImageBackground source={BACKGROUND_IMAGE} style={styles.container} resizeMode="cover">
+      {confetti && <ConfettiCannon count={200} origin={{ x: -10, y: 0 }} fadeOut />}
+
+      {/* Choose Wisely Image (Absolute Positioned) */}
+      <View style={styles.chooseWiselyContainer}>
+        <Image
+          source={CHOOSE_WISELY_IMAGE}
+          style={styles.chooseWiselyImage}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* Card Area */}
       <View style={styles.cardArea}>
         <View style={[styles.cardRow, { perspective: 1000 } as any]}>
-          {cards.map((_, i) => {
-            const rotateY = flipAnimations[i].interpolate({
+          {entranceAnimations.slice(0, 3).map((anim, i) => {
+            const flip = flipAnimations[i].interpolate({
               inputRange: [0, 1],
               outputRange: ['0deg', '180deg'],
             });
-
-            const frontAnimatedStyle = {
-              transform: [{ rotateY }],
-            };
-
-            const backAnimatedStyle = {
-              transform: [{ 
-                rotateY: flipAnimations[i].interpolate({ 
-                  inputRange: [0, 1], 
-                  outputRange: ['180deg', '360deg'] 
-                }) 
-              }], // Rotate backface based on original animation value
-            };
-
-            // Idle animation transformation
-            const idleTranslateY = idleAnimation.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, -10], // Float up by 10 units
+            const backFlip = flipAnimations[i].interpolate({
+                inputRange: [0, 1],
+                outputRange: ['180deg', '360deg'],
             });
-
-            // Entrance animation transformation
-            const entranceTranslateY = entranceAnimations[i].interpolate({
-              inputRange: [0, 1],
-              outputRange: [100, 0], // Slide up from 100 units below
-            });
-            const entranceOpacity = entranceAnimations[i].interpolate({
-              inputRange: [0, 0.5, 1],
-              outputRange: [0, 0.5, 1], // Fade in
-            });
-
-            // Shake animation transformation
-            const shakeTranslateX = shakeAnimations[i].interpolate({
-              inputRange: [-1, 1],
-              outputRange: [-2, 2], // Less intense shake
-            });
+             const entranceScale = anim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
+             const entranceOpacity = anim;
 
             return (
-              <Animated.View
-                key={i}
-                style={[
-                  styles.cardContainer,
-                  ((selectedIndex !== null && selectedIndex !== i) || isClaimed) && styles.disabledCardVisuals,
-                  selectedIndex === i && styles.selectedCardContainer,
-                  {
-                    opacity: entranceOpacity,
-                    transform: [
-                      { translateY: entranceTranslateY },
-                      ...(selectedIndex === null && !isClaimed ? [{ translateY: idleTranslateY }] : []),
-                      { translateX: shakeTranslateX },
-                    ],
-                  },
-                ]}
-              >
+              <Animated.View key={i} style={{ opacity: entranceOpacity, transform: [{ scale: entranceScale }] }}>
                 <TouchableOpacity
-                  style={{ width: '100%', height: '100%' }}
+                  activeOpacity={0.7}
                   onPress={() => handleCardPress(i)}
-                  disabled={animating || selectedIndex !== null || isClaimed}
-                  accessibilityLabel={`Card ${i + 1}, tap to reveal reward`}
+                  disabled={flipped[i] || animating || picks <= 0}
+                  accessibilityLabel={flipped[i] ? rewardText(cards[i], localization) : `Card ${i + 1}, Choose a card`}
                   accessibilityRole="button"
-                >
-                  {/* Front Side */}
-                  <Animated.View style={[styles.cardFace, styles.cardFront, frontAnimatedStyle]}>
-                    <Image source={CARD_BACK} style={styles.cardImage} resizeMode="cover" />
+                  accessibilityState={{ disabled: flipped[i] || animating || picks <= 0, selected: selectedIndex === i }}
+                  >
+                  <Animated.View style={[
+                      styles.card,
+                      { transform: [{ rotateY: flip }, { scale: cardScale }, { translateY: cardTranslateY }] },
+                      selectedIndex === i && styles.selectedCard, // Optional: style for selected card
+                      (flipped[i] || selectedIndex !== null) && styles.disabledCard, // Dim unflipped after selection
+                    ]}>
+                    <Image source={CARD_BACK} style={styles.cardFace} />
                   </Animated.View>
-
-                  {/* Back Side (Reward) */}
-                  <Animated.View style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}>
-                    <ImageBackground source={PANE_BACKGROUND} style={styles.paneBackground} resizeMode='cover'>
-                      <LinearGradient
-                        colors={reward && i === selectedIndex && reward.type === 'glowbag_rare' ? ['#FFD700', '#FFA500', '#FF8C00'] : ['transparent', 'transparent']}
-                        style={styles.cardGradientOverlay}
-                      >
-                        {((reward && i === selectedIndex) || (flipped[i] && otherRewards[i])) && (
-                          <Animated.View style={[
-                            styles.rewardContentContainer,
-                            {
-                              transform: [{
-                                scale: flipAnimations[i].interpolate({
-                                  inputRange: [0, 0.5, 1],
-                                  outputRange: [0.8, 0.8, 1],
-                                })
-                              }]
-                            }
-                          ]}>
-                            <Image 
-                              source={rewardIcon(i === selectedIndex ? reward : otherRewards[i])} 
-                              style={[
-                                styles.rewardIcon,
-                                i !== selectedIndex && { opacity: 0.6 } // Dim other rewards
-                              ]} 
+                  <Animated.View style={[
+                      styles.card, styles.cardBack,
+                      { transform: [{ rotateY: backFlip }, { scale: cardScale }, { translateY: cardTranslateY }] }
+                    ]}>
+                      <ImageBackground source={PANE_BACKGROUND} style={styles.cardFaceBackground} imageStyle={styles.cardBackgroundImageStyle}>
+                      {/* Content Revealed on Flip */}
+                      {(flipped[i] || selectedIndex === i) && otherRewards[i] && (
+                           <Animated.View style={[styles.rewardContent, { opacity: rewardAppearAnimation, transform: [{ scale: rewardAppearAnimation }] }]}>
+                            <Image
+                                source={rewardIcon(otherRewards[i])} // Show reward from otherRewards
+                                style={[
+                                    styles.rewardIcon,
+                                    // (i !== selectedIndex && selectedIndex !== null) && { opacity: 0.6 } // Dim other rewards?
+                                ]}
+                                resizeMode="contain"
                             />
                             <Text style={[
-                              styles.rewardText,
-                              i !== selectedIndex && { opacity: 0.6 } // Dim other rewards
+                                styles.rewardText,
+                                // (i !== selectedIndex && selectedIndex !== null) && { opacity: 0.6 } // Dim other rewards?
                             ]}>
-                              {rewardText(i === selectedIndex ? reward : otherRewards[i], localization)}
+                                {rewardText(otherRewards[i], localization)}
                             </Text>
-                          </Animated.View>
-                        )}
-                      </LinearGradient>
-                    </ImageBackground>
+                        </Animated.View>
+                      )}
+                      </ImageBackground>
+                  </Animated.View>
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })}
+        </View>
+        {/* Repeat for second row */}
+        <View style={[styles.cardRow, { perspective: 1000 } as any]}>
+          {entranceAnimations.slice(3, 6).map((anim, i) => {
+            const actualIndex = i + 3;
+            const flip = flipAnimations[actualIndex].interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
+            const backFlip = flipAnimations[actualIndex].interpolate({ inputRange: [0, 1], outputRange: ['180deg', '360deg'] });
+             const entranceScale = anim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
+             const entranceOpacity = anim;
+            return (
+              <Animated.View key={actualIndex} style={{ opacity: entranceOpacity, transform: [{ scale: entranceScale }] }}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleCardPress(actualIndex)}
+                  disabled={flipped[actualIndex] || animating || picks <= 0}
+                  accessibilityLabel={flipped[actualIndex] ? rewardText(cards[actualIndex], localization) : `Card ${actualIndex + 1}, Choose a card`}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: flipped[actualIndex] || animating || picks <= 0, selected: selectedIndex === actualIndex }}
+                >
+                   <Animated.View style={[
+                      styles.card,
+                      { transform: [{ rotateY: flip }, { scale: cardScale }, { translateY: cardTranslateY }] },
+                       selectedIndex === actualIndex && styles.selectedCard,
+                      (flipped[actualIndex] || selectedIndex !== null) && styles.disabledCard,
+                    ]}>
+                    <Image source={CARD_BACK} style={styles.cardFace} />
+                  </Animated.View>
+                  <Animated.View style={[
+                      styles.card, styles.cardBack,
+                      { transform: [{ rotateY: backFlip }, { scale: cardScale }, { translateY: cardTranslateY }] }
+                    ]}>
+                      <ImageBackground source={PANE_BACKGROUND} style={styles.cardFaceBackground} imageStyle={styles.cardBackgroundImageStyle}>
+                      {/* Content Revealed on Flip */}
+                      {(flipped[actualIndex] || selectedIndex === actualIndex) && otherRewards[actualIndex] && (
+                        <Animated.View style={[styles.rewardContent, { opacity: rewardAppearAnimation, transform: [{ scale: rewardAppearAnimation }] }]}>
+                             <Image
+                                source={rewardIcon(otherRewards[actualIndex])} // Show reward from otherRewards
+                                style={[
+                                    styles.rewardIcon,
+                                    // (actualIndex !== selectedIndex && selectedIndex !== null) && { opacity: 0.6 }
+                                ]}
+                                resizeMode="contain"
+                            />
+                            <Text style={[
+                                styles.rewardText,
+                                // (actualIndex !== selectedIndex && selectedIndex !== null) && { opacity: 0.6 }
+                            ]}>
+                                {rewardText(otherRewards[actualIndex], localization)}
+                            </Text>
+                        </Animated.View>
+                      )}
+                      </ImageBackground>
                   </Animated.View>
                 </TouchableOpacity>
               </Animated.View>
@@ -451,306 +592,170 @@ export const GlowCardReveal: React.FC<GlowCardRevealProps> = ({
         </View>
       </View>
 
-      <View style={styles.buttonArea}>
-        {confetti && reward && (
-          <ConfettiCannon
-            count={reward.type === 'glowbag_rare' || reward.type === 'glowbag_common' ? 250 : 100}
-            origin={{ x: -10, y: 0 }}
-            fadeOut={true}
-            explosionSpeed={400}
-            fallSpeed={3000}
-          />
-        )}
-
-        {selectedIndex !== null && reward && !isClaimed && (
-          <TouchableOpacity style={styles.claimButton} onPress={handleClaim} accessibilityRole="button">
-            <Text style={styles.claimText}>{localization ? localization('Claim') : 'Claim'}</Text>
-          </TouchableOpacity>
-        )}
-
-        {showPostClaimUI && (
-          <View style={styles.postClaimButtonContainer}>
-            {/* Done Button - Now first */}
-            <TouchableOpacity style={styles.doneButton} onPress={handleClose} accessibilityRole="button">
-              <Text style={styles.doneButtonText}>{localization ? localization('Done') : 'Done'}</Text>
+      {/* Bottom UI Area */}
+      <View style={styles.bottomArea}>
+        {showPostClaimUI && ( // Only show Done button after claim/reveal is complete
+            <TouchableOpacity style={styles.doneButton} onPress={handleClose}>
+                <Text style={styles.doneButtonText}>{localization ? localization('Done') : 'Done'}</Text>
             </TouchableOpacity>
-
-            {/* Pick Again Section */}
-            {(isPlusUser && !paidPickUsed) ? (
-              // Active Button Section
-              <View style={styles.pickAgainSection}>
-                <TouchableOpacity style={styles.paidPickButton} onPress={handlePaidPick} accessibilityRole="button">
-                  <Text style={styles.paidPickText}>{localization ? localization('One more?') : 'One more?'}</Text>
-                </TouchableOpacity>
-                <View style={styles.priceContainer}>
-                  <Image source={TOKEN_ICON} style={styles.priceIcon} />
-                  <Text style={styles.priceText}>{PAID_PICK_COST}</Text>
-                </View>
-              </View>
-            ) : (
-              // Disabled Button Section - Only show if NOT already used
-              !paidPickUsed && (
-                <View style={styles.pickAgainSection}>
-                  <TouchableOpacity style={styles.disabledPaidPickButton} disabled={true} accessibilityRole="button">
-                    <Text style={styles.disabledPaidPickText}>
-                      {localization ? localization('Plus users can pick again!') : 'Plus users can pick again!'}
-                    </Text>
-                  </TouchableOpacity>
-                  <View style={[styles.priceContainer, styles.disabledPriceContainer]}>
-                    <Image source={TOKEN_ICON} style={[styles.priceIcon, styles.disabledPriceIcon]} />
-                    <Text style={[styles.priceText, styles.disabledPriceText]}>{PAID_PICK_COST}</Text>
-                  </View>
-                </View>
-              )
-            )}
-          </View>
         )}
-
-        {reward && onShareReward && !isClaimed && (
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare} accessibilityRole="button">
-            <Text style={styles.shareText}>{localization ? localization('Share in Friend Den') : 'Share in Friend Den'}</Text>
-          </TouchableOpacity>
+        {/* Show Paid Pick Button */} 
+        {showPaidPick && ( // Show independently of the Done button
+            <TouchableOpacity style={styles.paidPickButton} onPress={handlePaidPick}>
+                <Text style={styles.paidPickButtonText}>
+                    {localization ? localization('Pick Again?') : 'Pick Again?'} ({PAID_PICK_COST} {localization ? localization('Tokens') : 'Tokens'})
+                </Text>
+            </TouchableOpacity>
         )}
-
         {error && <Text style={styles.errorText}>{error}</Text>}
       </View>
+
     </ImageBackground>
   );
 };
 
+// Add/Update Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    paddingTop: 80,
+    justifyContent: 'space-between', // Space between content and bottom button
+    paddingBottom: 40, // Padding at the bottom
   },
-  cardArea: {
-    flex: 1,
+  chooseWiselyContainer: {
+    position: 'absolute',
+    top: 20, // Adjust as needed
+    left: 0,
+    right: 0,
+    height: 80, // Reverted size for now, was 240
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
+    zIndex: 10, // Make sure it's above cards if overlapping
+  },
+  chooseWiselyImage: {
+    width: '60%', // Reverted size, was 180%
+    height: '100%',
+  },
+  cardArea: {
+     flex: 1, // Takes up available space
+     justifyContent: 'center', // Center cards vertically
+     alignItems: 'center',
+     width: '100%',
+     paddingTop: 120, // Space below the Choose Wisely image
   },
   cardRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 20,
+    justifyContent: 'space-around',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    shadowColor: '#FFD700',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    width: '90%',
+    marginBottom: 20,
+  },
+  card: {
+    width: 100, // Adjust size as needed
+    height: 140, // Adjust size as needed
+    backfaceVisibility: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent', // Card face is now transparent
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     elevation: 5,
   },
-  cardContainer: {
-    width: '30%',
-    aspectRatio: 0.66,
-    borderRadius: 12,
-    marginHorizontal: '1.5%',
-    marginBottom: 20,
-    shadowColor: '#FFD700',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+  cardBack: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    backgroundColor: 'transparent', // Card back is now transparent
   },
   cardFace: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
-    position: 'absolute',
-    backfaceVisibility: 'hidden',
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    backgroundColor: '#232946',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 10,
   },
-  cardFront: {
-    // Front specific styles (if any needed)
+  selectedCard: {
+    // Optional: Add styles for the selected card (e.g., border)
+    // elevation: 10,
+    // shadowOpacity: 0.5,
   },
-  cardBack: {
-    // Back specific styles (if any needed)
+  disabledCard: {
+      opacity: 0.7, // Dim unselected/unflipped cards after selection
   },
-  selectedCardContainer: {
-    transform: [{ scale: 1.12 }],
-    shadowOpacity: 0.9,
-    elevation: 15,
-    zIndex: 1,
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
+  rewardContent: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 10,
   },
   rewardIcon: {
-    width: 48,
-    height: 48,
-    marginBottom: 8,
+    width: 50,
+    height: 50,
+    marginBottom: 10,
   },
   rewardText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    maxWidth: '90%',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 1,
-    paddingHorizontal: 8,
-    marginTop: 4,
-  },
-  claimButton: {
-    backgroundColor: '#FFD700',
-    borderRadius: 25,
-    paddingHorizontal: 35,
-    paddingVertical: 14,
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  claimText: {
-    color: '#232946',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  paidPickButton: {
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#FFD700',
-  },
-  paidPickText: {
-    color: '#FFD700',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  disabledPaidPickButton: {
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 18,
-    paddingHorizontal: 25,
-    paddingVertical: 10,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#888',
-  },
-  disabledPaidPickText: {
-    color: '#888',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  shareButton: {
-    backgroundColor: '#232946',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#FFD700',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    marginTop: 6,
-  },
-  shareText: {
-    color: '#FFD700',
-    fontWeight: 'bold',
     fontSize: 14,
-  },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 16,
-    marginTop: 10,
+    fontWeight: 'bold',
     textAlign: 'center',
+    color: '#333',
   },
-  rewardContentContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    paddingHorizontal: 4,
+  bottomArea: {
+      width: '100%',
+      alignItems: 'center',
+      paddingVertical: 20, // Padding for the button area
+      // Removed height constraint to allow button to push content up if needed
   },
   doneButton: {
-    backgroundColor: '#FFD700',
-    borderRadius: 25,
-    paddingHorizontal: 35,
-    paddingVertical: 14,
-    marginTop: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+      backgroundColor: '#FFD700', // Gold color
+      paddingHorizontal: 40,
+      paddingVertical: 15,
+      borderRadius: 30,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 6,
   },
   doneButtonText: {
-    color: '#232946',
-    fontWeight: 'bold',
-    fontSize: 18,
+      color: '#4B3A00', // Darker text for contrast
+      fontSize: 18,
+      fontWeight: 'bold',
   },
-  paneBackground: {
+  paidPickButton: { // Style for the paid pick button
+      marginTop: 15,
+      backgroundColor: '#E0B400', // Darker gold color
+      paddingHorizontal: 30,
+      paddingVertical: 12,
+      borderRadius: 25,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 3,
+      elevation: 5,
+  },
+  paidPickButtonText: {
+      color: '#FFFFFF', // White text
+      fontSize: 16,
+      fontWeight: 'bold',
+  },
+  errorText: {
+      color: 'red',
+      marginTop: 10,
+  },
+  cardFaceBackground: { // Style for the ImageBackground wrapper
+    flex: 1,
     width: '100%',
     height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardGradientOverlay: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  postClaimButtonContainer: {
-    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 12,
+    overflow: 'hidden', // Ensure content stays within rounded corners
+    borderRadius: 10, // Match card border radius
   },
-  pickAgainSection: {
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  priceIcon: {
-    width: 18,
-    height: 18,
-    marginRight: 4,
-    tintColor: '#FFD700',
-  },
-  priceText: {
-    color: '#FFD700',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  disabledPriceContainer: {
-    // Specific styles if needed for disabled price container
-  },
-  disabledPriceIcon: {
-    tintColor: '#888',
-  },
-  disabledPriceText: {
-    color: '#888',
-  },
-  disabledCardVisuals: {
-    opacity: 0.6,
-  },
-  buttonArea: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingBottom: 40,
-    alignItems: 'center',
+  cardBackgroundImageStyle: { // Style for the image itself if needed (e.g., resizeMode)
+      borderRadius: 10, // Match card border radius for the image itself
   },
 });
 

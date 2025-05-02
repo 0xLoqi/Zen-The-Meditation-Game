@@ -9,7 +9,9 @@ const GlowCardTestScreen = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#232946' }}>
       <GlowCardReveal
-        onRewardClaimed={(reward: RewardType) => alert(`Reward: ${JSON.stringify(reward)}`)}
+        onRewardClaimed={(reward: RewardType) => {
+          console.log(`Test Screen - Reward Claimed: ${JSON.stringify(reward)}`);
+        }}
         userTokens={tokens}
         isPlusUser={true}
         streakSavers={streakSavers}

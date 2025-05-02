@@ -263,7 +263,7 @@ const MeditationSessionScreen = () => {
 
       // Submit the session data
       await submitMeditationSession(breathScore, usingBreathTracking);
-
+      await new Promise(resolve => setTimeout(resolve, 100)); // Ensure store state is updated
       // Get the result flags from the store *after* submission
       const { sessionCompleted, isFirstMeditationOfDay } = useMeditationStore.getState();
 

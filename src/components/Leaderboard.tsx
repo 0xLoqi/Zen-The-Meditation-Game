@@ -104,7 +104,9 @@ const Leaderboard = () => {
               {isTop3 && (
                 <AnimatedTrophy idx={idx} source={trophyImages[idx]} />
               )}
+              {/* Rank */}
               <Text style={styles.rank}>{idx + 1}.</Text>
+              {/* Avatar */}
               <MiniZenni
                 outfitId={entry.outfitId}
                 headgearId={entry.headgearId}
@@ -114,10 +116,13 @@ const Leaderboard = () => {
                 companionId={entry.companionId}
                 size="small"
                 animationState={isTop3 ? 'success' : 'idle'}
-                style={{ marginLeft: 6, marginRight: 10 }}
+                style={styles.avatar}
               />
-              <Text style={[styles.name, isSelf && styles.selfName]}>{entry.name}</Text>
-              <Text style={styles.xp}>Level {entry.level || 1}</Text>
+              {/* Name and Level Group */}
+              <View style={styles.nameLevelContainer}>
+                <Text style={[styles.name, isSelf && styles.selfName]} numberOfLines={1} ellipsizeMode="tail">{entry.name}</Text>
+                <Text style={styles.level}>Level {entry.level || 1}</Text>
+              </View>
             </View>
           </TouchableOpacity>
         );
@@ -171,19 +176,26 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontSize: 18,
     textAlign: 'center',
+    minWidth: 30,
+    marginRight: 6,
+  },
+  avatar: {
+    marginRight: 12,
+  },
+  nameLevelContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   name: {
-    flex: 1,
     fontWeight: 'bold',
     color: COLORS.neutralDark,
     fontSize: 16,
-    marginLeft: 8,
   },
-  xp: {
-    fontWeight: 'normal',
+  level: {
+    fontWeight: '500',
     color: COLORS.neutralMedium,
-    fontSize: 15,
-    marginLeft: 8,
+    fontSize: 14,
+    marginTop: 2,
   },
   selfName: {
     color: '#90A4AE',

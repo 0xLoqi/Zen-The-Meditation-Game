@@ -50,22 +50,21 @@ export const useMeditationStore = create<MeditationState>((set, get) => ({
   
   submitMeditationSession: async (breathScore: number, didUseBreathTracking: boolean) => {
     const { selectedType, selectedDuration } = get();
-    
+    console.log('[STORE] submitMeditationSession called', { selectedType, selectedDuration, breathScore, didUseBreathTracking });
     if (!selectedType || !selectedDuration) {
       set({ error: 'No meditation type or duration selected' });
       return;
     }
-    
     try {
       set({ isLoading: true, error: null });
-      
       const result = await meditationService.submitMeditationSession(
         selectedType,
         selectedDuration,
         breathScore,
         didUseBreathTracking
       );
-      
+      console.log('[STORE] meditationService result', result);
+      console.log('[STORE] Setting sessionCompleted: true');
       set({
         isLoading: false,
         breathScore,
@@ -76,15 +75,12 @@ export const useMeditationStore = create<MeditationState>((set, get) => ({
         didUseBreathTracking,
         sessionCompleted: true,
         isFirstMeditationOfDay: result.isFirstMeditationOfDay,
+        error: null
       });
-      
-      // Update user data after meditation session
-      const getUserData = useUserStore.getState().getUserData;
-      getUserData();
     } catch (error: any) {
       set({
         isLoading: false,
-        error: error.message,
+        error: error.message || 'Failed to complete meditation session',
       });
     }
   },
