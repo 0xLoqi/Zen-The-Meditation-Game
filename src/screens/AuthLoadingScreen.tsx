@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '../store/authStore';
 import { useUserStore } from '../store/userStore';
@@ -15,13 +15,15 @@ const AuthLoadingScreen = () => {
   // Get necessary state and actions
   const { isAuthenticated, isLoading: isAuthLoading, checkAuth } = useAuthStore();
   const { userData, isLoadingUser, getUserData } = useUserStore();
-  const hasNavigatedRef = useRef(false);
+  // Ref purely for initial load stabilization if needed elsewhere, not blocking nav
+  const hasNavigatedInitiallyRef = useRef(false);
 
   // Reset navigation flag when the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[AuthLoadingScreen] Screen focused, resetting navigation flag.');
-      hasNavigatedRef.current = false;
+      console.log('[AuthLoadingScreen] Screen focused.');
+      // If needed, reset flags here, but primary logic below avoids blocking
+      // hasNavigatedInitiallyRef.current = false;
     }, [])
   );
 
@@ -42,46 +44,51 @@ const AuthLoadingScreen = () => {
   }, [isAuthenticated, userData, isLoadingUser, getUserData]);
 
 
-  // Navigation logic effect - SIMPLIFIED
+  // Navigation logic effect - Revised
   useEffect(() => {
-    if (hasNavigatedRef.current) {
-      console.log('[AuthLoadingScreen] Already navigated (ref check), skipping.');
-      return;
-    }
-
-    // Wait for initial auth check AND user data if authenticated
+    // Wait for initial loading checks to settle
     if (isAuthLoading || (isAuthenticated && isLoadingUser && !userData)) {
        console.log(`[AuthLoadingScreen] Waiting... isAuthLoading=${isAuthLoading}, isAuthenticated=${isAuthenticated}, isLoadingUser=${isLoadingUser}, hasUserData=${!!userData}`);
        return;
     }
 
-    // Determine the INITIAL target route
+    // Determine the target route based on current state
     let targetRoute: keyof RootStackParamList | null = null;
-    if (isAuthenticated) {
-        // Only check username *after* loading is done
-        if (userData?.username) {
-            console.log('[AuthLoadingScreen] Determined route: MainApp (Authenticated + Username)');
-            targetRoute = 'MainApp';
-        } else {
-             console.log('[AuthLoadingScreen] Determined route: Onboarding (Authenticated, no Username)');
-             targetRoute = 'Onboarding'; 
-        }
+    if (isAuthenticated && userData?.username) {
+        targetRoute = 'MainApp';
     } else {
-      console.log('[AuthLoadingScreen] Determined route: Onboarding (Not Authenticated)');
-      targetRoute = 'Onboarding'; 
+        // Covers both !isAuthenticated and (isAuthenticated && !userData.username)
+        targetRoute = 'Onboarding';
+    }
+    console.log(`[AuthLoadingScreen] Current state suggests route: ${targetRoute}`);
+
+    // Get the current route name from the navigation state
+    const navState = navigation.getState();
+    const currentRoute = navState?.routes[navState?.index ?? 0]?.name;
+    console.log(`[AuthLoadingScreen] Current navigator route: ${currentRoute}`);
+
+    // Prevent redundant navigation resets *to the same target*
+    // Also prevent resetting if we haven't determined a target yet
+    if (!targetRoute || currentRoute === targetRoute) {
+        console.log(`[AuthLoadingScreen] Navigation not needed (target: ${targetRoute}, current: ${currentRoute}).`);
+        // Ensure initial navigation flag is set if we stabilize here and it wasn't set
+        if(!hasNavigatedInitiallyRef.current && targetRoute) {
+            console.log('[AuthLoadingScreen] Setting initial navigation flag.');
+            hasNavigatedInitiallyRef.current = true;
+        }
+        return;
     }
 
-    // Navigate using reset ONLY ONCE
-    if (targetRoute) {
-       console.log(`[AuthLoadingScreen] Resetting navigation ONCE to: ${targetRoute} (ref update)`);
-       hasNavigatedRef.current = true;
-       navigation.reset({
-         index: 0,
-         routes: [{ name: targetRoute }],
-       });
-    } else {
-        console.log('[AuthLoadingScreen] Could not determine target route after loading finished.');
+    // Perform the navigation reset if the target route is different
+    console.log(`[AuthLoadingScreen] Resetting navigation to: ${targetRoute}`);
+    // Set initial flag after first successful navigation if needed
+    if (!hasNavigatedInitiallyRef.current) {
+        hasNavigatedInitiallyRef.current = true;
     }
+    navigation.reset({
+      index: 0,
+      routes: [{ name: targetRoute }],
+    });
 
   }, [isAuthLoading, isAuthenticated, isLoadingUser, userData, navigation]);
 

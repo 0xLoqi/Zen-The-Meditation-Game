@@ -12,15 +12,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { RootStackParamList } from '../../navigation/RootNavigator';
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 import * as Haptics from 'expo-haptics';
 
 const settingsBg = require('../../../assets/images/backgrounds/settings_bg.png');
 
+type SettingsScreenNavigationProp = NavigationProp<RootStackParamList>;
+
 const SettingsScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<SettingsScreenNavigationProp>();
   const { signOut, user } = useAuthStore();
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [soundEnabled, setSoundEnabled] = React.useState(true);
@@ -43,7 +46,13 @@ const SettingsScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('[SettingsScreen] Signing out...');
               await signOut();
+              console.log('[SettingsScreen] Sign out complete. Resetting navigation...');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'AuthLoading' }],
+              });
             } catch (error) {
               console.error('Logout error:', error);
               Alert.alert('Error', 'Failed to logout. Please try again.');
