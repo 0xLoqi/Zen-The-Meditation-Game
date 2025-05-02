@@ -3,6 +3,8 @@ import { User, DailyCheckIn, OutfitId } from '../types';
 import * as userService from '../firebase/user';
 import * as Animatable from 'react-native-animatable';
 import { grant } from '../services/CosmeticsService';
+import { useAuthStore } from './authStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserState {
   userData: User | null;
@@ -14,6 +16,14 @@ interface UserState {
   checkInSubmitted: boolean;
   referralCode: string;
   isPlus: boolean;
+  screenTime?: number;
+  reduceTikTok?: boolean;
+  soundPackId?: 'rain' | 'waves' | 'silence';
+  isPremium: boolean;
+  setScreenTime: (minutes: number) => void;
+  setReduceTikTok: (reduce: boolean) => void;
+  setSoundPackId: (id: 'rain' | 'waves' | 'silence') => void;
+  setPremium: (value: boolean) => void;
   getUserData: () => Promise<void>;
   getTodayCheckIn: () => Promise<void>;
   submitDailyCheckIn: (rating: number, reflection?: string) => Promise<void>;
@@ -31,11 +41,28 @@ export const useUserStore = create<UserState>((set, get) => ({
   checkInSubmitted: false,
   referralCode: '',
   isPlus: false,
+  screenTime: undefined,
+  reduceTikTok: undefined,
+  soundPackId: 'rain',
+  isPremium: false,
+  setScreenTime: (minutes: number) => set({ screenTime: minutes }),
+  setReduceTikTok: (reduce: boolean) => set({ reduceTikTok: reduce }),
+  setSoundPackId: (id) => set({ soundPackId: id }),
+  setPremium: (value) => set({ isPremium: value }),
   
   getUserData: async () => {
     try {
       set({ isLoadingUser: true, userError: null });
-      const userData = await userService.getUserData();
+      const { user } = useAuthStore.getState();
+      let userId = user?.uid;
+      let userEmail = user?.email ?? undefined;
+      if (!userId) {
+        userId = await AsyncStorage.getItem('@user_id') || undefined;
+      }
+      if (!userId) throw new Error('No authenticated user');
+      // getUserData will create the user if it doesn't exist
+      const userData = await userService.getUserData(userId, userEmail);
+      if (!userData) throw new Error('Failed to load or create user');
       set({ userData, isLoadingUser: false });
     } catch (error: any) {
       set({ userError: error.message, isLoadingUser: false });
@@ -125,3 +152,21 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 }));
+
+export const resetUserStore = () => {
+  useUserStore.setState({
+    userData: null,
+    todayCheckIn: null,
+    isLoadingUser: false,
+    isLoadingCheckIn: false,
+    userError: null,
+    checkInError: null,
+    checkInSubmitted: false,
+    referralCode: '',
+    isPlus: false,
+    screenTime: undefined,
+    reduceTikTok: undefined,
+    soundPackId: 'rain',
+    isPremium: false,
+  });
+};

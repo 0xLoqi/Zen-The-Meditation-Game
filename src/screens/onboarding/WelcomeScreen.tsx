@@ -1,227 +1,67 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
-  SafeAreaView,
-  Platform,
   TouchableOpacity,
+  SafeAreaView,
+  ImageBackground,
+  Text,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSequence,
-  Easing,
-} from 'react-native-reanimated';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
-import Button from '../../components/Button';
-import FloatingLeaves from '../../components/FloatingLeaves';
-import MiniZenni from '../../components/MiniZenni';
-import PatternBackground from '../../components/PatternBackground';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+// Define navigation prop type
+type WelcomeScreenNavigationProp = StackNavigationProp<any, 'Welcome'>; // Use 'Welcome' or your screen name
+
+const screenHeight = Dimensions.get('window').height;
+const screenWidth = Dimensions.get('window').width;
 
 const WelcomeScreen = () => {
-  const navigation = useNavigation();
-  
-  // Animation values
-  const fadeAnim = useSharedValue(0);
-  const scaleAnim = useSharedValue(0.8);
-  const floatAnim = useSharedValue(0);
-  const glowAnim = useSharedValue(0);
-  
-  // Animation styles
-  const zenniStyle = useAnimatedStyle(() => {
-    return {
-      opacity: fadeAnim.value,
-      transform: [
-        { scale: scaleAnim.value },
-        { translateY: floatAnim.value },
-      ],
-    };
-  });
+  const navigation = useNavigation<WelcomeScreenNavigationProp>();
 
-  const glowStyle = useAnimatedStyle(() => {
-    return {
-      opacity: glowAnim.value,
-      transform: [{ scale: 1 + glowAnim.value * 0.1 }],
-    };
-  });
-  
-  useEffect(() => {
-    // Initial animations
-    fadeAnim.value = withTiming(1, {
-      duration: 1000,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-    });
-    
-    scaleAnim.value = withTiming(1, {
-      duration: 1000,
-      easing: Easing.bezier(0.34, 1.56, 0.64, 1),
-    });
-    
-    // Continuous floating animation
-    const startFloatingAnimation = () => {
-      floatAnim.value = withSequence(
-        withTiming(-10, {
-          duration: 1500,
-          easing: Easing.bezier(0.4, 0, 0.2, 1),
-        }),
-        withTiming(0, {
-          duration: 1500,
-          easing: Easing.bezier(0.4, 0, 0.2, 1),
-        })
-      );
-      
-      setTimeout(startFloatingAnimation, 3000);
-    };
-    
-    // Glow animation
-    const startGlowAnimation = () => {
-      glowAnim.value = withSequence(
-        withTiming(1, {
-          duration: 2000,
-          easing: Easing.bezier(0.4, 0, 0.2, 1),
-        }),
-        withTiming(0, {
-          duration: 2000,
-          easing: Easing.bezier(0.4, 0, 0.2, 1),
-        })
-      );
-      
-      setTimeout(startGlowAnimation, 4000);
-    };
-    
-    startFloatingAnimation();
-    startGlowAnimation();
-  }, []);
-  
-  const handleStart = () => {
-    navigation.navigate('NameSelection');
-  };
-
-  const handleLogin = () => {
-    navigation.navigate('Login');
+  const handleTap = () => {
+    navigation.navigate('IntroComic'); // Navigate to IntroComic
   };
   
   return (
-    <PatternBackground>
-      <SafeAreaView style={styles.container}>
-        <FloatingLeaves count={30} style={styles.leavesBackground} />
-        
-        <View style={styles.content}>
-          <Animated.View style={[styles.zenniContainer, zenniStyle]}>
-            <Animated.View style={[styles.glowContainer, glowStyle]}>
-              <MiniZenni
-                outfitId="default"
-                size="large"
-                animationState="idle"
-                autoPlay
-                loop
-              />
-            </Animated.View>
-          </Animated.View>
-          
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>Welcome to Zen</Text>
-            <Text style={styles.message}>
-              "Let's create your companion of the path..."
-            </Text>
-            <Text style={styles.description}>
-              Together, we'll summon your Mini Zenni - a spiritual guide for your mindfulness journey.
-            </Text>
-          </View>
-          
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Begin Journey"
-              onPress={handleStart}
-              size="large"
-              style={styles.button}
-            />
-            
-            <TouchableOpacity 
-              onPress={handleLogin}
-              style={styles.loginButton}
-            >
-              <Text style={styles.loginText}>
-                Already have an account? Sign in
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
-    </PatternBackground>
+    <ImageBackground
+      source={require('../../../assets/images/backgrounds/onboarding/welcome_im_zenni.png')} // Corrected relative path
+      style={styles.background}
+      resizeMode="cover" // Cover the whole screen
+    >
+      <SafeAreaView style={styles.safeArea}> 
+        <TouchableOpacity style={styles.touchable} onPress={handleTap} activeOpacity={1}>
+            {/* Overlay Tap Prompt - REMOVED */}
+             {/* <Text style={styles.promptText}>Tap to continue</Text> */}
+              </TouchableOpacity>
+        </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
+    flex: 1, // Ensure background fills the screen
+  },
+  safeArea: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: 'transparent', // Make SafeArea transparent
   },
-  leavesBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  content: {
+  touchable: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.xxlarge,
-    paddingHorizontal: SPACING.large,
-  },
-  zenniContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  glowContainer: {
-    padding: SPACING.large,
-    borderRadius: SPACING.large,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  textContainer: {
-    alignItems: 'center',
-    marginVertical: SPACING.xxlarge,
-  },
-  title: {
-    ...FONTS.heading.h1,
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginBottom: SPACING.medium,
-  },
-  message: {
-    ...FONTS.heading.h3,
-    color: COLORS.neutralDark,
-    textAlign: 'center',
-    marginBottom: SPACING.large,
-    fontStyle: 'italic',
-  },
-  description: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralDark,
-    textAlign: 'center',
-    maxWidth: 300,
-  },
-  buttonContainer: {
-    width: '100%',
+    justifyContent: 'flex-end', // Position prompt at bottom
     alignItems: 'center',
   },
-  button: {
-    width: '100%',
-    maxWidth: 300,
-  },
-  loginButton: {
-    marginTop: SPACING.large,
-    padding: SPACING.medium,
-  },
-  loginText: {
-    ...FONTS.body.regular,
-    color: COLORS.neutralMedium,
+  promptText: {
+    fontSize: 16,
+    color: '#FFFFFF', // White text for visibility on image
+    backgroundColor: 'rgba(0,0,0,0.4)', // Slight dark background for prompt text
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 15,
+    marginBottom: 60, // Position above bottom edge
     textAlign: 'center',
+    overflow: 'hidden', // Needed for borderRadius on Android
   },
 });
 

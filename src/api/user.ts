@@ -1,5 +1,4 @@
 import { User, DailyCheckIn, OutfitId } from '../types';
-import { getFirebaseFirestore } from './firebase';
 
 // Mock user for development
 const mockUser: User = {

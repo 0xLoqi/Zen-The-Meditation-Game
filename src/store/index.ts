@@ -2,10 +2,21 @@ import { create } from "zustand";
 import { save, load } from "../lib/persist";
 import * as Device from 'expo-device';
 import { syncUserDoc } from '../firebase';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import questsData from '../../assets/data/quests.json';
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { doc, getDoc } from 'firebase/firestore';
+
+// Friend type
+export interface Friend {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  xp?: number;
+  streak?: number;
+  level?: number;
+  cosmetics?: any;
+}
 
 // User slice interface
 interface UserSlice {
@@ -14,7 +25,9 @@ interface UserSlice {
     element: string;
     trait: string;
     email?: string;
+    motivation?: string;
   };
+  friends: Friend[];
 }
 
 // Progress slice interface
@@ -23,6 +36,7 @@ interface ProgressSlice {
     streak: number;
     xp: number;
     lastMeditatedAt: string;
+    tokens: number;
   };
 }
 
@@ -34,6 +48,9 @@ interface CosmeticSlice {
       outfit: string;
       headgear: string;
       aura: string;
+      face: string;
+      accessory: string;
+      companion: string;
     };
   };
 }
@@ -63,6 +80,8 @@ export type GameStore = UserSlice & ProgressSlice & CosmeticSlice & Achievements
   lowPowerMode: boolean;
   detectLowPowerMode: () => Promise<void>;
   unlockAchievement: (id: string) => void;
+  firstMeditationRewarded: boolean;
+  setFirstMeditationRewarded: (rewarded: boolean) => void;
 };
 
 const initialState: GameStore = {
@@ -71,11 +90,17 @@ const initialState: GameStore = {
     element: "",
     trait: "",
     email: "",
+    motivation: "",
   },
+  friends: [
+    { id: '1', name: 'Alex', xp: 1200, streak: 7 },
+    { id: '2', name: 'Sam', xp: 900, streak: 3 },
+  ],
   progress: {
     streak: 0,
     xp: 0,
     lastMeditatedAt: "",
+    tokens: 0,
   },
   cosmetics: {
     owned: [],
@@ -83,6 +108,9 @@ const initialState: GameStore = {
       outfit: "",
       headgear: "",
       aura: "",
+      face: "",
+      accessory: "",
+      companion: "",
     },
   },
   achievements: {
@@ -104,6 +132,8 @@ const initialState: GameStore = {
   unlockAchievement: () => {},
   resetQuests: () => {},
   completeQuest: () => {},
+  firstMeditationRewarded: false,
+  setFirstMeditationRewarded: () => {},
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -214,7 +244,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       };
     });
   },
+  firstMeditationRewarded: false,
+  setFirstMeditationRewarded: (rewarded: boolean) => set({ firstMeditationRewarded: rewarded }),
 }));
+
+// Utility: Only keep serializable data for Firestore
+function getSerializableGameStore(state) {
+  return {
+    user: state.user,
+    friends: state.friends,
+    progress: state.progress,
+    cosmetics: state.cosmetics,
+    achievements: state.achievements,
+    quests: state.quests,
+    firstMeditationRewarded: state.firstMeditationRewarded,
+    lowPowerMode: state.lowPowerMode,
+    // Add any other fields here, but DO NOT include functions
+  };
+}
 
 // Hydrate store on app launch
 (async () => {
@@ -233,10 +280,39 @@ useGameStore.subscribe((state) => {
     // Cloud backup: push to Firestore if authenticated
     if (auth.currentUser) {
       try {
-        await syncUserDoc(auth.currentUser.uid, state);
+        await syncUserDoc(auth.currentUser.uid, getSerializableGameStore(state));
       } catch (e) {
         // Ignore Firestore errors for now
       }
     }
   }, 5000);
 });
+
+// Fetch friends from Firestore by ID, including cosmetics
+export async function fetchAndSetFriendsFromFirestore(friendIds: string[]) {
+  const fetchedFriends: Friend[] = [];
+  for (const id of friendIds) {
+    try {
+      const docRef = doc(db, 'users', id);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        fetchedFriends.push({
+          id,
+          name: data.name,
+          xp: data.xp,
+          level: data.level,
+          streak: data.streak || 0,
+          cosmetics: data.cosmetics,
+        });
+      }
+    } catch (err) {
+      // Ignore Firestore errors for now
+    }
+  }
+  useGameStore.setState({ friends: fetchedFriends });
+}
+
+export const resetGameStore = () => {
+  useGameStore.setState({ ...initialState });
+};

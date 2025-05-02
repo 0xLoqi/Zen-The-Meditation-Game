@@ -9,6 +9,8 @@ import {
   Image,
   Platform,
   Dimensions,
+  ImageBackground,
+  Button,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -22,9 +24,27 @@ import { triggerHapticFeedback } from '../../utils/haptics';
 import { formatStreak } from '../../utils/formatters';
 import * as Clipboard from 'expo-clipboard';
 import { getFriendCode, setFriendCode } from '../../firebase/user';
-import { generateReferralCode } from '../../firebase/auth';
+// import { generateReferralCode } from '../../firebase/auth';
 import PatternBackground from '../../components/PatternBackground';
 import FloatingLeaves from '../../components/FloatingLeaves';
+import FriendDen from '../../components/FriendBar';
+import Leaderboard from '../../components/Leaderboard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MiniZenni from '../../components/MiniZenni';
+import { getXPForNextLevel } from '../../firebase/meditation';
+import * as Animatable from 'react-native-animatable';
+import { LinearGradient } from 'expo-linear-gradient';
+import Sparkle from '../../components/Sparkle';
+import FloatyAnimation from '../../components/FloatyAnimation';
+
+// Register custom animations
+Animatable.initializeRegistryWithDefinitions({
+  float: {
+    0: { translateY: 0 },
+    0.5: { translateY: -8 },
+    1: { translateY: 0 },
+  },
+});
 
 type HomeScreenNavigationProp = StackNavigationProp<MainStackParamList, 'Home'>;
 
@@ -40,27 +60,87 @@ const badgeImages = {
 const PROFILE_CARD_HEIGHT = 110;
 const PROFILE_CARD_WIDTH = Math.round(Dimensions.get('window').width * 0.9);
 
+// Helper to get streak badge color
+const getStreakColors = (streak: number) => {
+  if (streak <= 0) {
+    return { bg: '#E0E0E0', color: '#A0A0A0' };
+  } else if (streak < 4) {
+    return { bg: '#FFF3B0', color: '#FFD580' };
+  } else if (streak < 8) {
+    return { bg: '#FFE0B2', color: '#FFB300' };
+  } else {
+    return { bg: '#FFE0E0', color: '#FF5722' };
+  }
+};
+
+// Helper to get streak badge color and animation based on streak value
+function getStreakBadgeProps(streak) {
+  if (streak <= 0) {
+    return { bg: '#FFF', color: '#A0A0A0', border: '#FFD580', animation: null };
+  } else if (streak < 4) {
+    return { bg: '#FFF', color: '#FFD580', border: '#FFD580', animation: null };
+  } else if (streak < 8) {
+    return { bg: '#FFB300', color: '#FFF', border: '#FF8C42', animation: 'pulse', duration: 2200, intensity: 0.8 };
+  } else if (streak < 14) {
+    return { bg: '#FFE0E0', color: '#FF5722', border: '#FF8C42', animation: 'pulse', duration: 1400, intensity: 1.0 };
+  } else {
+    // Super streak: more intense pulse
+    return { bg: '#FFF8E1', color: '#FF3B30', border: '#FF8C42', animation: 'pulse', duration: 900, intensity: 1.2 };
+  }
+}
+
 const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { signOut } = useAuthStore();
   const { userData, isLoadingUser, userError, getUserData, todayCheckIn, getTodayCheckIn } = useUserStore();
   const [friendCode, setFriendCodeState] = useState('');
+  const insets = useSafeAreaInsets();
   
   useEffect(() => {
     getUserData();
     getTodayCheckIn();
+    console.log('HomeScreen MOUNT: userData:', userData, 'isLoadingUser:', isLoadingUser, 'userError:', userError);
     if (userData?.uid) {
       getFriendCode(userData.uid).then(code => {
         if (code) {
           setFriendCodeState(code);
         } else {
-          // Auto-generate and set a code if missing
-          const newCode = generateReferralCode();
-          setFriendCode(userData.uid, newCode).then(() => setFriendCodeState(newCode));
+          // const newCode = generateReferralCode();
+          // setFriendCode(userId, newCode).then(() => setFriendCodeState(newCode));
         }
       });
     }
-  }, [userData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
+  useEffect(() => {
+    // Log changes to userData, isLoadingUser, userError
+    console.log('HomeScreen UPDATE: userData:', userData, 'isLoadingUser:', isLoadingUser, 'userError:', userError);
+  }, [userData, isLoadingUser, userError]);
+
+  if (!userData && !isLoadingUser && userError) {
+    // If loading is done but userData is missing, show error
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load user data: {userError}</Text>
+          <TouchableOpacity onPress={getUserData} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading user data...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleMeditatePress = () => {
     triggerHapticFeedback('selection');
@@ -97,6 +177,15 @@ const HomeScreen = () => {
     await signOut();
   };
 
+  const handleQuestPress = (quest) => {
+    triggerHapticFeedback('selection');
+    if (quest.id === 'daily_checkin_start' || quest.id === 'daily_checkin_end') {
+      navigation.navigate('DailyCheckIn', undefined);
+    } else if (quest.id === 'first_meditation') {
+      navigation.navigate('MeditationSelection');
+    }
+  };
+
   if (isLoadingUser) {
     return (
       <SafeAreaView style={styles.container}>
@@ -107,116 +196,223 @@ const HomeScreen = () => {
     );
   }
 
-  if (userError) {
+  try {
+    const scrollContentTopMargin = PROFILE_CARD_HEIGHT + insets.top + SPACING.m;
+    const homeBg = require('../../../assets/images/backgrounds/home_screen_bg_2.png');
+    // cast to any to access Firestore cosmetics shape
+    const equipped = (userData as any)?.cosmetics?.equipped || {};
+    // Calculate XP progress
+    const currentXP = userData.xp || 0;
+    const currentLevel = userData.level || 1;
+    const xpForNextLevel = getXPForNextLevel(currentLevel - 1); // Level is 1-based, formula expects 0-based
+    const xpProgress = Math.min(currentXP / xpForNextLevel, 1);
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{userError}</Text>
-          <TouchableOpacity onPress={getUserData} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
+      <ImageBackground source={homeBg} style={{ flex: 1 }} resizeMode="cover">
+        <FloatingLeaves count={12} style={styles.leavesBackground} />
+        <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}> 
+          {/* Sticky Profile Card */}
+          <View style={[styles.stickyProfileCardContainer, { paddingTop: insets.top }]}>
+            <View style={styles.profileCard}>
+              <View style={styles.headerButtons}>
+                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Store')} accessibilityLabel="Store" accessible>
+                  <View style={{ position: 'relative', justifyContent: 'center', alignItems: 'center' }}>
+                    <MaterialCommunityIcons name="store" size={31} color={COLORS.primary} />
+                    {/* Notification Dot */}
+                    <View style={{
+                      position: 'absolute',
+                      top: 2,
+                      right: 2,
+                      width: 12,
+                      height: 12,
+                      borderRadius: 6,
+                      backgroundColor: '#FF3B30',
+                      borderWidth: 2,
+                      borderColor: '#fff',
+                      zIndex: 2,
+                    }} />
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')} accessibilityLabel="Settings" accessible>
+                  <Ionicons name="settings-outline" size={24} color={COLORS.primary} />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity style={styles.profileCardTouchable} onPress={() => navigation.navigate('Profile', {})} activeOpacity={0.8} accessibilityLabel="View profile" accessible>
+                <View style={styles.profileHeader} pointerEvents="box-none">
+                  <MiniZenni
+                    size="small"
+                    outfitId={equipped.outfit}
+                    headgearId={equipped.headgear}
+                    auraId={equipped.aura}
+                    faceId={equipped.face}
+                    accessoryId={equipped.accessory}
+                    companionId={equipped.companion}
+                    style={{ marginLeft: -15 }}
+                  />
+                  <View style={styles.profileInfo}>
+                    <View style={styles.usernameRow}>
+                      <Text style={styles.username}>{userData?.username || 'ZenUser'}</Text>
+                      {(() => {
+                        const streak = userData?.streak ?? 0;
+                        const { bg, color, border, animation, duration, intensity } = getStreakBadgeProps(streak);
+                        const Badge = (
+                          <View style={[styles.streakBadge, { backgroundColor: bg, borderColor: border, borderWidth: 1 }]}> 
+                            <Ionicons name="flame" size={16} color={color} style={{ marginRight: 2 }} />
+                            <Text style={[styles.streakBadgeText, { color }]}>{streak}</Text>
+                          </View>
+                        );
+                        if (animation) {
+                          return (
+                            <Animatable.View
+                              animation={animation}
+                              iterationCount="infinite"
+                              duration={duration}
+                              easing="ease-in-out"
+                              style={{ transform: [{ scale: intensity }] }}
+                            >
+                              {Badge}
+                            </Animatable.View>
+                          );
+                        }
+                        return Badge;
+                      })()}
+                    </View>
+                    <View style={styles.levelBadge}>
+                      <Text style={styles.levelText}>Level {userData?.level || 1}</Text>
+                    </View>
+                    <View style={styles.xpContainer}>
+                      <View style={styles.xpBarContainer}>
+                        <View style={[styles.xpBar, { width: `${xpProgress * 100}%` }]} />
+                      </View>
+                      <Text style={styles.xpText}>{currentXP}/{xpForNextLevel} XP</Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <ScrollView
+            style={styles.mainContent} contentContainerStyle={styles.scrollContentWithStickyProfile}
+          >
+            {/* Start Meditation Button */}
+            <Animatable.View
+              animation="pulse"
+              iterationCount="infinite"
+              duration={2200}
+              easing="ease-in-out"
+              style={styles.meditateButtonPulse}
+            >
+            <TouchableOpacity 
+              style={styles.meditateButton}
+              onPress={handleMeditatePress}
+              activeOpacity={0.8}
+            >
+                <LinearGradient
+                  colors={["#FFD580", "#FFB300", "#FF8C42"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.meditateButtonGradient}
+                >
+                  {/* Sparkles */}
+                  <FloatyAnimation style={styles.sparkle1} duration={3200} intensity="gentle">
+                    <Sparkle size={18} color="#fff8e1" />
+                  </FloatyAnimation>
+                  <FloatyAnimation style={styles.sparkle2} duration={2600} intensity="medium">
+                    <Sparkle size={14} color="#fffde7" />
+                  </FloatyAnimation>
+                  <FloatyAnimation style={styles.sparkle3} duration={4000} intensity="strong">
+                    <Sparkle size={22} color="#fff" />
+                  </FloatyAnimation>
+              <View style={styles.meditateButtonContent}>
+                    <FloatyAnimation animation="float" duration={2200} intensity="gentle">
+                <View style={styles.meditateIconContainer}>
+                        <MaterialCommunityIcons name="meditation" size={44} color={COLORS.white} />
+                </View>
+                    </FloatyAnimation>
+                <View style={styles.meditateTextContainer}>
+                  <Text style={styles.meditateButtonTitle}>Start Meditation</Text>
+                  <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
+                </View>
+                    <Ionicons name="chevron-forward" size={28} color={COLORS.white} />
+              </View>
+                </LinearGradient>
+            </TouchableOpacity>
+            </Animatable.View>
+            <View style={{ marginTop: 0 }}>
+              <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>Friend Den</Text></View>
+              <FriendDen />
+            </View>
+            {/* Quests Section */}
+            <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>Today's Quests</Text></View>
+            <View style={styles.questsContainer}>
+              {useGameStore.getState().quests.dailyQuests.map((quest) => {
+                const complete = useGameStore.getState().quests.progress[quest.id];
+                // Emoji prefix for each quest
+                const emoji = quest.id === 'daily_checkin_start' ? '📝'
+                  : quest.id === 'first_meditation' ? '✨'
+                  : quest.id === 'daily_checkin_end' ? '💭' : '';
+                return (
+                  <TouchableOpacity key={quest.id} onPress={() => handleQuestPress(quest)} activeOpacity={0.8}>
+                    <View style={[styles.questRow, complete && styles.questRowComplete]}>
+                      <View style={styles.questTextStack}>
+                        <Text style={[styles.questName, complete && styles.questNameComplete]}>{emoji} {quest.name} {complete ? '✔️' : ''}</Text>
+                        <Text style={styles.questDescription}>{quest.description}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {/* Achievements Section */}
+            <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>Achievements</Text></View>
+            <TouchableOpacity activeOpacity={0.85} onPress={handleAchievementsPress} style={{flex:1}}>
+              <View style={styles.achievementsContainer}>
+                {(() => {
+                  const unlocked = useGameStore.getState().achievements.unlocked || [];
+                  const achievementsData = require('../../../assets/data/achievements.json');
+                  const locked = achievementsData.filter((a) => !unlocked.includes(a.id));
+                  return locked.slice(0, 3).map((ach) => (
+                    <TouchableOpacity key={ach.id} activeOpacity={0.85} onPress={handleAchievementsPress} style={{flex:1}}>
+                      <View style={styles.achievementCard}>
+                        {badgeImages[ach.id] && (
+                          <Image 
+                            source={badgeImages[ach.id]} 
+                            style={[styles.achievementIcon, !unlocked.includes(ach.id) && { opacity: 0.4 }]} 
+                          />
+                        )}
+                        <View style={styles.achievementTextStack}>
+                          <Text style={styles.achievementName}>{ach.name}</Text>
+                          <Text style={styles.achievementDescription}>{ach.description}</Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ));
+                })()}
+              </View>
+            </TouchableOpacity>
+            <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>🌍 Global Leaderboard</Text></View>
+            <View style={styles.leaderboardContainer}>
+              <Leaderboard />
+            </View>
+          </ScrollView>
+          <FloatingLeaves count={12} style={styles.leavesOverlay} />
+          {__DEV__ && (
+            <View style={{ position: 'absolute', bottom: 24, left: 0, right: 0, alignItems: 'center', zIndex: 100 }}>
+              <Button
+                title="Test GlowCard Reveal"
+                onPress={() => navigation.navigate('GlowCardTest')}
+              />
+            </View>
+          )}
+        </SafeAreaView>
+      </ImageBackground>
+    );
+  } catch (e: any) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: 'red', fontSize: 18 }}>Render error: {e.message}</Text>
       </SafeAreaView>
     );
   }
-
-  return (
-    <PatternBackground>
-      <FloatingLeaves count={12} style={styles.leavesBackground} />
-      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}> 
-        {/* Sticky Profile Card */}
-        <View style={styles.stickyProfileCardContainer}>
-          <View style={styles.profileCard}>
-            <TouchableOpacity style={styles.settingsButton} onPress={() => navigation.navigate('Settings')} accessibilityLabel="Settings" accessible>
-              <Ionicons name="settings-outline" size={28} color={COLORS.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.profileCardTouchable} onPress={() => navigation.navigate('Profile')} activeOpacity={0.8} accessibilityLabel="View profile" accessible>
-              <View style={styles.profileHeader} pointerEvents="box-none">
-                <Image 
-                  source={require('../../../assets/images/minizenni.png')} 
-                  style={styles.profileImage}
-                />
-                <View style={styles.profileInfo}>
-                  <View style={styles.usernameRow}>
-                    <Text style={styles.username}>{userData?.username || 'ZenUser'}</Text>
-                    <View style={styles.streakBadge}>
-                      <Ionicons name="flame" size={16} color={COLORS.accent} style={{ marginRight: 2 }} />
-                      <Text style={styles.streakBadgeText}>{userData?.streak || 7}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.levelBadge}>
-                    <Text style={styles.levelText}>Level {userData?.level || 1}</Text>
-                  </View>
-                  <View style={styles.xpContainer}>
-                    <View style={styles.xpBarContainer}>
-                      <View style={[styles.xpBar, { width: '87.5%' }]} />
-                    </View>
-                    <Text style={styles.xpText}>350/400 XP</Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-        {/* Main Scrollable Content */}
-        <ScrollView contentContainerStyle={styles.scrollContentWithStickyProfile}>
-          {/* Start Meditation Button */}
-          <TouchableOpacity 
-            style={styles.meditateButton}
-            onPress={handleMeditatePress}
-            activeOpacity={0.8}
-          >
-            <View style={styles.meditateButtonContent}>
-              <View style={styles.meditateIconContainer}>
-                <MaterialCommunityIcons name="meditation" size={32} color={COLORS.white} />
-              </View>
-              <View style={styles.meditateTextContainer}>
-                <Text style={styles.meditateButtonTitle}>Start Meditation</Text>
-                <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color={COLORS.white} />
-            </View>
-          </TouchableOpacity>
-          {/* Quests Section */}
-          <Text style={styles.sectionTitle}>Today's Quests</Text>
-          <View style={styles.questsContainer}>
-            {useGameStore.getState().quests.dailyQuests.map((quest) => {
-              const complete = useGameStore.getState().quests.progress[quest.id];
-              return (
-                <View key={quest.id} style={[styles.questRow, complete && styles.questRowComplete]}>
-                  <View style={styles.questTextStack}>
-                    <Text style={[styles.questName, complete && styles.questNameComplete]}>{quest.name} {complete ? '✔️' : ''}</Text>
-                    <Text style={styles.questDescription}>{quest.description}</Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-          {/* Achievements Section */}
-          <Text style={styles.sectionTitle}>Closest Achievements</Text>
-          <View style={styles.achievementsContainer}>
-            {(() => {
-              const unlocked = useGameStore.getState().achievements.unlocked;
-              const achievementsData = require('../../../assets/data/achievements.json');
-              const locked = achievementsData.filter((a) => !unlocked.includes(a.id));
-              return locked.slice(0, 3).map((ach) => (
-                <View key={ach.id} style={styles.achievementCard}>
-                  {badgeImages[ach.id] && (
-                    <Image source={badgeImages[ach.id]} style={styles.achievementIcon} />
-                  )}
-                  <View style={styles.achievementTextStack}>
-                    <Text style={styles.achievementName}>{ach.name}</Text>
-                    <Text style={styles.achievementDescription}>{ach.description}</Text>
-                  </View>
-                </View>
-              ));
-            })()}
-          </View>
-        </ScrollView>
-        <FloatingLeaves count={12} style={styles.leavesOverlay} />
-      </SafeAreaView>
-    </PatternBackground>
-  );
 };
 
 const styles = StyleSheet.create({
@@ -268,14 +464,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     position: 'relative',
   },
-  settingsButton: {
+  headerButtons: {
+    flexDirection: 'row',
     position: 'absolute',
     top: 10,
     right: 10,
     zIndex: 2,
-    backgroundColor: 'rgba(255,255,255,0.8)',
+  },
+  iconButton: {
+    padding: 8,
     borderRadius: 20,
-    padding: 4,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    marginLeft: 8,
   },
   profileCardTouchable: {
     zIndex: 1,
@@ -337,15 +537,29 @@ const styles = StyleSheet.create({
   streakBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF3E0', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8 },
   streakBadgeText: { color: COLORS.accent, fontWeight: 'bold', fontSize: 14 },
   meditateButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: SIZES.radiusMedium,
+    backgroundColor: 'transparent',
+    borderRadius: 20,
     marginVertical: SPACING.m,
-    ...SHADOWS.medium,
+    marginTop: 60,
+  },
+  meditateButtonGradient: {
+    flex: 1,
+    borderRadius: 20,
+    padding: 6,
+    backgroundColor: 'linear-gradient(90deg, #FFD580 0%, #FF8C42 100%)', // fallback for web, will be overridden below
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.7)',
+    shadowColor: '#FFB300',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
   },
   meditateButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.m,
+    paddingVertical: 24,
+    paddingHorizontal: 18,
   },
   meditateIconContainer: {
     width: 48,
@@ -361,8 +575,11 @@ const styles = StyleSheet.create({
   },
   meditateButtonTitle: {
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 22,
     color: COLORS.white,
+    textShadowColor: 'rgba(0,0,0,0.18)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   meditateButtonSubtitle: {
     fontWeight: 'normal',
@@ -470,19 +687,72 @@ const styles = StyleSheet.create({
   },
   stickyProfileCardContainer: {
     position: 'absolute',
-    top: 0,
+    top: Platform.OS === 'ios' ? 60 : 20,
     left: 0,
     right: 0,
     zIndex: 10,
     alignItems: 'center',
     width: '100%',
-    height: PROFILE_CARD_HEIGHT,
     backgroundColor: 'transparent',
-    paddingTop: 60,
   },
   scrollContentWithStickyProfile: {
-    paddingTop: PROFILE_CARD_HEIGHT + 16, // Add a little extra margin
     padding: SPACING.m,
+  },
+  mainContent: {
+    flex: 1,
+    marginTop: PROFILE_CARD_HEIGHT + SPACING.m,
+  },
+  sectionTitlePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(35,32,20,0.7)',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginBottom: 8,
+    marginLeft: 2,
+  },
+  sectionTitlePillText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    letterSpacing: 0.2,
+  },
+  leaderboardContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 16,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  meditateButtonPulse: {
+    shadowColor: '#FFD580',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 32,
+    elevation: 16,
+    borderRadius: 24,
+  },
+  sparkle1: {
+    position: 'absolute',
+    top: 8,
+    left: 32,
+    zIndex: 2,
+  },
+  sparkle2: {
+    position: 'absolute',
+    top: 18,
+    right: 32,
+    zIndex: 2,
+  },
+  sparkle3: {
+    position: 'absolute',
+    bottom: 12,
+    left: 60,
+    zIndex: 2,
   },
 });
 

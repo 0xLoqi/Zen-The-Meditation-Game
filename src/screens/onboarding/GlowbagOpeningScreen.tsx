@@ -26,13 +26,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONTS } from '../../constants/theme';
 import PatternBackground from '../../components/PatternBackground';
 import { useAuthStore } from '../../store/authStore';
-import { analytics } from '../../firebase';
+import { analytics, ensureSignedIn } from '../../firebase';
 import { useGameStore } from '../../store';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const GlowbagOpeningScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { continueAsGuest } = useAuthStore();
   const hasAnimationFinished = useRef(false);
   const [canContinue, setCanContinue] = useState(false);
@@ -221,9 +221,10 @@ const GlowbagOpeningScreen = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (canContinue) {
-      continueAsGuest();
+      await ensureSignedIn();
+      navigation.getParent()?.replace('Main', { screen: 'Home' });
     }
   };
 

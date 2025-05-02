@@ -10,7 +10,7 @@ export interface FirebaseUser {
 export interface User {
   uid: string;
   id?: string; // Adding for compatibility with existing code
-  username: string;
+  username: string | null; // Allow null for onboarding
   email: string | null;
   xp: number;
   level: number;
@@ -21,6 +21,16 @@ export interface User {
   equippedOutfit: OutfitId;
   createdAt: string | Date;
   referralCode?: string; // Adding for compatibility
+  cosmetics?: {
+    equipped: {
+      outfit?: string;
+      headgear?: string;
+      aura?: string;
+      face?: string;
+      accessory?: string;
+      companion?: string;
+    };
+  };
 }
 
 // Meditation Types

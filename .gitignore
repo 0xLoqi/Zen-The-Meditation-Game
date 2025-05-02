@@ -70,3 +70,4 @@ web-build/
 # Cursor files
 .cursor/
 .cursor/rules/
+firebase_service_acct.json

@@ -1,4 +1,4 @@
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MeditationType, MeditationDuration } from '../types';
 import HomeScreen from '../screens/main/HomeScreen';
 import MeditationSelectionScreen from '../screens/main/MeditationSelectionScreen';
@@ -6,11 +6,15 @@ import MeditationSessionScreen from '../screens/main/MeditationSessionScreen';
 import PostSessionSummaryScreen from '../screens/main/PostSessionSummaryScreen';
 import DailyCheckInScreen from '../screens/main/DailyCheckInScreen';
 import WardrobeScreen from '../screens/main/WardrobeScreen';
+import GlowCardRevealScreen from '../screens/main/GlowCardRevealScreen';
 import GuruModeScreen from '../screens/main/GuruModeScreen';
 import ReferralScreen from '../screens/main/ReferralScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
 import AchievementsScreen from '../screens/main/AchievementsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
+import StoreScreen from '../screens/main/StoreScreen';
+import PaywallScreen from '../screens/PaywallScreen';
+import GlowCardTestScreen from '../screens/GlowCardTestScreen';
 
 export type MainStackParamList = {
   Home: undefined;
@@ -26,10 +30,14 @@ export type MainStackParamList = {
   Referral: undefined;
   Settings: undefined;
   Achievements: undefined;
-  Profile: undefined;
+  Profile: { friend?: any };
+  Store: undefined;
+  Paywall: undefined;
+  GlowCardTest: undefined;
+  GlowCardRevealScreen: { drop?: any };
 };
 
-const MainStack = createStackNavigator<MainStackParamList>();
+const MainStack = createNativeStackNavigator<MainStackParamList>();
 
 const MainNavigator = () => {
   return (
@@ -45,6 +53,10 @@ const MainNavigator = () => {
       <MainStack.Screen name="Settings" component={SettingsScreen} />
       <MainStack.Screen name="Achievements" component={AchievementsScreen} />
       <MainStack.Screen name="Profile" component={ProfileScreen} />
+      <MainStack.Screen name="Store" component={StoreScreen} />
+      <MainStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
+      <MainStack.Screen name="GlowCardTest" component={GlowCardTestScreen} />
+      <MainStack.Screen name="GlowCardRevealScreen" component={GlowCardRevealScreen} />
     </MainStack.Navigator>
   );
 };

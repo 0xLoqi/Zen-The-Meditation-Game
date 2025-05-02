@@ -1,0 +1,69 @@
+---
+description: The task list
+globs: 
+alwaysApply: false
+---
+✅ Finalized Optimized Onboarding Flow – Task Checklist
+🟡 1. Splash Screen
+ Create SplashScreen.tsx
+
+ Add animated logo with a 3-second fade-in
+
+ Auto-navigate to IntroComic.tsx after animation completes
+
+🟡 2. Intro Comic
+ Create IntroComic.tsx
+
+ Display a 2-panel comic using static images (assets already prepared)
+
+ Include tap-to-continue text prompt at the bottom
+
+ On tap, navigate to SummonFocusStone.tsx
+
+🟡 3. Summon Focus Stone (Game Starts)
+ Create SummonFocusStone.tsx
+
+ Create PulseStone.tsx (a reusable component)
+
+ Full-screen background image: mystical dark cave (already created)
+
+ Center the glowing Focus Stone as a visual element
+
+ Add breathing animation synced with soft haptics
+
+ Require user to hold their thumb on the stone for ≥ 3 seconds
+
+ If thumb lifts early → show soft "retry" prompt
+
+ If hold succeeds → trigger success state animation and sound
+
+ Auto-navigate to GlowcardReward.tsx
+
+🟡 4. Glowcard Reward
+ Reuse GlowCardReveal.tsx but configure it to show just 1 pre-flipped card
+
+ Always reward tokens: 25 for this first card
+
+ Add “Continue” button after claim that routes to NameEntry.tsx
+
+🟡 5. Name Entry
+ Create NameEntry.tsx
+
+ Allow user to enter their name (optional)
+
+ Allow user to name their Mini Zenni (optional)
+
+ Show preview of Mini Zenni with nameplate to confirm (non-intrusive, fades after confirmation)
+
+ Continue button ➜ navigate to AuthScreen.tsx
+
+🟡 6. Authentication Screen
+ Create AuthScreen.tsx
+
+ Add “Continue without Account” button (default flow)
+
+ Add “Sign in with Google” button using Expo Auth Session
+
+ Save unique identifier and token in local storage
+
+ If returning user, auto-skip intro screens and go to HomeScreen.tsx

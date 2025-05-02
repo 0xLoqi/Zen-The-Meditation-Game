@@ -1,6 +1,14 @@
 import { create } from 'zustand';
-import { FirebaseUser, checkUsernameUnique, signup, login, signOut, listenToAuthState } from '../firebase/auth';
-import { useGoogleAuth } from '../firebase/googleAuth';
+import { auth } from '../firebase';
+import type { User as FirebaseUser } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import * as AuthSession from 'expo-auth-session';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { resetUserStore } from './userStore';
+import { resetGameStore } from './index';
+import { useMeditationStore } from './meditationStore';
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AuthState {
   user: FirebaseUser | null;
@@ -10,41 +18,60 @@ interface AuthState {
   googleAuthLoading: boolean;
   googleAuthError: string | null;
   checkAuth: () => (() => void); // Returns the unsubscribe function
-  signup: (email: string, password: string, username: string) => Promise<void>;
+  signup: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
-  checkUsernameUnique: (username: string) => Promise<boolean>;
   continueAsGuest: () => void;
+  firebaseSignInWithGoogle: (idToken: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  isLoading: false,
+  isLoading: true,
   error: null,
   isAuthenticated: false,
   googleAuthLoading: false,
   googleAuthError: null,
 
   checkAuth: () => {
-    // Listen to auth state changes
-    const unsubscribe = listenToAuthState((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
       set({ 
         user, 
-        isAuthenticated: !!user, 
-        isLoading: false,
-        error: null
-      });
+          isAuthenticated: true, 
+          isLoading: false,
+          error: null
+        });
+        await AsyncStorage.setItem('@user_id', user.uid);
+        await AsyncStorage.setItem('@auth_type', 'firebase');
+        await AsyncStorage.removeItem('@user_token');
+      } else {
+        try {
+          const storedUserId = await AsyncStorage.getItem('@user_id');
+          const authType = await AsyncStorage.getItem('@auth_type');
+          const isNonFirebaseAuthenticated = false; // Assume false initially for non-firebase users on startup
+
+          console.log('[checkAuth] No Firebase user. AsyncStorage check:', { storedUserId, authType, isNonFirebaseAuthenticated });
+          set({
+            user: null,
+            isAuthenticated: isNonFirebaseAuthenticated, // Will now be false here
+            isLoading: false,
+            error: null
+          });
+        } catch (e) {
+          console.error("[checkAuth] AsyncStorage error when checking non-Firebase auth:", e);
+          set({ user: null, isAuthenticated: false, isLoading: false, error: 'Failed to check session' });
+        }
+      }
     });
 
     return unsubscribe;
   },
 
-  signup: async (email: string, password: string, username: string) => {
+  signup: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const user = await signup(email, password, username);
-      set({ user, isAuthenticated: true, isLoading: false });
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
       set({ 
         error: error.message || 'Error signing up', 
@@ -57,8 +84,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const user = await login(email, password);
-      set({ user, isAuthenticated: true, isLoading: false });
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
       set({ 
         error: error.message || 'Error logging in', 
@@ -68,40 +94,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signInWithGoogle: async () => {
-    set({ googleAuthLoading: true, googleAuthError: null });
-    
-    try {
-      // We're using the custom hook directly to leverage Firebase Auth providers
-      const { signInWithGoogle } = useGoogleAuth();
-      
-      const result = await signInWithGoogle();
-      
-      // The actual auth state update is handled by the listenToAuthState effect
-      // Since Firebase Auth will emit an event when the user signs in with Google
-      set({ googleAuthLoading: false });
-      
-      if (!result) {
-        throw new Error('Google sign in failed');
-      }
-    } catch (error: any) {
-      set({ 
-        googleAuthError: error.message || 'Error signing in with Google', 
-        googleAuthLoading: false 
-      });
-      throw error;
-    }
-  },
-
   signOut: async () => {
     set({ isLoading: true, error: null });
     try {
-      await signOut();
-      set({ 
-        user: null, 
-        isAuthenticated: false, 
-        isLoading: false 
-      });
+      await signOut(auth);
+      await AsyncStorage.removeItem('@user_id');
+      await AsyncStorage.removeItem('@auth_type');
+      await AsyncStorage.removeItem('@user_token');
+      await AsyncStorage.removeItem('gameStore');
+      resetUserStore();
+      resetGameStore();
+      useMeditationStore.getState().resetMeditationSession();
+      set({ isAuthenticated: false, user: null, isLoading: false, error: null });
     } catch (error: any) {
       set({ 
         error: error.message || 'Error signing out', 
@@ -111,26 +115,55 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  checkUsernameUnique: async (username: string) => {
+  continueAsGuest: async () => {
+    set({ isLoading: true });
+    let guestId: string | null = null;
     try {
-      return await checkUsernameUnique(username);
+      guestId = uuidv4(); // Generate ID
+
+      // Add check to satisfy TypeScript and ensure ID exists
+      if (guestId) { 
+        console.log(`[authStore] Attempting to set @user_id: ${guestId}`);
+        await AsyncStorage.setItem('@user_id', guestId); // Store ID
+        console.log(`[authStore] Finished setting @user_id`);
+
+        console.log(`[authStore] Attempting to set @auth_type: anonymous`);
+        await AsyncStorage.setItem('@auth_type', 'anonymous'); // Store auth type
+        console.log(`[authStore] Finished setting @auth_type`);
+
+        console.log('[authStore] Successfully stored guest info, updating state...');
+        // Update state AFTER successful storage
+        set({
+          user: null,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null
+        });
+      } else {
+        // Should realistically never happen with uuidv4
+        throw new Error('Failed to generate guest ID.'); 
+      }
+
     } catch (error: any) {
-      set({ error: error.message || 'Error checking username' });
-      throw error;
+      console.error("[authStore] Error during continueAsGuest:", error);
+      set({
+        user: null,
+        error: error.message || 'Failed to start guest session',
+        isLoading: false,
+        isAuthenticated: false
+      });
     }
   },
 
-  continueAsGuest: () => {
-    const guestUser: FirebaseUser = {
-      uid: `guest-${Date.now()}`,
-      email: null,
-      displayName: 'Guest User',
-    };
-    set({ 
-      user: guestUser,
-      isAuthenticated: true,
-      isLoading: false,
-      error: null
-    });
+  firebaseSignInWithGoogle: async (idToken: string) => {
+    set({ googleAuthLoading: true, googleAuthError: null });
+    try {
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+      set({ googleAuthLoading: false });
+    } catch (error: any) {
+      set({ googleAuthLoading: false, googleAuthError: error.message || 'Google sign-in failed' });
+      throw error;
+    }
   },
 }));

@@ -29,6 +29,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth, analytics } from '../../firebase';
 import { linkWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { grant } from '../../services/CosmeticsService';
+import { requestNotificationPermission } from '../../lib/notifications';
+import { ensureSignedIn } from '../../firebase';
+import { navigationRef } from '../../navigation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
 
 const isValidEmail = (email: string) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,9 +42,11 @@ const isValidEmail = (email: string) => {
 
 const GlowbagOfferScreen = () => {
   const navigation = useNavigation();
-  const { continueAsGuest } = useAuthStore();
+  const { continueAsGuest, firebaseSignInWithGoogle } = useAuthStore();
   const [email, setEmail] = useState('');
   const [isEmailValid, setIsEmailValid] = useState(true);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const insets = useSafeAreaInsets();
 
   // Portal rotation animation
   const portalStyle = useAnimatedStyle(() => ({
@@ -87,33 +94,57 @@ const GlowbagOfferScreen = () => {
     setIsEmailValid(text === '' || isValidEmail(text));
   };
 
+  const handleSkip = async () => {
+    console.log('Skip pressed');
+    continueAsGuest();
+    await requestNotificationPermission();
+    navigationRef.current?.navigate('Main', { screen: 'Home' });
+  };
+
   const handleSubmit = async () => {
     if (email && !isValidEmail(email)) {
       setIsEmailValid(false);
       return;
     }
-    if (email) {
-      try {
-        await linkWithCredential(
-          auth.currentUser!,
-          EmailAuthProvider.credential(email, Math.random().toString(36).slice(-12))
-        );
+    try {
+      const user = await ensureSignedIn();
+      if (email) {
+        const credential = EmailAuthProvider.credential(email, Math.random().toString(36).slice(-12));
+        await linkWithCredential(user, credential);
         grant('messenger_sprite');
         if (analytics && typeof analytics.logEvent === 'function') {
           analytics.logEvent('email_linked');
         }
-      navigation.replace('GlowbagOpening');
-      } catch (err) {
-        setIsEmailValid(false);
-        // Optionally show error to user
+        await requestNotificationPermission();
+        navigationRef.current?.navigate('Main', { screen: 'Home' });
+      } else {
+        continueAsGuest();
+        await requestNotificationPermission();
+        navigationRef.current?.navigate('Main', { screen: 'Home' });
       }
-    } else {
-      continueAsGuest();
+    } catch (err: any) {
+      setIsEmailValid(false);
+      if (err && err.message) {
+        alert(err.message);
+      }
     }
   };
 
-  const handleSkip = () => {
-    continueAsGuest();
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      // Use Expo AuthSession or your preferred Google sign-in method to get idToken
+      // For now, this is a placeholder for the OAuth flow
+      const idToken = await getGoogleIdToken(); // Implement this function or use your existing logic
+      await firebaseSignInWithGoogle(idToken);
+      grant('messenger_sprite');
+      await requestNotificationPermission();
+      navigationRef.current?.navigate('GlowbagOpening');
+    } catch (err) {
+      // Handle error (show toast, etc.)
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -122,7 +153,7 @@ const GlowbagOfferScreen = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           <ScrollView 
             contentContainerStyle={styles.scrollContent}
             bounces={false}
@@ -173,7 +204,7 @@ const GlowbagOfferScreen = () => {
             <View style={styles.inputContainer}>
               <TextInput
                 style={[styles.input, !isEmailValid && styles.inputError]}
-                placeholder="Your email (optional)"
+                placeholder="Your email"
                 value={email}
                 onChangeText={handleEmailChange}
                 keyboardType="email-address"
@@ -185,6 +216,7 @@ const GlowbagOfferScreen = () => {
                   Please enter a valid email address
                 </Text>
               )}
+              <GoogleSignInButton onPress={handleGoogleSignIn} isLoading={googleLoading} style={{ marginTop: 16 }} />
             </View>
           </ScrollView>
 
@@ -195,9 +227,6 @@ const GlowbagOfferScreen = () => {
               size="large"
               style={styles.button}
             />
-            <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip for now</Text>
-            </TouchableOpacity>
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
@@ -301,15 +330,6 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '100%',
-  },
-  skipButton: {
-    marginTop: SPACING.medium,
-    padding: SPACING.small,
-  },
-  skipText: {
-    fontSize: 14,
-    color: COLORS.neutralMedium,
-    textAlign: 'center',
   },
 });
 

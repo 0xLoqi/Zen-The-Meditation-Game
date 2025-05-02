@@ -1,5 +1,4 @@
 import { MeditationType, MeditationDuration } from '../types';
-import { getFirebaseFirestore } from './firebase';
 
 interface MeditationResult {
   xpGained: number;

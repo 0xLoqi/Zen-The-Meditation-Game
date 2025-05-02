@@ -1,86 +1,178 @@
 [
   {
-    "id": "totem_gotmail",
-    "name": "Totem: Got Mail",
-    "category": "totem",
-    "rarity": "common",
-    "asset": "../images/Cosmetic_totem_GotMail.png"
-  },
-  {
-    "id": "zenni_portal",
-    "name": "Zenni Summoning Portal",
-    "category": "background",
-    "rarity": "epic",
-    "asset": "../images/zenni_summoning_portal.png"
-  },
-  {
-    "id": "zenni_success",
-    "name": "Zenni Success",
-    "category": "background",
-    "rarity": "rare",
-    "asset": "../images/zenni_success.png"
-  },
-  {
-    "id": "pattern_bg",
-    "name": "Pattern Background",
-    "category": "background",
-    "rarity": "common",
-    "asset": "../images/pattern_bg.png"
-  },
-  {
-    "id": "zenni_summoning",
-    "name": "Zenni Summoning",
-    "category": "background",
-    "rarity": "epic",
-    "asset": "../images/zenni_summoning.png"
-  },
-  {
-    "id": "splash",
-    "name": "Splash Screen",
-    "category": "background",
-    "rarity": "common",
-    "asset": "../images/splash.png"
-  },
-  {
-    "id": "zenni",
-    "name": "Zenni Character",
-    "category": "character",
+    "id": "ember_robe",
+    "name": "Ember Robe",
+    "category": "outfit",
     "rarity": "legendary",
-    "asset": "../images/zenni.png"
+    "image": "ember_robe.png",
+    "price": 1200
   },
   {
-    "id": "minizenni",
-    "name": "Mini Zenni",
-    "category": "character",
-    "rarity": "rare",
-    "asset": "../images/minizenni.png"
-  },
-  {
-    "id": "google_logo",
-    "name": "Google Logo",
-    "category": "icon",
-    "rarity": "common",
-    "asset": "../images/google_logo.png"
-  },
-  {
-    "id": "icon",
-    "name": "App Icon",
-    "category": "icon",
-    "rarity": "common",
-    "asset": "../images/icon.png"
-  },
-  {
-    "id": "adaptive_icon",
-    "name": "Adaptive Icon",
-    "category": "icon",
-    "rarity": "rare",
-    "asset": "../images/Adaptive-icon.png"
-  },
-  {
-    "id": "glowbag_blue",
-    "name": "Glowbag Blue",
-    "category": "glowbag",
+    "id": "prism_cloak",
+    "name": "Prism Cloak",
+    "category": "outfit",
     "rarity": "epic",
-    "asset": "../images/glowbags/blue.png"
+    "image": "prism_cloak.png",
+    "price": 600
+  },
+  {
+    "id": "nap_hoodie",
+    "name": "Nap Hoodie",
+    "category": "outfit",
+    "rarity": "rare",
+    "image": "nap_hoodie.png",
+    "price": 250
+  },
+  {
+    "id": "warm_beanie",
+    "name": "Warm Beanie",
+    "category": "headgear",
+    "rarity": "common",
+    "image": "warm_beanie.png",
+    "price": 80
+  },
+  {
+    "id": "royal_crown",
+    "name": "Royal Crown",
+    "category": "headgear",
+    "rarity": "epic",
+    "image": "royal_crown.png",
+    "price": 550
+  },
+  {
+    "id": "leaf_crown",
+    "name": "Leaf Crown",
+    "category": "headgear",
+    "rarity": "rare",
+    "image": "Leaf Crown.png",
+    "price": 250
+  },
+  {
+    "id": "auric_bloom",
+    "name": "Auric Bloom",
+    "category": "aura",
+    "rarity": "rare",
+    "image": "auric_bloom.png",
+    "price": 800
+  },
+  {
+    "id": "focus_spiral",
+    "name": "Focus Spiral",
+    "category": "aura",
+    "rarity": "epic",
+    "image": "focus_spiral.png",
+    "price": 1000
+  },
+  {
+    "id": "verdant_halo",
+    "name": "Verdant Halo",
+    "category": "aura",
+    "rarity": "rare",
+    "image": "verdant_halo.png",
+    "price": 800
+  },
+  {
+    "id": "whorled_staff",
+    "name": "Whorled Staff",
+    "category": "accessory",
+    "rarity": "rare",
+    "image": "whorled_staff.png",
+    "price": 250
+  },
+  {
+    "id": "you_blink_first_mask",
+    "name": "You Blink First Mask",
+    "category": "accessory",
+    "rarity": "epic",
+    "image": "you_blink_first_mask.png",
+    "price": 500
+  },
+  {
+    "id": "true_stoic_mask",
+    "name": "True Stoic Mask",
+    "category": "accessory",
+    "rarity": "epic",
+    "image": "true_stoic_mask.png",
+    "price": 500
+  },
+  {
+    "id": "satchel_of_stillness",
+    "name": "Satchel of Stillness",
+    "category": "accessory",
+    "rarity": "rare",
+    "image": "satchel_of_stillness.png",
+    "price": 250
+  },
+  {
+    "id": "cozy_owl",
+    "name": "Cozy Owl",
+    "category": "companion",
+    "rarity": "rare",
+    "image": "cozy_owl.png",
+    "price": 800
+  },
+  {
+    "id": "busy_bee",
+    "name": "Busy Bee",
+    "category": "companion",
+    "rarity": "epic",
+    "image": "busy_bee.png",
+    "price": 1000
+  },
+  {
+    "id": "baby_echo",
+    "name": "Baby Echo",
+    "category": "companion",
+    "rarity": "epic",
+    "image": "baby_echo.png",
+    "price": 650
+  },
+  {
+    "id": "messenger_sprite",
+    "name": "Messenger Sprite",
+    "category": "companion",
+    "rarity": "legendary",
+    "image": "messenger_sprite.png",
+    "price": 1500
+  },
+  {
+    "id": "angry",
+    "name": "Angry Face",
+    "category": "face",
+    "rarity": "common",
+    "image": "angry.png",
+    "price": 50
+  },
+  {
+    "id": "shook",
+    "name": "Shook Face",
+    "category": "face",
+    "rarity": "rare",
+    "image": "shook.png",
+    "price": 150
+  },
+  {
+    "id": "wink",
+    "name": "Wink Face",
+    "category": "face",
+    "rarity": "rare",
+    "image": "wink.png",
+    "price": 150
+  },
+  {
+    "id": "worried",
+    "name": "Worried Face",
+    "category": "face",
+    "rarity": "common",
+    "image": "worried.png",
+    "price": 50
+  },
+  {
+    "id": "sad",
+    "name": "Sad Face",
+    "category": "face",
+    "rarity": "common",
+    "image": "sad.png",
+    "price": 50
   }
-] 
+]

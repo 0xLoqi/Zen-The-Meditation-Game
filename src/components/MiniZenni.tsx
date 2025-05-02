@@ -14,9 +14,16 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import Sparkle from './Sparkle';
+import { useGameStore } from '../store';
+import { cosmeticImages, defaultImage } from './Store/cosmeticImages';
 
 interface MiniZenniProps {
-  outfitId: OutfitId;
+  outfitId?: string;
+  headgearId?: string;
+  auraId?: string;
+  faceId?: string;
+  accessoryId?: string | string[];
+  companionId?: string;
   size?: 'small' | 'medium' | 'large';
   style?: ViewStyle;
   animationState?: 'idle' | 'meditating' | 'levelUp' | 'bouncing' | 'success';
@@ -30,7 +37,12 @@ interface MiniZenniProps {
 }
 
 const MiniZenni = ({
-  outfitId = 'default',
+  outfitId,
+  headgearId,
+  auraId,
+  faceId,
+  accessoryId,
+  companionId,
   size = 'medium',
   style,
   animationState = 'idle',
@@ -96,6 +108,9 @@ const MiniZenni = ({
     };
   });
 
+  // Zustand fallback
+  const equipped = useGameStore((s) => s.cosmetics.equipped);
+
   // Determine dimensions based on size (increased by 30%)
   const getDimensions = () => {
     switch (size) {
@@ -112,13 +127,31 @@ const MiniZenni = ({
   const dimensions = getDimensions();
   const sparkleSize = dimensions.width * 1.5;
 
-  // Get the appropriate image based on state
-  const getImage = () => {
-    if (animationState === 'success') {
-      return require('../../assets/images/zenni_success.png');
-    }
-    return require('../../assets/images/zenni_summoning.png');
-  };
+  // Determine accessory IDs supporting array, string, or comma-separated string (fallback to equipped)
+  const rawAccessory = accessoryId !== undefined ? accessoryId : equipped.accessory;
+  const accessoryIds = Array.isArray(rawAccessory)
+    ? rawAccessory
+    : typeof rawAccessory === 'string'
+      ? rawAccessory.split(',').map(id => id.trim()).filter(Boolean)
+      : [];
+
+  // Build layers with aura behind the base
+  const getImageKey = (id: string | undefined) =>
+    id ? (id.endsWith('.png') ? id : id + '.png') : undefined;
+  const layers = [
+    // Aura behind everything
+    cosmeticImages[getImageKey(auraId || equipped.aura)] || null,
+    // Base body
+    cosmeticImages['default_base.png'] || defaultImage,
+    // Outfit, face, headgear
+    cosmeticImages[getImageKey(outfitId || equipped.outfit)] || null,
+    cosmeticImages[getImageKey(faceId || equipped.face)] || null,
+    cosmeticImages[getImageKey(headgearId || equipped.headgear)] || null,
+    // Accessories (support multiple)
+    ...accessoryIds.map(id => cosmeticImages[getImageKey(id)] || null),
+    // Companion on top
+    cosmeticImages[getImageKey(companionId || equipped.companion)] || null,
+  ].filter(Boolean);
 
   return (
     <RNView style={[styles.container, dimensions, style]}>
@@ -129,18 +162,22 @@ const MiniZenni = ({
           style={styles.sparkle}
         />
       </Animated.View>
-      <Animated.View style={animatedStyle}>
+      <Animated.View style={[animatedStyle, dimensions]}>
+        {layers.map((src, idx) => (
         <RNImage
-          source={getImage()}
+            key={idx}
+            source={src}
           style={[
             styles.image,
             dimensions,
-            colorScheme && {
+              colorScheme && idx === 0 && {
               tintColor: colorScheme.primary,
             },
+              // Optionally add zIndex if needed
           ]}
           resizeMode="contain"
         />
+        ))}
       </Animated.View>
     </RNView>
   );
@@ -152,6 +189,9 @@ const styles = RNStyleSheet.create({
     alignItems: 'center',
   },
   image: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
     width: '100%',
     height: '100%',
   },
