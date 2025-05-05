@@ -1,0 +1,336 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '../../store/authStore';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../navigation/types';
+import { COLORS, SPACING, SHADOWS } from '../../constants/theme';
+import Button from '../../components/Button';
+import PatternBackground from '../../components/PatternBackground';
+import Animated, {
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withSpring,
+  Easing,
+} from 'react-native-reanimated';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { auth, analytics } from '../../firebase';
+import { linkWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { grant } from '../../services/CosmeticsService';
+import { requestNotificationPermission } from '../../lib/notifications';
+import { ensureSignedIn } from '../../firebase';
+import { navigationRef } from '../../navigation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
+
+const isValidEmail = (email: string) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const GlowbagOfferScreen = () => {
+  const navigation = useNavigation();
+  const { continueAsGuest, firebaseSignInWithGoogle } = useAuthStore();
+  const [email, setEmail] = useState('');
+  const [isEmailValid, setIsEmailValid] = useState(true);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  // Portal rotation animation
+  const portalStyle = useAnimatedStyle(() => ({
+    transform: [{
+      rotate: withRepeat(
+        withTiming('360deg', {
+          duration: 20000,
+          easing: Easing.linear,
+        }),
+        -1
+      ),
+    }],
+  }));
+
+  // Glowbag floating and glowing animation
+  const glowbagStyle = useAnimatedStyle(() => {
+    const scale = withRepeat(
+      withSequence(
+        withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+
+    const translateY = withRepeat(
+      withSequence(
+        withSpring(-10, { damping: 6, stiffness: 40 }),
+        withSpring(0, { damping: 6, stiffness: 40 })
+      ),
+      -1,
+      true
+    );
+
+    return {
+      transform: [
+        { scale },
+        { translateY },
+      ],
+    };
+  });
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    setIsEmailValid(text === '' || isValidEmail(text));
+  };
+
+  const handleSkip = async () => {
+    console.log('Skip pressed');
+    continueAsGuest();
+    await requestNotificationPermission();
+    navigationRef.current?.navigate('Main', { screen: 'Home' });
+  };
+
+  const handleSubmit = async () => {
+    if (email && !isValidEmail(email)) {
+      setIsEmailValid(false);
+      return;
+    }
+    try {
+      const user = await ensureSignedIn();
+      if (email) {
+        const credential = EmailAuthProvider.credential(email, Math.random().toString(36).slice(-12));
+        await linkWithCredential(user, credential);
+        grant('messenger_sprite');
+        if (analytics && typeof analytics.logEvent === 'function') {
+          analytics.logEvent('email_linked');
+        }
+        await requestNotificationPermission();
+        navigationRef.current?.navigate('Main', { screen: 'Home' });
+      } else {
+        continueAsGuest();
+        await requestNotificationPermission();
+        navigationRef.current?.navigate('Main', { screen: 'Home' });
+      }
+    } catch (err: any) {
+      setIsEmailValid(false);
+      if (err && err.message) {
+        alert(err.message);
+      }
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      // Use Expo AuthSession or your preferred Google sign-in method to get idToken
+      // For now, this is a placeholder for the OAuth flow
+      const idToken = await getGoogleIdToken(); // Implement this function or use your existing logic
+      await firebaseSignInWithGoogle(idToken);
+      grant('messenger_sprite');
+      await requestNotificationPermission();
+      navigationRef.current?.navigate('GlowbagOpening');
+    } catch (err) {
+      // Handle error (show toast, etc.)
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  return (
+    <PatternBackground>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.portalContainer}>
+              <Animated.Image
+                source={require('../../../assets/images/zenni_summoning_portal.png')}
+                style={[styles.portalImage, portalStyle]}
+                resizeMode="contain"
+              />
+            </View>
+
+            <Text style={styles.title}>
+              A rare Glowbag shimmers...
+            </Text>
+
+            <View style={styles.glowbagContainer}>
+              <Animated.Image
+                source={require('../../../assets/images/glowbags/Glowbag_legendary.png')}
+                style={[styles.glowbagImage, glowbagStyle]}
+                resizeMode="contain"
+              />
+              <MaterialCommunityIcons
+                name="star-four-points"
+                size={24}
+                color="#FFD700"
+                style={[styles.sparkle, styles.sparkle1]}
+              />
+              <MaterialCommunityIcons
+                name="star-four-points"
+                size={16}
+                color="#FFD700"
+                style={[styles.sparkle, styles.sparkle2]}
+              />
+              <MaterialCommunityIcons
+                name="star-four-points"
+                size={20}
+                color="#FFD700"
+                style={[styles.sparkle, styles.sparkle3]}
+              />
+            </View>
+
+            <Text style={styles.description}>
+              Share your email so your mini can grab it!
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[styles.input, !isEmailValid && styles.inputError]}
+                placeholder="Your email"
+                value={email}
+                onChangeText={handleEmailChange}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor={COLORS.neutralMedium}
+              />
+              {!isEmailValid && (
+                <Text style={styles.errorText}>
+                  Please enter a valid email address
+                </Text>
+              )}
+              <GoogleSignInButton onPress={handleGoogleSignIn} isLoading={googleLoading} style={{ marginTop: 16 }} />
+            </View>
+          </ScrollView>
+
+          <View style={styles.buttonContainer}>
+            <Button
+              title={email ? "Claim Reward" : "Continue"}
+              onPress={handleSubmit}
+              size="large"
+              style={styles.button}
+            />
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+    </PatternBackground>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingHorizontal: SPACING.medium,
+    paddingTop: SPACING.large,
+    paddingBottom: SPACING.xxlarge,
+  },
+  portalContainer: {
+    width: '60%',
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.large,
+  },
+  portalImage: {
+    width: '100%',
+    height: '100%',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: COLORS.primary,
+    textAlign: 'center',
+    marginBottom: SPACING.large,
+  },
+  glowbagContainer: {
+    width: 120,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.large,
+  },
+  glowbagImage: {
+    width: '100%',
+    height: '100%',
+  },
+  sparkle: {
+    position: 'absolute',
+    opacity: 0.8,
+  },
+  sparkle1: {
+    top: '10%',
+    right: '10%',
+  },
+  sparkle2: {
+    bottom: '20%',
+    left: '10%',
+  },
+  sparkle3: {
+    top: '40%',
+    right: '5%',
+  },
+  description: {
+    fontSize: 18,
+    color: COLORS.neutralDark,
+    textAlign: 'center',
+    marginBottom: SPACING.large,
+  },
+  inputContainer: {
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+    paddingHorizontal: SPACING.medium,
+  },
+  input: {
+    width: '100%',
+    height: 50,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    paddingHorizontal: SPACING.medium,
+    fontSize: 16,
+    color: COLORS.neutralDark,
+    ...SHADOWS.medium,
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    marginTop: SPACING.small,
+    alignSelf: 'flex-start',
+  },
+  buttonContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.medium,
+    paddingBottom: Platform.OS === 'ios' ? SPACING.medium : SPACING.large,
+  },
+  button: {
+    width: '100%',
+  },
+});
+
+export default GlowbagOfferScreen; 

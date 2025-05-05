@@ -22,18 +22,20 @@ const IntroComic = () => {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/backgrounds/onboarding/dimming.png')}
-      style={styles.background} // Use fullscreen style
-      resizeMode="cover" 
-    >
-        <SafeAreaView style={styles.safeArea}> 
-            <TouchableOpacity style={styles.touchable} onPress={handleTap} activeOpacity={1}>
-                {/* Only prompt text is needed over the background */}
-                <Text style={styles.promptText}>Tap to continue</Text>
-            </TouchableOpacity>
-        </SafeAreaView>
-    </ImageBackground>
+    <View style={{ flex: 1, backgroundColor: '#000000' }}>
+      <ImageBackground
+        source={require('../../../assets/images/backgrounds/onboarding/dimming.png')}
+        style={[styles.background, { transform: [{ scale: 1.25 }] }]}
+        resizeMode="contain"
+      >
+          <SafeAreaView style={styles.safeArea}> 
+              <TouchableOpacity style={styles.touchable} onPress={handleTap} activeOpacity={1}>
+                  {/* Only prompt text is needed over the background */}
+                  <Text style={styles.promptText}>Tap to continue</Text>
+              </TouchableOpacity>
+          </SafeAreaView>
+      </ImageBackground>
+    </View>
   );
 };
 
@@ -53,13 +55,13 @@ const styles = StyleSheet.create({
       alignItems: 'center',
   },
   promptText: {
-    fontSize: 16,
+    fontSize: 14, // smaller for more fit
     color: '#FFFFFF',
     backgroundColor: 'rgba(0,0,0,0.4)', 
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 15,
-    marginBottom: 60, 
+    marginBottom: 110, // even more bottom padding
     textAlign: 'center',
     overflow: 'hidden', 
   },

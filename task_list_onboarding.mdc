@@ -1,0 +1,117 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Zen Onboarding – Delta Tasks Only
+(Assumes repo state @ commit HEAD 2025‑05‑03)
+
+────────────────────────────────────────────────────
+1. SCREENS (create new or extend)
+────────────────────────────────────────────────────
+1.1 src/screens/PrologueScreen.tsx
+
+Static temple BG + text “As distractions spread, only ancient Focus Stones still glow.”
+
+Buttons: Begin ▶︎ | Sign‑In (nav → AuthScreen)
+
+1.2 src/screens/ZenniAppearance.tsx
+
+Re‑use assets/stone_idle.png → flash → show Zenni sprite
+
+One‑line dialog, CTA → FocusTutorial
+
+1.3 src/screens/StoneScarcityScreen.tsx
+
+Show 2 grey stone icons; if premium flag true → 4 gold icons
+
+Copy explains daily limit; CTA → AuthScreen
+
+1.4 src/screens/PremiumUpsellScreen.tsx
+
+Table Free vs Zenni+ (Daily Stones 2/4, Ads yes/no, Extra Glow pull yes)
+
+CTA: Start Trial | Maybe Later
+
+Hook into existing PremiumModal logic for payment flow
+
+1.5 src/screens/MiniZenniIntro.tsx ✅ (NEW)
+
+BG: Stylized meditation dojo
+
+Text: “This is your Mini-Zenni — a reflection of your Monkey Mind. You’ll calm it through Focus.”
+
+Optional: Show monkey silhouette flitting around chaotically → calms down
+
+CTA → MiniZenniSetup
+
+1.6 src/screens/NotificationPermission.tsx ✅ (NEW)
+
+Text: “Zenni can help you focus — just once a day.”
+
+Ask for notification permissions + preferred time picker
+
+CTA → StoneScarcityScreen
+
+1.7 src/screens/ZenniLabScreen.tsx ✅ (NEW)
+
+Zenni in a lab coat beside a chalkboard
+
+One-line stat: “Just 10 minutes of focused breathing can reduce stress by 44%.” (placeholder, verify citation)
+
+CTA → Next onboarding screen or skip if stat already shown
+
+────────────────────────────────────────────────────
+2. WIREFLOW CHANGES
+────────────────────────────────────────────────────
+Update stack order in AppNavigator.tsx:
+
+SplashScreen → PrologueScreen → ZenniAppearance → FocusTutorial → GlowCardReveal → MiniZenniIntro → MiniZenniSetup (with summon animation) → NotificationPermission → ZenniLabScreen → StoneScarcityScreen → AuthScreen → PremiumUpsellScreen → HomeScreen
+
+────────────────────────────────────────────────────
+3. STATE
+────────────────────────────────────────────────────
+Extend store/focusSlice.ts:
+
+stonesMax, stonesAvailable, lastRefillUTC
+
+isPremium, glowPullsUsed, miniZenniName
+
+✅ preferredFocusTime, hasNotificationPermission
+
+────────────────────────────────────────────────────
+4. GLOWCARD / ADS
+────────────────────────────────────────────────────
+4.1 GlowCardReveal.tsx
+
+If !isPremium && sessionIndex > 1 → call AdRewardPopup
+
+After ad success → set extraGlowAvailable = true
+
+4.2 ExtraGlowModal.tsx
+
+Trigger from GlowCardReveal when extraGlowAvailable
+
+Premium users: cost 50 ZenTokens
+
+Free: disabled
+
+────────────────────────────────────────────────────
+5. MINI‑ZENNI SUMMON ANIMATION
+────────────────────────────────────────────────────
+5.1 Add assets/mini_summon.json (Lottie swirl)
+5.2 Wrap MiniZenniSetup.tsx with AnimatePresence:
+
+Show swirl for 800 ms, then reveal form & base Mini-Zenni sprite
+
+────────────────────────────────────────────────────
+6. ANALYTICS
+────────────────────────────────────────────────────
+Emit events (Segment):
+
+tutorial_start, stone_success, glowcard_claim
+
+mini_zenni_named, auth_complete, premium_trial_start, ad_watch_complete
+
+
+✅ notification_permission_granted, preferred_focus_time_set, monkey_mind_intro_shown, lab_fact_viewed

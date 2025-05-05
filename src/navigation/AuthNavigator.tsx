@@ -2,14 +2,14 @@ import React, { useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import NameSelectionScreen from '../screens/onboarding/NameSelectionScreen';
-import ColorSelectionScreen from '../screens/onboarding/ColorSelectionScreen';
+import ColorSelectionScreen from '../screens/onboarding/.old_ColorSelectionScreen';
 import TraitSelectionScreen from '../screens/onboarding/TraitSelectionScreen';
-import GlowbagOfferScreen from '../screens/onboarding/GlowbagOfferScreen';
+import GlowbagOfferScreen from '../screens/onboarding/.old_GlowbagOfferScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
-import GlowbagOpeningScreen from '../screens/onboarding/GlowbagOpeningScreen';
+import GlowbagOpeningScreen from '../screens/onboarding/.old_GlowbagOpeningScreen';
 import { useMiniZenniStore } from '../store/miniZenniStore';
-import ScreenTimeQScreen from '../screens/onboarding/ScreenTimeQScreen';
-import TikTokQScreen from '../screens/onboarding/TikTokQScreen';
+import ScreenTimeQScreen from '../screens/onboarding/.old_ScreenTimeQScreen';
+import TikTokQScreen from '../screens/onboarding/.old_TikTokQScreen';
 
 export type AuthStackParamList = {
   Welcome: undefined;
