@@ -5,6 +5,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/SplashScreen';
 import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import IntroComic from '../screens/onboarding/IntroComic';
+// Import new comic screens
+import IntroComic2 from '../screens/onboarding/IntroComic2';
+import IntroComic3 from '../screens/onboarding/IntroComic3';
+import IntroComic4 from '../screens/onboarding/IntroComic4';
+import IntroComic5 from '../screens/onboarding/IntroComic5';
 import FocusStoneIntroScreen from '../screens/onboarding/FocusStoneIntroScreen';
 import SummonFocusStone from '../screens/onboarding/SummonFocusStone';
 import FocusStoneTutorialScreen from '../screens/onboarding/FocusStoneTutorialScreen';
@@ -24,6 +29,10 @@ export type NewOnboardingStackParamList = {
   OnboardingChoice: undefined;
   Welcome: undefined;
   IntroComic: undefined;
+  IntroComic2: undefined;
+  IntroComic3: undefined;
+  IntroComic4: undefined;
+  IntroComic5: undefined;
   FocusStoneIntro: undefined;
   SummonFocusStone: undefined;
   FocusStoneTutorial: undefined;
@@ -49,6 +58,10 @@ const NewOnboardingNavigator = () => {
       <OnboardingStack.Screen name="OnboardingChoice" component={OnboardingChoiceScreen} />
       <OnboardingStack.Screen name="Welcome" component={WelcomeScreen} />
       <OnboardingStack.Screen name="IntroComic" component={IntroComic} />
+      <OnboardingStack.Screen name="IntroComic2" component={IntroComic2} />
+      <OnboardingStack.Screen name="IntroComic3" component={IntroComic3} />
+      <OnboardingStack.Screen name="IntroComic4" component={IntroComic4} />
+      <OnboardingStack.Screen name="IntroComic5" component={IntroComic5} />
       <OnboardingStack.Screen name="FocusStoneIntro" component={FocusStoneIntroScreen} />
       <OnboardingStack.Screen name="SummonFocusStone" component={SummonFocusStone} />
       <OnboardingStack.Screen name="GlowcardReward" component={GlowcardReward} />

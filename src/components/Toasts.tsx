@@ -1,5 +1,6 @@
 import React from 'react';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+import { playSoundById } from '../services/audio';
 
 // Define a type for the variant config
 interface ToastVariantConfig {
@@ -35,6 +36,7 @@ export function showToast(
   variant: keyof typeof toastVariants, 
   overrides?: { text1?: string; text2?: string } // Optional overrides object
 ) {
+  playSoundById('alert');
   const variantConfig = toastVariants[variant];
   if (!variantConfig) return; // Handle case where variant doesn't exist
 

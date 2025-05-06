@@ -72,6 +72,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      set({ isLoading: false });
     } catch (error: any) {
       set({ 
         error: error.message || 'Error signing up', 
@@ -85,6 +86,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      set({ isLoading: false });
     } catch (error: any) {
       set({ 
         error: error.message || 'Error logging in', 

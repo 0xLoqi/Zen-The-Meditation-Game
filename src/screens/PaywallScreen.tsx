@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Image, Animated, Easing } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import * as RNIap from 'react-native-iap';
 import { useUserStore } from '../store/userStore';
+import { cosmeticImages, defaultImage } from '../components/Store/cosmeticImages';
+import cosmetics from '../../assets/data/cosmetics.json';
 
 const productIds = ['zen_premium_monthly', 'zen_premium_annual'];
 const ANNUAL_SKU = 'zen_premium_annual'; // Assuming trial converts to annual
@@ -100,8 +102,82 @@ const PaywallScreen = ({ navigation }: any) => {
     return <ActivityIndicator style={styles.loadingIndicator} size="large" color={ORANGE} />;
   }
 
+  // --- Marquee Component ---
+  const allCosmetics = cosmetics as any[];
+  function getMarqueeSet(excludeIds: string[] = []) {
+    let set = allCosmetics.filter((item) => item.rarity === 'legendary' && !excludeIds.includes(item.id));
+    if (set.length < 6) {
+      const epics = allCosmetics.filter((item) => item.rarity === 'epic' && !excludeIds.includes(item.id));
+      set = [...set, ...epics];
+    }
+    if (set.length < 6) {
+      const rares = allCosmetics.filter((item) => item.rarity === 'rare' && !excludeIds.includes(item.id));
+      set = [...set, ...rares];
+    }
+    if (set.length < 6) {
+      const commons = allCosmetics.filter((item) => item.rarity === 'common' && !excludeIds.includes(item.id));
+      set = [...set, ...commons];
+    }
+    return set.slice(0, 6);
+  }
+  const topMarqueeCosmetics = getMarqueeSet();
+  const bottomMarqueeCosmetics = getMarqueeSet(topMarqueeCosmetics.map(i => i.id));
+
+  const defaultSilhouette = require('../../assets/images/cosmetics/base/default_sillouhette.png');
+
+  const Marquee = ({ items, reverse = false }: { items: any[]; reverse?: boolean }) => {
+    const scrollAnim = useRef(new Animated.Value(0)).current;
+    const ITEM_SIZE = 100;
+    const GAP = 32;
+    const setWidth = (ITEM_SIZE + GAP) * items.length;
+
+    useEffect(() => {
+      let isMounted = true;
+      function start() {
+        scrollAnim.setValue(0);
+        Animated.timing(scrollAnim, {
+          toValue: reverse ? setWidth : -setWidth,
+          duration: 12000,
+          useNativeDriver: true,
+          easing: Easing.linear,
+        }).start(({ finished }) => {
+          if (finished && isMounted) start();
+        });
+      }
+      start();
+      return () => { isMounted = false; };
+    }, [setWidth, reverse]);
+
+    return (
+      <View style={styles.marqueeContainer}>
+        <Animated.View
+          style={{
+            flexDirection: 'row',
+            transform: [{ translateX: scrollAnim }],
+          }}
+        >
+          {[...items, ...items].map((item, idx) => (
+            <View key={idx} style={styles.marqueeItemWrap}>
+              <Image
+                source={defaultSilhouette}
+                style={styles.marqueeSilhouette}
+                resizeMode="contain"
+              />
+              <Image
+                source={cosmeticImages[item.image] || defaultImage}
+                style={styles.marqueeItem}
+                resizeMode="contain"
+              />
+            </View>
+          ))}
+        </Animated.View>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
+      <Marquee items={topMarqueeCosmetics} />
       <Video
         source={require('../../assets/images/backgrounds/animated_darkmode_bg.mp4')}
         style={StyleSheet.absoluteFill}
@@ -116,6 +192,7 @@ const PaywallScreen = ({ navigation }: any) => {
             <Text style={styles.subtitle}>Start your Zen Premium free trial:</Text>
             <View style={styles.features}>
               <Text style={styles.feature}>🚫 Ad-free experience</Text>
+              <Text style={styles.feature}>🪨 2x lives per day</Text>
               <Text style={styles.feature}>🎵 Premium profile soundscapes</Text>
               <Text style={styles.feature}>📽️ Animated backgrounds</Text>
               <Text style={styles.feature}>🌈 Legendary cosmetics</Text>
@@ -147,13 +224,7 @@ const PaywallScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
       </View>
-       <Animated.View style={[styles.mascotContainer, { transform: [{ translateY: floatAnim }] }]}>
-          <Image
-            source={require('../../assets/images/UI/premium_zenni.png')}
-            style={styles.mascotImage}
-            resizeMode="contain"
-          />
-       </Animated.View>
+      <Marquee items={bottomMarqueeCosmetics} reverse />
     </View>
   );
 };
@@ -250,17 +321,37 @@ const styles = StyleSheet.create({
       fontSize: 16,
       opacity: 0.9,
   },
-   mascotContainer: {
-     position: 'absolute',
-     bottom: 20,
-     alignSelf: 'center',
-     width: 150,
-     height: 150,
-   },
-    mascotImage: {
-     width: '100%',
-     height: '100%',
-   },
+  marqueeContainer: {
+    width: '100%',
+    height: 120,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
+    marginBottom: 16,
+    marginTop: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  marqueeItemWrap: {
+    width: 100,
+    height: 100,
+    marginRight: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  marqueeSilhouette: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    opacity: 0.25,
+  },
+  marqueeItem: {
+    width: 70,
+    height: 70,
+    borderRadius: 12,
+    zIndex: 1,
+  },
 });
 
 export default PaywallScreen; 

@@ -1,0 +1,43 @@
+export const audioImports: { [id: string]: any } = {
+  // Ambient
+  horror2: require('../../assets/audio/ambient/horror2.wav'),
+  futuree: require('../../assets/audio/ambient/futuree.wav'),
+  horror: require('../../assets/audio/ambient/horror.wav'),
+  light_rain: require('../../assets/audio/ambient/light_rain.wav'),
+  your_mission: require('../../assets/audio/ambient/your_mission.wav'),
+  park_day: require('../../assets/audio/ambient/park_day.wav'),
+  soothing: require('../../assets/audio/ambient/soothing.mp3'),
+  horro3: require('../../assets/audio/ambient/horro3.wav'),
+  the_office: require('../../assets/audio/ambient/the_office.wav'),
+  beach_day: require('../../assets/audio/ambient/beach_day.wav'),
+  birds: require('../../assets/audio/ambient/birds.wav'),
+  silence: require('../../assets/audio/ambient/silence.mp3'),
+  waves: require('../../assets/audio/ambient/waves.mp3'),
+  rain: require('../../assets/audio/ambient/rain.mp3'),
+
+  // Music
+  ate_bit: require('../../assets/audio/music/ate-bit.wav'),
+  acutal_techno: require('../../assets/audio/music/acutal_techno.wav'),
+  sapced_outer: require('../../assets/audio/music/sapced_outer.wav'),
+  techo_tune: require('../../assets/audio/music/techo_tune.wav'),
+  wonky_tune: require('../../assets/audio/music/wonky_tune.wav'),
+
+  // UI
+  back_button: require('../../assets/audio/UI/back_button.wav'),
+  alert: require('../../assets/audio/UI/alert.wav'),
+  settings_open: require('../../assets/audio/UI/settings_open.wav'),
+  select_3: require('../../assets/audio/UI/select_3.wav'),
+  select_2: require('../../assets/audio/UI/select_2.wav'),
+  settings_menu: require('../../assets/audio/UI/settings_menu.wav'),
+  select: require('../../assets/audio/UI/select.wav'),
+  generic_win: require('../../assets/audio/UI/generic_win.wav'),
+  coin_win: require('../../assets/audio/UI/coin-win.wav'),
+  money_bag_drop: require('../../assets/audio/UI/money_bag_drop.wav'),
+  coin: require('../../assets/audio/UI/coin.wav'),
+  select_drip: require('../../assets/audio/UI/select_drip.wav'),
+  zen_tablet_break: require('../../assets/audio/UI/zen_tablet_break.wav'),
+  loading_screen: require('../../assets/audio/UI/loading_screen.wav'),
+  shop_music: require('../../assets/audio/UI/shop_music.wav'),
+  level_up: require('../../assets/audio/UI/level_up.wav'),
+  pop: require('../../assets/audio/UI/pop.wav'),
+}; 

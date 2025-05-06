@@ -9,6 +9,7 @@ import {
   Platform,
   Text,
   LogBox,
+  Button,
 } from 'react-native';
 import { COLORS, FONTS, SPACING } from './constants/theme';
 import * as Animatable from 'react-native-animatable';
@@ -23,6 +24,8 @@ import { grant } from './services/CosmeticsService';
 import { handleInitialLink } from './services/referral';
 import { ToastProvider, showToast } from './components/Toasts';
 import { useUserStore } from './store/userStore';
+import { playSoundById } from './services/audio';
+import { Audio } from 'expo-av';
 
 // Suppress flexWrap warning for VirtualizedList/FlatList
 LogBox.ignoreLogs([
@@ -145,6 +148,22 @@ export default function App() {
     detectLowPowerMode();
   }, [detectLowPowerMode]);
 
+  useEffect(() => {
+    // Force lowPowerMode off for testing
+    const { setState } = require('./store').useGameStore;
+    setState({ lowPowerMode: false });
+  }, []);
+
+  useEffect(() => {
+    // iOS: allow playback in silent mode
+    Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+  }, []);
+
+  useEffect(() => {
+    // Play test audio on mount
+    playSoundById('rain'); // or any valid audio ID
+  }, []);
+
   if (error) {
     return (
       <View style={styles.errorContainer}>
@@ -159,6 +178,7 @@ export default function App() {
     <ErrorBoundary>
       <NavigationContainer>
         <RootNavigator />
+        <Button title="Play Test Audio" onPress={() => playSoundById('rain')} />
         <StatusBar style="auto" />
       </NavigationContainer>
       <ToastProvider />

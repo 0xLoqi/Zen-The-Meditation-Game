@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
+import { playSoundById } from '../../services/audio';
 
 type NameEntryScreenNavigationProp = NativeStackNavigationProp<any>;
 
@@ -25,6 +26,10 @@ const NameEntryScreen = () => {
 
     console.log(`[NameEntryScreen] Navigating to ReminderPrompt with name: ${trimmedName}`);
     navigation.navigate('ReminderPrompt', { username: trimmedName });
+
+    if (success) {
+      playSoundById('generic_win');
+    }
   };
 
   return (

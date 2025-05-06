@@ -10,27 +10,33 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import ProgressDots from '../../components/ProgressDots';
+import { NewOnboardingStackParamList } from '../../navigation/NewOnboardingNavigator';
 
 // Define navigation prop type
-type IntroComicNavigationProp = StackNavigationProp<any, 'IntroComic'>; 
+type IntroComicNavigationProp = StackNavigationProp<NewOnboardingStackParamList, 'IntroComic'>; 
+
+// Define total steps for this sequence
+const TOTAL_LORE_STEPS = 5; 
 
 const IntroComic = () => {
   const navigation = useNavigation<IntroComicNavigationProp>();
+  const currentStep = 1; // This is the first step
 
   const handleTap = () => {
-    navigation.navigate('SummonFocusStone'); // Navigate to SummonFocusStone
+    navigation.navigate('IntroComic2'); // Navigate to the next lore screen
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000000' }}>
+      <ProgressDots step={currentStep} total={TOTAL_LORE_STEPS} />
       <ImageBackground
-        source={require('../../../assets/images/backgrounds/onboarding/dimming.png')}
-        style={[styles.background, { transform: [{ scale: 1.25 }] }]}
+        source={require('../../../assets/images/backgrounds/onboarding/lore1.png')}
+        style={styles.backgroundImage}
         resizeMode="contain"
       >
           <SafeAreaView style={styles.safeArea}> 
               <TouchableOpacity style={styles.touchable} onPress={handleTap} activeOpacity={1}>
-                  {/* Only prompt text is needed over the background */}
                   <Text style={styles.promptText}>Tap to continue</Text>
               </TouchableOpacity>
           </SafeAreaView>
@@ -40,10 +46,11 @@ const IntroComic = () => {
 };
 
 const styles = StyleSheet.create({
-  background: {
+  backgroundImage: {
     flex: 1,
-    width: '100%', // Ensure it covers width
-    height: '100%', // Ensure it covers height
+    width: '100%',
+    aspectRatio: 9 / 16,
+    alignSelf: 'center',
   },
   safeArea: {
       flex: 1,
@@ -55,15 +62,15 @@ const styles = StyleSheet.create({
       alignItems: 'center',
   },
   promptText: {
-    fontSize: 14, // smaller for more fit
+    fontSize: 14,
     color: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0.4)', 
+    backgroundColor: 'rgba(0,0,0,0.4)',
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 15,
-    marginBottom: 110, // even more bottom padding
+    marginBottom: 40,
     textAlign: 'center',
-    overflow: 'hidden', 
+    overflow: 'hidden',
   },
 });
 

@@ -54,10 +54,12 @@ const AuthLoadingScreen = () => {
 
     // Determine the target route based on current state
     let targetRoute: keyof RootStackParamList | null = null;
-    if (isAuthenticated && userData?.username) {
+    // If authenticated and user data has been successfully fetched (even if incomplete),
+    // navigate to the main app. Handle missing profile info within MainApp/ProfileScreen.
+    if (isAuthenticated && userData) { 
         targetRoute = 'MainApp';
     } else {
-        // Covers both !isAuthenticated and (isAuthenticated && !userData.username)
+        // Covers !isAuthenticated or cases where userData fetch failed (userData is null)
         targetRoute = 'Onboarding';
     }
     console.log(`[AuthLoadingScreen] Current state suggests route: ${targetRoute}`);

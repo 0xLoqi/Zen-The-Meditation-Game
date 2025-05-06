@@ -22,12 +22,14 @@ import * as WebBrowser from 'expo-web-browser';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
+import { playSoundById } from '../../services/audio';
 
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 import FloatingLeaves from '../../components/FloatingLeaves';
 import MiniZenni from '../../components/MiniZenni';
+import PatternBackground from '../../components/PatternBackground';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -39,8 +41,8 @@ WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   // State
-  const [email, setEmail] = useState('admin@z.com');
-  const [password, setPassword] = useState('adminn');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // Animation refs
@@ -67,10 +69,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   // Google Auth Request
   const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: '<YOUR_EXPO_CLIENT_ID>',
+    clientId: '<YOUR_WEB_CLIENT_ID>',
     iosClientId: '<YOUR_IOS_CLIENT_ID>',
     androidClientId: '<YOUR_ANDROID_CLIENT_ID>',
-    webClientId: '<YOUR_WEB_CLIENT_ID>',
   });
 
   useEffect(() => {
@@ -128,12 +129,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   // Handle login button press
   const handleLogin = async () => {
     if (!email || !password) {
+      playSoundById('alert');
       return;
     }
-    
     try {
+      playSoundById('select');
       await login(email, password);
     } catch (error) {
+      playSoundById('alert');
       console.log('Login error:', error);
     }
   };
@@ -153,128 +156,116 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <FloatingLeaves count={6} style={styles.leavesBackground} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+      <PatternBackground style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidView}
         >
-          <Animatable.View 
-            ref={logoRef}
-            animation="fadeIn"
-            duration={800}
-            delay={300}
-            useNativeDriver={Platform.OS !== 'web'}
-            style={styles.header}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
           >
-            <Animated.View style={{ transform: [{ translateY }] }}>
-              <MiniZenni 
-                outfitId="default" 
-                size="large" 
-                animationState="idle"
-                autoPlay 
-                loop
+            <Animatable.View 
+              ref={logoRef}
+              animation="fadeIn"
+              duration={800}
+              delay={300}
+              useNativeDriver={Platform.OS !== 'web'}
+              style={styles.header}
+            >
+              <Animated.View style={{ transform: [{ translateY }] }}>
+                <MiniZenni 
+                  outfitId="default" 
+                  size="large" 
+                  animationState="idle"
+                  autoPlay 
+                  loop
+                />
+              </Animated.View>
+            </Animatable.View>
+
+            <Animatable.View
+              ref={titleRef}
+              animation="fadeIn"
+              duration={800}
+              delay={500}
+              useNativeDriver={Platform.OS !== 'web'}
+              style={styles.titleContainer}
+            >
+              <Text style={styles.title}>Welcome Back</Text>
+              <Text style={styles.subtitle}>Continue your mindfulness journey</Text>
+            </Animatable.View>
+
+            <Animatable.View
+              ref={formRef}
+              animation="fadeInUp"
+              duration={800}
+              delay={700}
+              useNativeDriver={Platform.OS !== 'web'}
+              style={styles.formContainer}
+            >
+              {/* Google Sign-In Button */}
+              <GoogleSignInButton
+                onPress={() => promptAsync()}
+                isLoading={googleAuthLoading}
+                style={styles.googleSignInButton}
               />
-            </Animated.View>
-          </Animatable.View>
-
-          <Animatable.View
-            ref={titleRef}
-            animation="fadeIn"
-            duration={800}
-            delay={500}
-            useNativeDriver={Platform.OS !== 'web'}
-            style={styles.titleContainer}
-          >
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Continue your mindfulness journey</Text>
-          </Animatable.View>
-
-          <Animatable.View
-            ref={formRef}
-            animation="fadeInUp"
-            duration={800}
-            delay={700}
-            useNativeDriver={Platform.OS !== 'web'}
-            style={styles.formContainer}
-          >
-            {/* Google Sign-In Button */}
-            <GoogleSignInButton
-              onPress={() => promptAsync()}
-              isLoading={googleAuthLoading}
-              style={styles.googleSignInButton}
-            />
-            {/* Apple Sign-In Button is hidden until developer account is ready */}
-            {/* {Platform.OS === 'ios' && (
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={5}
-                style={styles.appleSignInButton}
-                onPress={handleAppleSignIn}
+              {/* Apple Sign-In Button is hidden until developer account is ready */}
+              {/* {Platform.OS === 'ios' && (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={5}
+                  style={styles.appleSignInButton}
+                  onPress={handleAppleSignIn}
+                />
+              )} */}
+              {/* Divider */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.divider} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.divider} />
+              </View>
+              {/* Email/Password Form */}
+              <Input
+                label="Email"
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                containerStyle={styles.inputContainer}
               />
-            )} */}
-            {/* Divider */}
-            <View style={styles.dividerContainer}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.divider} />
-            </View>
-            {/* Email/Password Form */}
-            <Input
-              label="Email"
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              leftIcon={
-                <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
-              }
-              containerStyle={styles.inputContainer}
-            />
 
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              leftIcon={
-                <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} />
-              }
-              rightIcon={
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={COLORS.neutralDark}
-                  />
-                </TouchableOpacity>
-              }
-              containerStyle={styles.inputContainer}
-            />
+              <Input
+                label="Password"
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                containerStyle={styles.inputContainer}
+              />
 
-            <TouchableOpacity style={styles.forgotPasswordContainer}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.forgotPasswordContainer}>
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
+              {error && <Text style={styles.errorText}>{error}</Text>}
+              {googleAuthError && <Text style={styles.errorText}>Google Sign-In Error: {googleAuthError}</Text>}
 
-            <Button
-              title="Login"
-              onPress={handleLogin}
-              isLoading={isLoading}
-              disabled={isLoading || !email || !password}
-              style={styles.loginButton}
-              size="large"
-              textStyle={{ fontSize: 16, fontWeight: '600' }}
-            />
-          </Animatable.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+              <Button
+                title="Login"
+                onPress={handleLogin}
+                isLoading={isLoading}
+                disabled={isLoading || !email || !password}
+                style={styles.loginButton}
+                size="large"
+                textStyle={{ fontSize: 16, fontWeight: '600' }}
+              />
+            </Animatable.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </PatternBackground>
     </SafeAreaView>
   );
 };
@@ -282,7 +273,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   keyboardAvoidView: {
     flex: 1,
@@ -290,12 +280,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: SPACING.large,
-    paddingVertical: SPACING.large,
+    paddingVertical: SPACING.medium,
   },
   header: {
     alignItems: 'center',
-    marginTop: SPACING.xxlarge,
-    marginBottom: SPACING.xxlarge,
+    marginTop: SPACING.large,
+    marginBottom: SPACING.medium,
   },
   leavesBackground: {
     position: 'absolute',
@@ -306,7 +296,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-    marginBottom: SPACING.xxlarge,
+    marginBottom: SPACING.large,
   },
   title: {
     fontSize: 32,
@@ -322,11 +312,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   inputContainer: {
-    marginBottom: SPACING.medium,
+    marginBottom: SPACING.small,
   },
   forgotPasswordContainer: {
     alignItems: 'flex-end',
-    marginBottom: SPACING.large,
+    marginBottom: SPACING.medium,
   },
   forgotPasswordText: {
     fontSize: 14,
@@ -340,12 +330,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.medium,
   },
   loginButton: {
-    marginTop: SPACING.large,
+    marginTop: SPACING.medium,
     height: 48,
     paddingVertical: SPACING.small,
   },
   googleSignInButton: {
-    marginVertical: SPACING.medium,
+    marginVertical: SPACING.small,
   },
   appleSignInButton: {
     width: '100%',
@@ -356,7 +346,7 @@ const styles = StyleSheet.create({
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: SPACING.small,
   },
   divider: {
     flex: 1,

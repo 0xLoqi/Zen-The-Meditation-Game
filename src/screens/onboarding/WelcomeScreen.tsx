@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { playSoundById, stopSound } from '../../services/audio';
 
 // Define navigation prop type
 type WelcomeScreenNavigationProp = StackNavigationProp<any, 'Welcome'>; // Use 'Welcome' or your screen name
@@ -23,6 +24,11 @@ const WelcomeScreen = () => {
     navigation.navigate('IntroComic'); // Navigate to IntroComic
   };
   
+  useEffect(() => {
+    playSoundById('soothing', { isLooping: true });
+    return () => { stopSound(); };
+  }, []);
+
   return (
     <ImageBackground
       source={require('../../../assets/images/backgrounds/onboarding/welcome_im_zenni.png')} // Corrected relative path

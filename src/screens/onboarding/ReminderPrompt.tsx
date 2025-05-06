@@ -1,32 +1,45 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import ProgressDots from '../../components/ProgressDots';
+import { COLORS, SIZES, SPACING, FONTS, SHADOWS } from '../../constants/theme';
 // import * as Notifications from 'expo-notifications'; // Uncomment if using expo-notifications
 
 const ReminderPrompt = ({ navigation, route }: any) => {
   const { step = 7, total = 9 } = route.params || {};
-  // Get username from route params, default to empty string if not passed
-  const username = route.params?.username || ''; 
+  const username = route.params?.username || '';
   const [granted, setGranted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleAllow = async () => {
+  // Logic to request permissions (currently simulated)
+  const requestPermissions = async () => {
+    if (loading) return; // Prevent double taps
     setLoading(true);
+    // --- Replace this timeout with actual permission request --- 
     // const { status } = await Notifications.requestPermissionsAsync();
     // if (status === 'granted') {
-    //   // Schedule first daily reminder here
     //   setGranted(true);
+    // } else {
+    //   // Handle permission denied case if needed
     // }
-    setTimeout(() => {
-      setGranted(true);
-      setLoading(false);
-    }, 1000); // Placeholder for async permission
+    // --- End Placeholder ---
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate async request
+    setGranted(true); // Simulate success
+    setLoading(false);
   };
 
-  const handleContinue = () => {
-    // Pass username along to the next screen (Signup)
-    navigation.navigate('Signup', { ...route.params, username: username });
+  // Single handler for the button press
+  const handlePress = () => {
+    if (granted) {
+      // If already granted, navigate
+      navigation.navigate('Signup', { ...route.params, username: username });
+    } else {
+      // If not granted, request permissions
+      requestPermissions();
+    }
   };
+
+  // Determine button text based on state
+  const buttonText = loading ? 'Requesting...' : granted ? 'Continue' : 'Allow Reminders';
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000000' }}>
@@ -37,24 +50,15 @@ const ReminderPrompt = ({ navigation, route }: any) => {
       >
         <ProgressDots step={step} total={total} />
         <View style={styles.centeredOuter}>
-          <View style={styles.card}>
-            <Text style={styles.title}>Enable daily reminders?</Text>
-            <Text style={styles.description}>Stay on track with gentle daily notifications.</Text>
+            {/* Ensure no stray text/whitespace here */}
             <TouchableOpacity
-              style={[styles.button, granted && styles.buttonDisabled]}
-              onPress={handleAllow}
-              disabled={granted || loading}
+              style={styles.button}
+              onPress={handlePress}
+              disabled={loading}
             >
-              <Text style={styles.buttonText}>{loading ? 'Requesting...' : granted ? 'Allowed' : 'Allow'}</Text>
+              <Text style={styles.buttonText}>{buttonText}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, !granted && styles.buttonDisabled]}
-              onPress={handleContinue}
-              disabled={!granted}
-            >
-              <Text style={styles.buttonText}>Continue</Text>
-            </TouchableOpacity>
-          </View>
+             {/* Ensure no stray text/whitespace here */}
         </View>
       </ImageBackground>
     </View>
@@ -70,49 +74,27 @@ const styles = StyleSheet.create({
   },
   centeredOuter: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-  },
-  card: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 22,
-    marginBottom: 16,
-    color: '#fff',
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 16,
-    marginBottom: 32,
-    textAlign: 'center',
-    color: '#fff',
+    paddingBottom: 75,
+    paddingHorizontal: SPACING.large,
   },
   button: {
-    backgroundColor: '#6C63FF',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    marginTop: 16,
-    width: 200,
+    backgroundColor: COLORS.primaryDark,
+    borderRadius: SIZES.radiusLarge,
+    paddingVertical: SPACING.medium,
+    paddingHorizontal: SPACING.xl,
+    width: '85%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
+    ...SHADOWS.medium,
+    elevation: 6,
   },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
+  buttonText: {
+    color: COLORS.white,
+    fontFamily: FONTS.primary,
+    fontWeight: FONTS.bold as '700',
+    fontSize: FONTS.large,
+  },
 });
 
 export default ReminderPrompt; 

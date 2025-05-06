@@ -1,18 +1,27 @@
 import { Audio } from 'expo-av';
+import { audioManifest, AudioCategory, AudioFile } from '../constants/audioManifest';
+import { audioImports } from '../constants/audioImports';
 
-const SOUND_FILES = {
-  rain: require('../../assets/audio/ambient/rain.mp3'),
-  waves: require('../../assets/audio/ambient/waves.mp3'),
-  silence: null, // Special case: no sound
-};
+// Helper: get audio file by id
+export function getAudioFileById(id: string): AudioFile | undefined {
+  return audioManifest.find(f => f.id === id);
+}
+
+// Helper: get all audio files by category
+export function getAudioFilesByCategory(category: AudioCategory): AudioFile[] {
+  return audioManifest.filter(f => f.category === category);
+}
 
 let currentSound: Audio.Sound | null = null;
 let currentId: string | null = null;
 
-export async function playAmbient(id: 'rain' | 'waves' | 'silence', crossfade = true) {
-  if (currentId === id) return; // Already playing
+// Play any sound by id (ambient/music/UI)
+export async function playSoundById(id: string, options: { isLooping?: boolean, crossfade?: boolean } = {}) {
+  const file = getAudioFileById(id);
+  if (!file || !file.path) return;
+  if (currentId === id && options.isLooping) return; // Already playing
   if (currentSound) {
-    if (crossfade) {
+    if (options.crossfade) {
       await currentSound.setStatusAsync({ volume: 0 });
       await currentSound.stopAsync();
       await currentSound.unloadAsync();
@@ -23,11 +32,29 @@ export async function playAmbient(id: 'rain' | 'waves' | 'silence', crossfade = 
     currentSound = null;
     currentId = null;
   }
+  // Silence is a special case
   if (id === 'silence') return;
-  const { sound } = await Audio.Sound.createAsync(SOUND_FILES[id], { isLooping: true, volume: 1 });
+  // Replace dynamic require with static lookup
+  const source = audioImports[id];
+  if (!source) return;
+  const { sound } = await Audio.Sound.createAsync(source, { isLooping: !!options.isLooping, volume: 1 });
   currentSound = sound;
   currentId = id;
   await sound.playAsync();
+}
+
+export async function stopSound() {
+  if (currentSound) {
+    await currentSound.stopAsync();
+    await currentSound.unloadAsync();
+    currentSound = null;
+    currentId = null;
+  }
+}
+
+// For backwards compatibility, keep playAmbient as a wrapper
+export async function playAmbient(id: string, crossfade = true) {
+  return playSoundById(id, { isLooping: true, crossfade });
 }
 
 export async function stopAmbient() {
