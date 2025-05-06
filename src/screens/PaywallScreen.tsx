@@ -156,7 +156,7 @@ const PaywallScreen = ({ navigation }: any) => {
             transform: [{ translateX: scrollAnim }],
           }}
         >
-          {[...items, ...items].map((item, idx) => (
+          {[...items, ...items, ...items].map((item, idx) => (
             <View key={idx} style={styles.marqueeItemWrap}>
               <Image
                 source={defaultSilhouette}
