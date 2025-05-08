@@ -14,6 +14,7 @@ export default {
   owner: "wilby-org",
   name: "Zen",
   slug: "zen-meditation-app",
+  scheme: "com.zenmeditation.app",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/icon.png",

@@ -178,7 +178,6 @@ export default function App() {
     <ErrorBoundary>
       <NavigationContainer>
         <RootNavigator />
-        <Button title="Play Test Audio" onPress={() => playSoundById('rain')} />
         <StatusBar style="auto" />
       </NavigationContainer>
       <ToastProvider />

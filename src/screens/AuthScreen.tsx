@@ -56,6 +56,12 @@ const AuthScreen = () => {
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS;
   const clientId = Platform.OS === 'android' ? androidClientId : iosClientId;
 
+  // ---- START DEBUG LOG ----
+  console.log("AuthScreen: Android Client ID:", androidClientId);
+  console.log("AuthScreen: iOS Client ID:", iosClientId);
+  console.log("AuthScreen: Selected Client ID for Google Sign-In:", clientId);
+  // ---- END DEBUG LOG ----
+
   // Check if Client ID is configured for the current platform
   const isGoogleSignInConfigured = !!clientId;
 

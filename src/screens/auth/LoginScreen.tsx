@@ -18,6 +18,7 @@ import * as Animatable from 'react-native-animatable';
 import AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
@@ -68,19 +69,78 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Google Auth Request
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: '<YOUR_WEB_CLIENT_ID>',
-    iosClientId: '<YOUR_IOS_CLIENT_ID>',
-    androidClientId: '<YOUR_ANDROID_CLIENT_ID>',
+  // Load client IDs from environment variables
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID; // Use the general web client ID
+  const iosClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS;
+  const androidClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID;
+
+  // Log the raw environment variable values
+  console.log("LoginScreen: Raw env EXPO_PUBLIC_GOOGLE_CLIENT_ID (for web):", webClientId);
+  console.log("LoginScreen: Raw env EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS:", iosClientIdEnv);
+  console.log("LoginScreen: Raw env EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID:", androidClientIdEnv);
+
+  // --- MODIFICATION: Revert to native redirect URI and native Client ID for native platforms ---
+  let redirectUri;
+  let effectiveClientId;
+
+  if (Platform.OS === 'web') {
+    redirectUri = AuthSession.makeRedirectUri({
+      preferLocalhost: true, // Required for web to correctly generate http://localhost... 
+    });
+    effectiveClientId = webClientId; 
+  } else {
+    // For native, use the app scheme and a path. This should match your app.config.js scheme.
+    // Expo's makeRedirectUri will use the scheme from app.config.js by default for native.
+    redirectUri = AuthSession.makeRedirectUri({
+        path: 'oauthredirect', // Ensure a path component
+        // scheme: 'com.zenmeditation.app' // Already in app.config.js
+    });
+    effectiveClientId = androidClientIdEnv; // Use Android Client ID on Android
+    if (Platform.OS === 'ios') {
+        effectiveClientId = iosClientIdEnv; // Use iOS Client ID on iOS (if defined)
+    }
+  }
+  console.log("LoginScreen: Determined redirectUri for platform:", Platform.OS, redirectUri);
+  console.log("LoginScreen: Effective Client ID for Google request for platform:", Platform.OS, effectiveClientId);
+
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: effectiveClientId,          // This will be the native ID on native platforms
+    iosClientId: iosClientIdEnv,          // Still pass for consistency, hook might use it
+    androidClientId: androidClientIdEnv,    // Still pass for consistency, hook might use it
+    redirectUri: redirectUri, 
   });
+  // --- END MODIFICATION ---
+
+  // Log the effective clientId being used in the request URL (dynamically chosen by the library)
+  useEffect(() => {
+    if (request) {
+      // The request.url will contain the client_id that is actually being sent to Google.
+      // This is a good way to verify which ID is active for the current platform.
+      console.log("LoginScreen: Auth Request URL (check client_id parameter):", request.url);
+    }
+  }, [request]);
 
   useEffect(() => {
+    // ---- MODIFIED FOR MORE LOGGING ----
+    console.log("LoginScreen: Google Response received:", JSON.stringify(response, null, 2)); // Log the full response
+
     if (response?.type === 'success') {
       const { id_token } = response.params;
+      console.log("LoginScreen: Google Sign-In Success, id_token present:", !!id_token);
       if (id_token) {
         firebaseSignInWithGoogle(id_token);
+      } else {
+        console.error("LoginScreen: Google Sign-In Success, but id_token is missing in response.params", response.params);
       }
+    } else if (response?.type === 'error') {
+      console.error("LoginScreen: Google Sign-In Response Error:", response.error);
+    } else if (response?.type === 'dismiss') {
+      console.log("LoginScreen: Google Sign-In Dismissed by user.");
+    } else if (response) {
+      // Catch any other response types or states
+      console.log("LoginScreen: Google Sign-In Response (unhandled type):", response.type, response);
     }
+    // ---- END MODIFICATION ----
   }, [response]);
 
   // Set up floating animation

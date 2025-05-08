@@ -36,6 +36,7 @@ import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
 import Sparkle from '../../components/Sparkle';
 import FloatyAnimation from '../../components/FloatyAnimation';
+import { playSoundById } from '../../services/audio';
 
 // Register custom animations
 Animatable.initializeRegistryWithDefinitions({
@@ -214,7 +215,7 @@ const HomeScreen = () => {
           <View style={[styles.stickyProfileCardContainer, { paddingTop: insets.top }]}>
             <View style={styles.profileCard}>
               <View style={styles.headerButtons}>
-                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Store')} accessibilityLabel="Store" accessible>
+                <TouchableOpacity style={styles.iconButton} onPress={() => { playSoundById('select_3'); navigation.navigate('Store'); }} accessibilityLabel="Store" accessible>
                   <View style={{ position: 'relative', justifyContent: 'center', alignItems: 'center' }}>
                     <MaterialCommunityIcons name="store" size={31} color={COLORS.primary} />
                     {/* Notification Dot */}
@@ -232,7 +233,7 @@ const HomeScreen = () => {
                     }} />
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')} accessibilityLabel="Settings" accessible>
+                <TouchableOpacity style={styles.iconButton} onPress={() => { playSoundById('settings_open'); playSoundById('select_3'); navigation.navigate('Settings'); }} accessibilityLabel="Settings" accessible>
                   <Ionicons name="settings-outline" size={24} color={COLORS.primary} />
                 </TouchableOpacity>
               </View>
@@ -303,7 +304,7 @@ const HomeScreen = () => {
             >
             <TouchableOpacity 
               style={styles.meditateButton}
-              onPress={handleMeditatePress}
+              onPress={() => { playSoundById('select_3'); handleMeditatePress(); }}
               activeOpacity={0.8}
             >
                 <LinearGradient
