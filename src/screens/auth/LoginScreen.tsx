@@ -61,6 +61,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     firebaseSignInWithGoogle
   } = useAuthStore();
 
+  // ADD THIS useEffect to log the error from the store
+  useEffect(() => {
+    console.log("LoginScreen: authStore error state changed to:", error);
+  }, [error]);
+  // END ADDITION
+
   // Animation state
   const floatAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;

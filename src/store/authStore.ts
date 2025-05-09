@@ -52,12 +52,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           const isNonFirebaseAuthenticated = false; // Assume false initially for non-firebase users on startup
 
           console.log('[checkAuth] No Firebase user. AsyncStorage check:', { storedUserId, authType, isNonFirebaseAuthenticated });
-          set({
+          set(state => ({
+            ...state,
             user: null,
-            isAuthenticated: isNonFirebaseAuthenticated, // Will now be false here
+            isAuthenticated: isNonFirebaseAuthenticated,
             isLoading: false,
-            error: null
-          });
+          }));
         } catch (e) {
           console.error("[checkAuth] AsyncStorage error when checking non-Firebase auth:", e);
           set({ user: null, isAuthenticated: false, isLoading: false, error: 'Failed to check session' });
