@@ -15,9 +15,9 @@
   },
   {
     "id": "daily_checkin_end",
-    "name": "Final Reflection",
-    "description": "Reflect after your meditation.",
+    "name": "Share the Glow",
+    "description": "Give 5 likes after completing your daily focus session.",
     "icon": "quest_checkin_end.png",
-    "reward": "+10 Tokens"
+    "reward": "+5 Tokens"
   }
 ] 

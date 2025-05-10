@@ -25,6 +25,7 @@ import * as Animatable from 'react-native-animatable';
 import MoodScale from '../../components/MoodScale';
 import MiniZenni from '../../components/MiniZenni';
 import { Animated, Easing } from 'react-native';
+import { playSoundById } from '../../services/audio';
 
 // Strong, universal, curiosity-driven hooks
 const PLACEHOLDER_MESSAGES = [
@@ -134,6 +135,7 @@ const MeditationSelectionScreen = () => {
   // Start meditation session
   const startMeditation = () => {
     if (selectedDuration) {
+      playSoundById('select_2');
       // Complete first reflection quest when beginning meditation
       completeQuest('daily_checkin_start');
       // Use 'focus' as default type if none selected
@@ -283,7 +285,7 @@ const MeditationSelectionScreen = () => {
         {/* Sticky Start Button */}
         <View style={styles.stickyStartButtonContainer}>
           <Button
-            title={selectedDuration ? `Begin ${selectedDuration} min Meditation` : 'Begin Meditation'}
+            title={selectedDuration ? `Begin ${selectedDuration} min Session` : 'Begin Session'}
             onPress={startMeditation}
             disabled={!selectedDuration}
             style={styles.startButton}

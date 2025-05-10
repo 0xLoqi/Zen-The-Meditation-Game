@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import { COLORS, FONTS, SPACING, SIZES, SHADOWS } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 import * as Haptics from 'expo-haptics';
+import { playSoundById, stopSound } from '../../services/audio';
 
 const settingsBg = require('../../../assets/images/backgrounds/settings_bg.png');
 
@@ -89,13 +90,18 @@ const SettingsScreen = () => {
     </View>
   );
 
+  useEffect(() => {
+    playSoundById('settings_menu', { isLooping: true });
+    return () => { stopSound(); };
+  }, []);
+
   return (
     <ImageBackground source={settingsBg} style={{ flex: 1 }} resizeMode="cover">
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => { playSoundById('back_button'); navigation.goBack(); }}
           >
             <Ionicons name="chevron-back" size={28} color={COLORS.neutralDark} />
           </TouchableOpacity>

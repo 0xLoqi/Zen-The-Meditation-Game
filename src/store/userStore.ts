@@ -5,6 +5,8 @@ import * as Animatable from 'react-native-animatable';
 import { grant } from '../services/CosmeticsService';
 import { useAuthStore } from './authStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setUserData } from '../firebase/user';
+import { useGameStore } from './index';
 
 interface UserState {
   userData: User | null;
@@ -29,7 +31,11 @@ interface UserState {
   submitDailyCheckIn: (rating: number, reflection?: string) => Promise<void>;
   equipOutfit: (outfitId: OutfitId) => Promise<void>;
   getReferralCode: () => Promise<void>;
+  updateUserData: (dataToUpdate: Partial<User>) => Promise<void>;
+  clearUserData: () => void;
 }
+
+let isFetchingUserData = false;
 
 export const useUserStore = create<UserState>((set, get) => ({
   userData: null,
@@ -53,18 +59,46 @@ export const useUserStore = create<UserState>((set, get) => ({
   getUserData: async () => {
     try {
       set({ isLoadingUser: true, userError: null });
-      const { user } = useAuthStore.getState();
-      let userId = user?.uid;
-      let userEmail = user?.email ?? undefined;
-      if (!userId) {
+      const auth = useAuthStore.getState(); // Get the whole auth store state
+      const firebaseUser = auth.user;      // Firebase auth user from the store
+
+      let userId = firebaseUser?.uid;
+      let userEmail = firebaseUser?.email ?? undefined;
+
+      // Only try AsyncStorage if there's no Firebase user AND auth isn't currently loading.
+      // This prevents fetching a guest ID if a Firebase login is in progress.
+      if (!userId && !auth.isLoading) {
+        console.log('[userStore.getUserData] No Firebase user and auth is not loading. Checking AsyncStorage for guest ID.');
         userId = await AsyncStorage.getItem('@user_id') || undefined;
+        // If we get a userId from AsyncStorage here, it's a guest, so email should be undefined.
+        if (userId) {
+            userEmail = undefined; // Explicitly ensure email is not carried over for guest IDs from storage
+        }
       }
-      if (!userId) throw new Error('No authenticated user');
-      // getUserData will create the user if it doesn't exist
-      const userData = await userService.getUserData(userId, userEmail);
-      if (!userData) throw new Error('Failed to load or create user');
-      set({ userData, isLoadingUser: false });
+
+      if (!userId) {
+        console.log('[userStore.getUserData] No user ID found from Firebase auth or AsyncStorage. Aborting.');
+        set({ isLoadingUser: false, userData: null }); // Clear userData if no ID
+        // Optional: throw new Error('No authenticated user or guest session ID');
+        return;
+      }
+
+      console.log(`[userStore.getUserData] Proceeding with userId: ${userId}, email: ${userEmail}`);
+      const userDataFromService = await userService.getUserData(userId, userEmail);
+
+      if (!userDataFromService) {
+        console.error(`[userStore.getUserData] Failed to load or create user data for UID: ${userId}`);
+        // Keep existing error state logic
+        set({ userError: 'Failed to load or create user', isLoadingUser: false });
+        return;
+      }
+      set({ userData: userDataFromService, isLoadingUser: false });
+      // Patch: Ensure daily quests are initialized if missing/empty after login
+      if (!userDataFromService.quests || !userDataFromService.quests.dailyQuests || userDataFromService.quests.dailyQuests.length === 0) {
+        useGameStore.getState().resetQuests();
+      }
     } catch (error: any) {
+      console.error('[userStore.getUserData] Error:', error);
       set({ userError: error.message, isLoadingUser: false });
     }
   },
@@ -151,9 +185,48 @@ export const useUserStore = create<UserState>((set, get) => ({
       console.error('Failed to get referral code:', error);
     }
   },
+
+  updateUserData: async (dataToUpdate: Partial<User>) => {
+    const currentUserId = await AsyncStorage.getItem('@user_id');
+    if (!currentUserId) {
+      console.error('[updateUserData] No user ID found in storage. Cannot update.');
+      throw new Error('User session not found for update.');
+    }
+    
+    // Prevent setting isLoadingUser here, as it might interfere with AuthLoadingScreen logic
+    // set({ isLoadingUser: true, userError: null });
+    console.log(`[updateUserData] Updating user ${currentUserId} with:`, dataToUpdate);
+
+    try {
+      // Call the utility to merge data in Firestore
+      await setUserData(currentUserId, dataToUpdate);
+      console.log(`[updateUserData] Firestore updated for user ${currentUserId}.`);
+
+      // Merge the update into the local state
+      set((state) => ({
+        userData: state.userData ? { ...state.userData, ...dataToUpdate } : (dataToUpdate as User), // Cast needed if initial state is null
+        // isLoadingUser: false, // Don't set loading false here if not set true initially
+        userError: null,
+      }));
+      console.log('[updateUserData] Local user store state updated.');
+
+    } catch (error: any) {
+      console.error(`[updateUserData] Failed to update user data for ${currentUserId}:`, error);
+      set({
+        // isLoadingUser: false,
+        userError: error.message || 'Failed to update user data.',
+      });
+      throw error; // Re-throw error so calling function knows it failed
+    }
+  },
+
+  clearUserData: () => {
+    set({ userData: null, userError: null, isLoadingUser: false });
+  },
 }));
 
 export const resetUserStore = () => {
+  console.log('[resetUserStore] Called. Clearing user store state.');
   useUserStore.setState({
     userData: null,
     todayCheckIn: null,

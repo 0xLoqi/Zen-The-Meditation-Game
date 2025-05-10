@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Button, SafeAreaView, Platform, TouchableOpacity, ActivityIndicator, useColorScheme } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session'; // <-- IMPORT AuthSession
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Ensure AsyncStorage is imported
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -13,9 +14,9 @@ WebBrowser.maybeCompleteAuthSession();
 
 // --- TODO: Replace with your actual credentials ---
 // These can be stored securely, perhaps via environment variables or a config file
-const GOOGLE_CLIENT_ID_WEB = 'YOUR_GOOGLE_CLIENT_ID_WEB.apps.googleusercontent.com';
-const GOOGLE_CLIENT_ID_IOS = 'YOUR_GOOGLE_CLIENT_ID_IOS.apps.googleusercontent.com';
-const GOOGLE_CLIENT_ID_ANDROID = 'YOUR_GOOGLE_CLIENT_ID_ANDROID.apps.googleusercontent.com';
+// const GOOGLE_CLIENT_ID_WEB = 'YOUR_GOOGLE_CLIENT_ID_WEB.apps.googleusercontent.com'; // Not used directly in this native flow logic
+// const GOOGLE_CLIENT_ID_IOS = 'YOUR_GOOGLE_CLIENT_ID_IOS.apps.googleusercontent.com'; // Loaded from env
+// const GOOGLE_CLIENT_ID_ANDROID = 'YOUR_GOOGLE_CLIENT_ID_ANDROID.apps.googleusercontent.com'; // Loaded from env
 // ---
 
 // Define your stack param list if needed
@@ -51,51 +52,88 @@ const AuthScreen = () => {
     continueAsGuest // Destructure continueAsGuest
   } = useAuthStore(); 
 
-  // Get Client IDs from environment variables
-  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID;
-  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS;
-  const clientId = Platform.OS === 'android' ? androidClientId : iosClientId;
+  // Load client IDs from environment variables
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID; // For web (not primary for native hook)
+  const iosClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS;
+  const androidClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID;
 
-  // Check if Client ID is configured for the current platform
-  const isGoogleSignInConfigured = !!clientId;
+  // Log the raw environment variable values
+  console.log("AuthScreen: Raw env EXPO_PUBLIC_GOOGLE_CLIENT_ID (for web):", webClientId);
+  console.log("AuthScreen: Raw env EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS:", iosClientIdEnv);
+  console.log("AuthScreen: Raw env EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID:", androidClientIdEnv);
 
-  // Configure Google Sign-In Request
+  let redirectUri;
+  let effectiveClientId;
+
+  if (Platform.OS === 'web') {
+    redirectUri = AuthSession.makeRedirectUri({
+      preferLocalhost: true, 
+    });
+    effectiveClientId = webClientId; 
+  } else {
+    redirectUri = AuthSession.makeRedirectUri({
+        path: 'oauthredirect',
+    });
+    effectiveClientId = Platform.OS === 'android' ? androidClientIdEnv : iosClientIdEnv;
+  }
+  console.log("AuthScreen: Determined redirectUri for platform:", Platform.OS, redirectUri);
+  console.log("AuthScreen: Effective Client ID for Google request for platform:", Platform.OS, effectiveClientId);
+  
+  const isGoogleSignInConfigured = !!effectiveClientId;
+
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: clientId, // Use the determined clientId
+    clientId: effectiveClientId,       
+    iosClientId: iosClientIdEnv,      
+    androidClientId: androidClientIdEnv, 
+    redirectUri: redirectUri,
   });
 
-  // Handle Google Sign-In Response
   useEffect(() => {
-    const handleResponse = async () => {
-      if (response?.type === 'success') {
-        const { id_token } = response.params;
-        setIsLoading(true); // Set loading state here for Google sign-in
-        try {
-          await firebaseSignInWithGoogle(id_token);
-          await AsyncStorage.removeItem('@user_id'); 
-          await AsyncStorage.removeItem('@auth_type');
-          // Navigation handled by App.tsx state change
-        } catch (error) {
-          console.error("Google Sign-In Error:", error);
-          // Display error to user
-        } finally {
-          setIsLoading(false); // Ensure loading stops
-        }
-      } else if (response?.type === 'error') {
-          console.error("Google Sign-In Response Error:", response.error);
-          // Display error to user
+    if (request) {
+      console.log("AuthScreen: Auth Request URL (check client_id parameter):", request.url);
+    }
+  }, [request]);
+
+  useEffect(() => {
+    console.log("AuthScreen: Google Response received:", JSON.stringify(response, null, 2));
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      console.log("AuthScreen: Google Sign-In Success, id_token present:", !!id_token);
+      setIsLoading(true);
+      if (id_token) {
+        firebaseSignInWithGoogle(id_token)
+          .then(() => {
+            AsyncStorage.removeItem('@user_id'); 
+            AsyncStorage.removeItem('@auth_type');
+            // Navigation handled by App.tsx state change
+          })
+          .catch((error) => {
+            console.error("AuthScreen: Firebase signInWithCredential error:", error);
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
+      } else {
+        console.error("AuthScreen: Google Sign-In Success, but id_token is missing in response.params", response.params);
+        setIsLoading(false);
       }
-    };
-    handleResponse();
-  }, [response, firebaseSignInWithGoogle]); // Keep dependency array
+    } else if (response?.type === 'error') {
+      console.error("AuthScreen: Google Sign-In Response Error:", response.error);
+      setIsLoading(false);
+    } else if (response?.type === 'dismiss') {
+      console.log("AuthScreen: Google Sign-In Dismissed by user.");
+      setIsLoading(false); // Ensure loading stops if dismissed
+    } else if (response) {
+      console.log("AuthScreen: Google Sign-In Response (unhandled type):", response.type, response);
+      setIsLoading(false);
+    }
+  }, [response, firebaseSignInWithGoogle]);
 
   const handleGoogleSignIn = () => {
     if (!isGoogleSignInConfigured) {
-        console.error('Google Sign-In is not configured for this platform.');
-        // Optionally show a user-facing message here
+        console.error('AuthScreen: Google Sign-In is not configured for this platform. Missing Client ID.');
         return;
     }
-    setIsLoading(true);
     promptAsync(); 
   };
 
@@ -103,16 +141,11 @@ const AuthScreen = () => {
     console.log('Continuing without account...');
     setIsLoading(true); // Set loading state
     try {
-      // Call the store function which now handles ID generation and storage
       await continueAsGuest(); 
-      // Navigation is handled by App.tsx state change
     } catch (error) {
       console.error("Continue as Guest error:", error);
-      // Optionally show error to user
     } finally {
-       // No need to set isLoading false here, as continueAsGuest in store does it,
-       // and App.tsx should switch navigator causing unmount.
-       // If screen doesn't switch, we might need to add setIsLoading(false) back here.
+       // setIsLoading(false); // As per original logic
     }
   };
 
@@ -145,10 +178,8 @@ const AuthScreen = () => {
               style={[
                 styles.gsiMaterialButtonBase, 
                 googleButtonStyle,             
-                // Disable if request isn't ready OR if not configured
                 (!request || !isGoogleSignInConfigured) && googleButtonDisabledStyle 
               ]}
-              // Disable if request isn't ready OR if not configured
               disabled={!request || !isGoogleSignInConfigured}
               onPress={handleGoogleSignIn} 
               activeOpacity={0.8} 
@@ -163,7 +194,6 @@ const AuthScreen = () => {
                  <Text style={[
                      styles.gsiMaterialButtonContentsBase, 
                      googleButtonContentStyle,             
-                     // Adjust disabled style based on request OR config
                      (!request || !isGoogleSignInConfigured) && googleButtonContentDisabledStyle 
                    ]}>
                    Sign in with Google
@@ -175,7 +205,7 @@ const AuthScreen = () => {
 
             <TouchableOpacity
               style={[styles.button, isDarkMode ? styles.anonymousButtonDark : styles.anonymousButtonLight]}
-              onPress={handleContinueAsGuest} // Correct handler
+              onPress={handleContinueAsGuest}
             >
                <Text style={isDarkMode ? styles.anonymousButtonTextDark : styles.anonymousButtonTextLight}>
                  Continue without Account

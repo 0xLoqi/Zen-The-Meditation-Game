@@ -1,0 +1,38 @@
+[
+  {
+    "id": "first_focus",
+    "name": "First Focus",
+    "description": "Complete your first focus session.",
+    "icon": "first_focus_colored.png"
+  },
+  {
+    "id": "seven_day_focus_streak",
+    "name": "7‑Day Streak",
+    "description": "Focus 7 days in a row.",
+    "icon": "seven_day_streak_colored.png"
+  },
+  {
+    "id": "first_legendary",
+    "name": "Legendary Drop",
+    "description": "Open your first legendary Glowbag.",
+    "icon": "first_legendary_colored.png"
+  },
+  {
+    "id": "early_bird",
+    "name": "Early Bird",
+    "description": "Focus before 7 AM.",
+    "icon": "early_bird_colored.png"
+  },
+  {
+    "id": "night_owl",
+    "name": "Night Owl",
+    "description": "Focus after 10 PM.",
+    "icon": "night_owl_colored.png"
+  },
+  {
+    "id": "quest_master",
+    "name": "Quest Master",
+    "description": "Complete all daily quests in one day.",
+    "icon": "quest_master_colored.png"
+  }
+]

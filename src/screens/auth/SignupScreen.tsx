@@ -10,16 +10,24 @@ import {
   ScrollView,
   Animated,
   ImageBackground,
+  Alert,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { useAuthStore } from '../../store/authStore';
+import { useUserStore } from '../../store/userStore';
+import { setUserData } from '../../firebase/user';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth } from '../../firebase';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { COLORS, FONTS, SPACING, SHADOWS, SIZES } from '../../constants/theme';
-import { useAuthStore } from '../../store/authStore';
 
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -27,46 +35,50 @@ import GoogleSignInButton from '../../components/GoogleSignInButton';
 import FloatingLeaves from '../../components/FloatingLeaves';
 import MiniZenni from '../../components/MiniZenni';
 
-type SignupScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Signup'>;
+type SignupScreenNavigationProp = any;
 
 interface SignupScreenProps {
   navigation: SignupScreenNavigationProp;
+  route: any;
 }
 
-const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
+WebBrowser.maybeCompleteAuthSession();
+
+const SignupScreen: React.FC<SignupScreenProps> = ({ navigation, route }) => {
   const navigationNative = useNavigation();
-  // State
+  const username = route.params?.username || '';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  // Animation refs
-  const backButtonRef = useRef<Animatable.View & View>(null);
   const logoRef = useRef<Animatable.View & View>(null);
   const titleRef = useRef<Animatable.View & View>(null);
   const subtitleRef = useRef<Animatable.View & View>(null);
   const formRef = useRef<Animatable.View & View>(null);
 
-  // Animation state
   const floatAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
-  // Auth state
-  const { 
-    signup, 
-    isLoading: authIsLoading, 
-    error: authError, 
-    signInWithGoogle, 
-    googleAuthLoading 
+  const {
+    signup,
+    isLoading: authIsLoading,
+    error: authError,
+    firebaseSignInWithGoogle,
+    googleAuthLoading,
+    continueAsGuest,
   } = useAuthStore();
 
-  // Set up floating animation
+  const { updateUserData } = useUserStore();
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_AUTH_WEB_CLIENT_ID || '<YOUR_WEB_CLIENT_ID>',
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_AUTH_IOS_CLIENT_ID || '<YOUR_IOS_CLIENT_ID>',
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_AUTH_ANDROID_CLIENT_ID || '<YOUR_ANDROID_CLIENT_ID>',
+  });
+
   useEffect(() => {
-    // Floating animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(floatAnim, {
@@ -82,7 +94,6 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
       ])
     ).start();
 
-    // Subtle rotation animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(rotateAnim, {
@@ -99,7 +110,36 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
     ).start();
   }, [floatAnim, rotateAnim]);
 
-  // Validate password
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      if (id_token) {
+        firebaseSignInWithGoogle(id_token)
+          .then(async () => {
+            console.log('Google Sign-In successful via Firebase.');
+            const firebaseUser = auth.currentUser;
+            if (firebaseUser?.uid && username) {
+              console.log(`Saving username '${username}' for user ${firebaseUser.uid}`);
+              await updateUserData({ username });
+            } else {
+              console.warn('Could not save username after Google sign-in: No UID or username');
+            }
+            console.log('Navigating to Paywall...');
+            navigation.navigate('Paywall');
+          })
+          .catch((err) => {
+            console.error("Firebase Google Sign-In Error:", err);
+            Alert.alert('Google Sign-In Failed', 'Could not sign in with Google via Firebase.');
+          });
+      } else {
+        Alert.alert('Google Sign-In Error', 'Could not get ID token from Google response.');
+      }
+    } else if (response?.type === 'error') {
+      console.error('Google Auth Session Error:', response.error);
+      Alert.alert('Google Sign-In Error', 'An error occurred during Google sign-in.');
+    }
+  }, [response, firebaseSignInWithGoogle, navigation, username, updateUserData]);
+
   const validatePassword = () => {
     if (!password) {
       setPasswordError('Password is required');
@@ -120,52 +160,52 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
     return true;
   };
 
-  // Handle signup button press
   const handleSignup = async () => {
     if (!email || !password || !confirmPassword) {
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-      alert('Please fill in all fields');
+      Alert.alert('Missing Fields', 'Please fill in all fields');
       return;
     }
 
-    if (password !== confirmPassword) {
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-      alert('Passwords do not match');
+    if (!validatePassword()) {
+      Alert.alert('Password Issue', passwordError || 'Please check your password.');
       return;
     }
 
-    setIsLoading(true);
+    if (authIsLoading || googleAuthLoading) return;
+
     try {
       await signup(email, password);
-      // After successful signup, navigate to onboarding
-      navigation.replace('Welcome');
-    } catch (error: any) {
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      console.log('Email/Pass Signup successful.');
+      const firebaseUser = auth.currentUser;
+      if (firebaseUser?.uid && username) {
+        console.log(`Saving username '${username}' for user ${firebaseUser.uid}`);
+        await updateUserData({ username });
+      } else {
+        console.warn('Could not save username after email/pass sign-up: No UID or username');
       }
+      console.log('Navigating to Paywall...');
+      navigation.navigate('Paywall');
+    } catch (error: any) {
       console.error('Signup error:', error);
-      alert('Signup failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+      if (error?.code === 'auth/email-already-in-use') {
+        Alert.alert(
+          'Email Already Registered',
+          'This email address is already in use. Please log in or use a different email address.'
+        );
+      } else {
+        Alert.alert('Signup Failed', authError || 'Could not create account. Please try again.');
+      }
     }
   };
 
-  // Handle Google sign-in
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.log('Google sign in error:', error);
-    }
+  const handleAppleSignIn = async () => {
+    Alert.alert('Coming Soon', 'Sign in with Apple is not yet available.');
   };
 
-  // Handle login navigation
   const handleLoginPress = () => {
-    // Fun exit animation before navigating
     if (formRef.current && logoRef.current && titleRef.current && subtitleRef.current) {
       try {
         const formPromise = formRef.current.fadeOutDown?.(300) || Promise.resolve();
@@ -183,7 +223,6 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
             navigation.navigate('Login');
           });
       } catch (error) {
-        // Fallback in case animation fails
         navigation.navigate('Login');
       }
     } else {
@@ -191,25 +230,42 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
     }
   };
 
-  // Interpolate floating animation
+  const handleContinueAsGuest = async () => {
+    if (authIsLoading || googleAuthLoading) return;
+
+    try {
+      console.log('[SignupScreen] Attempting to continue as guest...');
+      await continueAsGuest();
+      console.log('[SignupScreen] Continue as guest successful.');
+      
+      const guestId = await AsyncStorage.getItem('@user_id');
+      if (guestId && username) {
+        console.log(`Saving username '${username}' for guest user ${guestId}`);
+        await updateUserData({ username });
+      } else {
+        console.warn('Could not save username after guest setup: No guest ID or username');
+      }
+      console.log('[SignupScreen] Navigating to Paywall...');
+      navigation.navigate('Paywall');
+    } catch (error) {
+      console.error('[SignupScreen] Continue as Guest Error:', error);
+      Alert.alert('Error', 'Could not continue as guest. Please try again.');
+    }
+  };
+
   const translateY = floatAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, -10]
   });
   
-  // Interpolate rotation animation (subtle)
   const rotateZ = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['-5deg', '5deg']
   });
 
-  const handleBack = () => {
-    navigationNative.goBack();
-  };
-
   return (
     <ImageBackground
-      source={require('../../../assets/pattern_bg.png')}
+      source={require('../../../assets/images/pattern_bg.png')}
       resizeMode="repeat"
       style={styles.backgroundImage}
     >
@@ -223,20 +279,6 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
-            <Animatable.View
-              ref={backButtonRef}
-              animation="fadeIn"
-              duration={500}
-              useNativeDriver
-            >
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={handleBack}
-              >
-                <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
-              </TouchableOpacity>
-            </Animatable.View>
-
             <Animatable.View
               ref={logoRef}
               animation="fadeIn"
@@ -290,10 +332,20 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
               useNativeDriver
             >
               <GoogleSignInButton
-                onPress={handleGoogleSignIn}
+                onPress={() => promptAsync()}
                 isLoading={googleAuthLoading}
                 style={styles.googleSignInButton}
               />
+
+              {Platform.OS === 'ios' && (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={SIZES.radiusLarge}
+                  style={styles.appleSignInButton}
+                  onPress={handleAppleSignIn}
+                />
+              )}
 
               <View style={styles.dividerContainer}>
                 <View style={styles.divider} />
@@ -308,12 +360,8 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                leftIcon={
-                  <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
-                }
                 containerStyle={styles.inputContainer}
                 style={styles.input}
-                textStyle={styles.inputText}
               />
 
               <Input
@@ -323,21 +371,8 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 error={passwordError}
-                leftIcon={
-                  <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} />
-                }
-                rightIcon={
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={20}
-                      color={COLORS.neutralDark}
-                    />
-                  </TouchableOpacity>
-                }
                 containerStyle={styles.inputContainer}
                 style={styles.input}
-                textStyle={styles.inputText}
               />
 
               <Input
@@ -347,22 +382,19 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}
                 onBlur={validatePassword}
-                leftIcon={
-                  <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.primary} />
-                }
                 containerStyle={styles.inputContainer}
                 style={styles.input}
-                textStyle={styles.inputText}
               />
 
-              {error && <Text style={styles.errorText}>{error}</Text>}
+              {authError && <Text style={styles.errorText}>{authError}</Text>}
 
               <Button
                 title="Sign Up"
                 onPress={handleSignup}
-                isLoading={isLoading}
+                isLoading={authIsLoading}
                 disabled={
-                  isLoading ||
+                  googleAuthLoading ||
+                  authIsLoading ||
                   !email ||
                   !password ||
                   !confirmPassword ||
@@ -370,14 +402,20 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
                 }
                 style={styles.signupButton}
                 size="large"
-                textStyle={{ fontSize: 18, fontWeight: '700', color: COLORS.white }}
+                textStyle={styles.signupButtonText}
               />
 
-              <View style={styles.loginContainer}>
-                <Text style={styles.loginText}>
+              <View style={styles.bottomLinksContainer}>
+                <Text style={styles.bottomText}>
                   Already have an account?{' '}
-                  <Text style={styles.loginLink} onPress={handleLoginPress}>
+                  <Text style={styles.bottomLink} onPress={handleLoginPress}>
                     Log In
+                  </Text>
+                </Text>
+                <Text style={[styles.bottomText, { marginTop: SPACING.small }]}>
+                  Or{' '}
+                  <Text style={styles.bottomLink} onPress={handleContinueAsGuest}>
+                    Continue as Guest
                   </Text>
                 </Text>
               </View>
@@ -404,7 +442,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: SPACING.large,
-    paddingVertical: SPACING.large,
+    paddingTop: SPACING.xxxl,
+    paddingBottom: SPACING.large,
   },
   leavesBackground: {
     position: 'absolute',
@@ -413,22 +452,9 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  backButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 60 : 20,
-    left: 20,
-    zIndex: 10,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.medium,
-  },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: SPACING.large,
+    marginBottom: SPACING.small,
   },
   title: {
     fontSize: 32,
@@ -442,10 +468,10 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.neutralDark,
     textAlign: 'center',
-    marginBottom: SPACING.xxlarge,
+    marginBottom: SPACING.large,
   },
   inputContainer: {
-    marginBottom: SPACING.medium,
+    marginBottom: SPACING.small,
   },
   input: {
     backgroundColor: COLORS.white,
@@ -455,31 +481,46 @@ const styles = StyleSheet.create({
     ...SHADOWS.small,
   },
   inputText: {
-    ...FONTS.body.regular,
+    fontFamily: FONTS.secondary,
+    fontWeight: FONTS.regular,
     fontSize: 16,
     color: COLORS.neutralDark,
   },
   errorText: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.secondary,
     fontSize: FONTS.small,
     color: COLORS.error,
-    marginBottom: SPACING.medium,
+    marginBottom: SPACING.small,
+    textAlign: 'center',
   },
   signupButton: {
-    marginTop: SPACING.large,
-    height: 48,
+    marginTop: SPACING.medium,
+    height: 50,
     paddingVertical: SPACING.small,
     backgroundColor: COLORS.primary,
-    borderRadius: SIZES.radiusMedium,
+    borderRadius: SIZES.radiusLarge,
     ...SHADOWS.medium,
   },
+  signupButtonText: {
+    fontSize: 18,
+    fontFamily: FONTS.primary,
+    fontWeight: FONTS.bold,
+    color: COLORS.white,
+  },
   googleSignInButton: {
-    marginVertical: SPACING.medium,
+    marginVertical: SPACING.small,
+    height: 50,
+    borderRadius: SIZES.radiusLarge,
+  },
+  appleSignInButton: {
+    width: '100%',
+    height: 50,
+    marginVertical: SPACING.small,
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: SPACING.xxlarge,
+    marginVertical: SPACING.large,
     paddingHorizontal: SPACING.large,
   },
   divider: {
@@ -493,18 +534,22 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginHorizontal: SPACING.small,
   },
-  loginContainer: {
+  bottomLinksContainer: {
     alignItems: 'center',
-    marginTop: SPACING.small,
+    marginTop: SPACING.medium,
+    paddingBottom: SPACING.small,
   },
-  loginText: {
-    fontFamily: FONTS.primary,
-    fontSize: FONTS.regular_size,
+  bottomText: {
+    fontFamily: FONTS.secondary,
+    fontSize: FONTS.base,
     color: COLORS.textSecondary,
+    textAlign: 'center',
   },
-  loginLink: {
+  bottomLink: {
     color: COLORS.primary,
+    fontFamily: FONTS.secondary,
     fontWeight: FONTS.bold as '700',
+    fontSize: FONTS.base,
   },
   miniZenni: {
     marginBottom: SPACING.medium,

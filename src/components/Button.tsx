@@ -9,6 +9,7 @@ import {
   TouchableOpacityProps
 } from 'react-native';
 import { COLORS, SIZES, SPACING, FONTS, SHADOWS } from '../constants/theme';
+import { playSoundById } from '../services/audio';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -160,10 +161,15 @@ const Button = ({
     };
   };
   
+  const handlePress = (e: any) => {
+    playSoundById('select');
+    if (onPress) onPress(e);
+  };
+  
   return (
     <TouchableOpacity 
       style={[getButtonStyle(), style]}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || isLoading}
       activeOpacity={0.7}
       {...rest}

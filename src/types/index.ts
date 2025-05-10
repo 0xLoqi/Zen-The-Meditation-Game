@@ -31,6 +31,11 @@ export interface User {
       companion?: string;
     };
   };
+  quests?: {
+    dailyQuests: { id: string; name: string; description: string; icon: string }[];
+    progress: { [id: string]: boolean };
+    lastReset: string;
+  };
 }
 
 // Meditation Types

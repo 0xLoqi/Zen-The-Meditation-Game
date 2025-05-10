@@ -200,6 +200,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
   resetQuests: () => {
+    console.log('[resetQuests] Called. Resetting daily quests.');
     // Set new dailyQuests, reset progress, update lastReset
     set({
       quests: {

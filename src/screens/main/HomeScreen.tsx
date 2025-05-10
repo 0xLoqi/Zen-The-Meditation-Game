@@ -11,6 +11,7 @@ import {
   Dimensions,
   ImageBackground,
   Button,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -36,6 +37,7 @@ import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
 import Sparkle from '../../components/Sparkle';
 import FloatyAnimation from '../../components/FloatyAnimation';
+import { playSoundById } from '../../services/audio';
 
 // Register custom animations
 Animatable.initializeRegistryWithDefinitions({
@@ -96,6 +98,23 @@ const HomeScreen = () => {
   const [friendCode, setFriendCodeState] = useState('');
   const insets = useSafeAreaInsets();
   
+  // Animated glow for Train Your Brain button
+  const [glowAnim] = useState(new Animated.Value(0));
+  useEffect(() => {
+    const pulse = () => {
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 700, useNativeDriver: false }),
+        Animated.timing(glowAnim, { toValue: 0, duration: 700, useNativeDriver: false }),
+      ]).start(() => pulse());
+    };
+    pulse();
+    return () => { glowAnim.stopAnimation(); };
+  }, []);
+  const glowColor = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#FFD580', '#FF8C42']
+  });
+
   useEffect(() => {
     getUserData();
     getTodayCheckIn();
@@ -214,7 +233,7 @@ const HomeScreen = () => {
           <View style={[styles.stickyProfileCardContainer, { paddingTop: insets.top }]}>
             <View style={styles.profileCard}>
               <View style={styles.headerButtons}>
-                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Store')} accessibilityLabel="Store" accessible>
+                <TouchableOpacity style={styles.iconButton} onPress={() => { playSoundById('select_3'); navigation.navigate('Store'); }} accessibilityLabel="Store" accessible>
                   <View style={{ position: 'relative', justifyContent: 'center', alignItems: 'center' }}>
                     <MaterialCommunityIcons name="store" size={31} color={COLORS.primary} />
                     {/* Notification Dot */}
@@ -232,7 +251,7 @@ const HomeScreen = () => {
                     }} />
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')} accessibilityLabel="Settings" accessible>
+                <TouchableOpacity style={styles.iconButton} onPress={() => { playSoundById('settings_open'); playSoundById('select_3'); navigation.navigate('Settings'); }} accessibilityLabel="Settings" accessible>
                   <Ionicons name="settings-outline" size={24} color={COLORS.primary} />
                 </TouchableOpacity>
               </View>
@@ -301,43 +320,91 @@ const HomeScreen = () => {
               easing="ease-in-out"
               style={styles.meditateButtonPulse}
             >
-            <TouchableOpacity 
-              style={styles.meditateButton}
-              onPress={handleMeditatePress}
-              activeOpacity={0.8}
-            >
-                <LinearGradient
-                  colors={["#FFD580", "#FFB300", "#FF8C42"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.meditateButtonGradient}
+              <Animated.View
+                style={[
+                  styles.meditateButton,
+                  {
+                    borderWidth: 2,
+                    borderRadius: 20,
+                    borderColor: glowColor,
+                    shadowColor: '#FF8C42',
+                    shadowOpacity: 0.5,
+                    shadowRadius: 12,
+                    shadowOffset: { width: 0, height: 0 },
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={{ borderRadius: 20, overflow: 'hidden' }}
+                  onPress={() => { playSoundById('select_3'); handleMeditatePress(); }}
+                  activeOpacity={0.8}
                 >
-                  {/* Sparkles */}
-                  <FloatyAnimation style={styles.sparkle1} duration={3200} intensity="gentle">
-                    <Sparkle size={18} color="#fff8e1" />
-                  </FloatyAnimation>
-                  <FloatyAnimation style={styles.sparkle2} duration={2600} intensity="medium">
-                    <Sparkle size={14} color="#fffde7" />
-                  </FloatyAnimation>
-                  <FloatyAnimation style={styles.sparkle3} duration={4000} intensity="strong">
-                    <Sparkle size={22} color="#fff" />
-                  </FloatyAnimation>
-              <View style={styles.meditateButtonContent}>
-                    <FloatyAnimation animation="float" duration={2200} intensity="gentle">
-                <View style={styles.meditateIconContainer}>
-                        <MaterialCommunityIcons name="meditation" size={44} color={COLORS.white} />
-                </View>
+                  <LinearGradient
+                    colors={["#FFD580", "#FFB300", "#FF8C42"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.meditateButtonGradient}
+                  >
+                    {/* Sparkles */}
+                    <FloatyAnimation style={styles.sparkle1} duration={3200} intensity="gentle">
+                      <Animatable.View
+                        animation={{
+                          0: { scale: 1, opacity: 0.7 },
+                          0.5: { scale: 1.4, opacity: 1 },
+                          1: { scale: 1, opacity: 0.7 }
+                        }}
+                        iterationCount="infinite"
+                        duration={1800}
+                        easing="ease-in-out"
+                      >
+                        <Sparkle size={18} color="#fff8e1" />
+                      </Animatable.View>
                     </FloatyAnimation>
-                <View style={styles.meditateTextContainer}>
-                  <Text style={styles.meditateButtonTitle}>Start Meditation</Text>
-                  <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
-                </View>
-                    <Ionicons name="chevron-forward" size={28} color={COLORS.white} />
-              </View>
-                </LinearGradient>
-            </TouchableOpacity>
+                    <FloatyAnimation style={styles.sparkle2} duration={2600} intensity="medium">
+                      <Animatable.View
+                        animation={{
+                          0: { scale: 1, opacity: 0.7 },
+                          0.5: { scale: 1.5, opacity: 1 },
+                          1: { scale: 1, opacity: 0.7 }
+                        }}
+                        iterationCount="infinite"
+                        duration={2100}
+                        easing="ease-in-out"
+                      >
+                        <Sparkle size={14} color="#fffde7" />
+                      </Animatable.View>
+                    </FloatyAnimation>
+                    <FloatyAnimation style={styles.sparkle3} duration={4000} intensity="strong">
+                      <Animatable.View
+                        animation={{
+                          0: { scale: 1, opacity: 0.7 },
+                          0.5: { scale: 1.6, opacity: 1 },
+                          1: { scale: 1, opacity: 0.7 }
+                        }}
+                        iterationCount="infinite"
+                        duration={2500}
+                        easing="ease-in-out"
+                      >
+                        <Sparkle size={22} color="#fff" />
+                      </Animatable.View>
+                    </FloatyAnimation>
+                    <View style={styles.meditateButtonContent}>
+                      <FloatyAnimation animation="float" duration={2200} intensity="gentle">
+                        <View style={styles.meditateIconContainer}>
+                          <MaterialCommunityIcons name="brain" size={44} color={COLORS.white} />
+                        </View>
+                      </FloatyAnimation>
+                      <View style={styles.meditateTextContainer}>
+                        <Text style={styles.meditateButtonTitle}>Train Your Brain</Text>
+                        <Text style={styles.meditateButtonSubtitle}>Choose type and duration</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={28} color={COLORS.white} />
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </Animated.View>
             </Animatable.View>
-            <View style={{ marginTop: 0 }}>
+            <View style={{ marginTop: 0, marginBottom: 16 }}>
               <View style={styles.sectionTitlePill}><Text style={styles.sectionTitlePillText}>Friend Den</Text></View>
               <FriendDen />
             </View>

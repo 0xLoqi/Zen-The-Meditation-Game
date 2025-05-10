@@ -1,5 +1,6 @@
 import React from 'react';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+import { playSoundById } from '../services/audio';
 
 // Define a type for the variant config
 interface ToastVariantConfig {
@@ -37,6 +38,14 @@ export function showToast(
 ) {
   const variantConfig = toastVariants[variant];
   if (!variantConfig) return; // Handle case where variant doesn't exist
+
+  let soundId = 'pop'; // Default sound
+  if (variantConfig.type === 'error') {
+    soundId = 'alert';
+  } else if (variantConfig.type === 'success') {
+    soundId = 'generic_win';
+  }
+  playSoundById(soundId);
 
   Toast.show({
     type: variantConfig.type ?? 'info', // Use nullish coalescing for default

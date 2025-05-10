@@ -104,7 +104,7 @@ export const SPACING = {
   l: 24,   // 3 * baseUnit
   xl: 32,  // 4 * baseUnit
   xxl: 48, // 6 * baseUnit
-  xxxl: 64, // 8 * baseUnit
+  xxxl: 84, // 8 * baseUnit
   
   // Common UI Spacing
   screenHorizontal: 16,  // Side padding for screens

@@ -9,6 +9,7 @@ import { resetGameStore } from './index';
 import { useMeditationStore } from './meditationStore';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
+import { getUserData } from '../firebase/user';
 
 interface AuthState {
   user: FirebaseUser | null;
@@ -35,6 +36,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkAuth: () => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      const currentState = get(); // Get current store state
+      console.log(`[authStore.onAuthStateChanged] Received user: ${user ? user.uid : null}. Current store error before set: ${currentState.error}`);
+
       if (user) {
       set({ 
         user, 
@@ -52,12 +56,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           const isNonFirebaseAuthenticated = false; // Assume false initially for non-firebase users on startup
 
           console.log('[checkAuth] No Firebase user. AsyncStorage check:', { storedUserId, authType, isNonFirebaseAuthenticated });
-          set({
+          // Get current store state AGAIN right before this specific set, in case it changed due to another parallel operation (less likely here but good for debugging)
+          const currentStateInElse = get(); 
+          console.log(`[authStore.onAuthStateChanged] ELSE block. Current store error before set: ${currentStateInElse.error}`);
+          set(state => ({
+            ...state,
             user: null,
-            isAuthenticated: isNonFirebaseAuthenticated, // Will now be false here
+            isAuthenticated: isNonFirebaseAuthenticated,
             isLoading: false,
-            error: null
-          });
+          }));
         } catch (e) {
           console.error("[checkAuth] AsyncStorage error when checking non-Firebase auth:", e);
           set({ user: null, isAuthenticated: false, isLoading: false, error: 'Failed to check session' });
@@ -72,6 +79,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await getUserData(userCredential.user.uid, email);
+      await AsyncStorage.removeItem('@user_id');
+      await AsyncStorage.removeItem('@auth_type');
+      set({ isLoading: false });
     } catch (error: any) {
       set({ 
         error: error.message || 'Error signing up', 
@@ -85,6 +96,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await getUserData(userCredential.user.uid, email);
+      await AsyncStorage.removeItem('@user_id');
+      await AsyncStorage.removeItem('@auth_type');
+      set({ isLoading: false });
     } catch (error: any) {
       set({ 
         error: error.message || 'Error logging in', 

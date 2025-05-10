@@ -3,15 +3,15 @@ import { createStackNavigator } from '@react-navigation/stack';
 import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import SummonMiniZenniScreen from '../screens/onboarding/SummonMiniZenniScreen';
 import NameSelectionScreen from '../screens/onboarding/NameSelectionScreen';
-import GoalsScreen from '../screens/onboarding/GoalsScreen';
-import CommitmentScreen from '../screens/onboarding/CommitmentScreen';
-import SoundPrefScreen from '../screens/onboarding/SoundPrefScreen';
+import GoalsScreen from '../screens/onboarding/.old_GoalsScreen';
+import CommitmentScreen from '../screens/onboarding/.old_CommitmentScreen';
+import SoundPrefScreen from '../screens/onboarding/.old_SoundPrefScreen';
 import ReminderPrompt from '../screens/onboarding/ReminderPrompt';
 import AccountScreen from '../screens/onboarding/AccountScreen';
-import FirstSessionIntroScreen from '../screens/onboarding/FirstSessionIntroScreen';
+import FirstSessionIntroScreen from '../screens/onboarding/.old_FirstSessionIntroScreen';
 import NameEntryScreen from '../screens/onboarding/NameEntryScreen';
-import GlowbagOfferScreen from '../screens/onboarding/GlowbagOfferScreen';
-import GlowbagOpeningScreen from '../screens/onboarding/GlowbagOpeningScreen';
+import GlowbagOfferScreen from '../screens/onboarding/.old_GlowbagOfferScreen';
+import GlowbagOpeningScreen from '../screens/onboarding/.old_GlowbagOpeningScreen';
 // TODO: Import all other onboarding screens as implemented
 
 const OnboardingStackNav = createStackNavigator();

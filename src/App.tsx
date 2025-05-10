@@ -9,6 +9,7 @@ import {
   Platform,
   Text,
   LogBox,
+  Button,
 } from 'react-native';
 import { COLORS, FONTS, SPACING } from './constants/theme';
 import * as Animatable from 'react-native-animatable';
@@ -23,6 +24,8 @@ import { grant } from './services/CosmeticsService';
 import { handleInitialLink } from './services/referral';
 import { ToastProvider, showToast } from './components/Toasts';
 import { useUserStore } from './store/userStore';
+import { playSoundById } from './services/audio';
+import { Audio } from 'expo-av';
 
 // Suppress flexWrap warning for VirtualizedList/FlatList
 LogBox.ignoreLogs([
@@ -86,6 +89,9 @@ export default function App() {
   const lastReset = useGameStore((s) => s.quests.lastReset);
   const motivation = useGameStore((s) => s.user.motivation || 'nerd');
 
+  // Add a key that changes when isAuthenticated changes
+  const rootNavigatorKey = isAuthenticated ? 'authed' : 'unauthed';
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -145,6 +151,22 @@ export default function App() {
     detectLowPowerMode();
   }, [detectLowPowerMode]);
 
+  useEffect(() => {
+    // Force lowPowerMode off for testing
+    const { setState } = require('./store').useGameStore;
+    setState({ lowPowerMode: false });
+  }, []);
+
+  useEffect(() => {
+    // iOS: allow playback in silent mode
+    Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+  }, []);
+
+  useEffect(() => {
+    // Play test audio on mount
+    playSoundById('rain'); // or any valid audio ID
+  }, []);
+
   if (error) {
     return (
       <View style={styles.errorContainer}>
@@ -158,7 +180,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <NavigationContainer>
-        <RootNavigator />
+        <RootNavigator key={rootNavigatorKey} />
         <StatusBar style="auto" />
       </NavigationContainer>
       <ToastProvider />

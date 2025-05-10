@@ -87,19 +87,19 @@ function equippedToMiniZenniProps(equipped) {
 
 const FriendDen = () => {
   const navigation = useNavigation<StackNavigationProp<MainStackParamList, 'Profile'>>();
+  const friends = useGameStore((s) => s.friends);
+  const hasRealFriends = friends && friends.length > 0;
+  const [mockFriends] = useState(() => generateMockFriends());
+
   React.useEffect(() => {
     (async () => {
       try {
-        await ensureSignedIn();
         fetchAndSetFriendsFromFirestore(FRIEND_IDS);
       } catch (err) {
         console.error('Auth or fetch failed:', err);
       }
     })();
   }, []);
-  const friends = useGameStore((s) => s.friends);
-  const hasRealFriends = friends && friends.length > 0;
-  const [mockFriends] = useState(() => generateMockFriends());
 
   return (
     <View style={styles.denRowBg}>
