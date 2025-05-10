@@ -7,7 +7,7 @@ import ProgressDots from '../../components/ProgressDots';
 const SOUND_PACKS = [
   { id: 'nature', name: 'Nature', image: require('../../../assets/images/sound_nature.png') },
   { id: 'ocean', name: 'Ocean', image: require('../../../assets/images/sound_ocean.png') },
-  { id: 'rain', name: 'Rain', image: require('../../../assets/images/sound_rain.png') },
+  // { id: 'rain', name: 'Rain', image: require('../../../assets/images/sound_rain.png') }, // Removed this line
 ];
 
 const SoundPrefScreen = ({ navigation, route }: any) => {

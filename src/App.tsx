@@ -89,6 +89,9 @@ export default function App() {
   const lastReset = useGameStore((s) => s.quests.lastReset);
   const motivation = useGameStore((s) => s.user.motivation || 'nerd');
 
+  // Add a key that changes when isAuthenticated changes
+  const rootNavigatorKey = isAuthenticated ? 'authed' : 'unauthed';
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -177,7 +180,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <NavigationContainer>
-        <RootNavigator />
+        <RootNavigator key={rootNavigatorKey} />
         <StatusBar style="auto" />
       </NavigationContainer>
       <ToastProvider />

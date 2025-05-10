@@ -5,7 +5,7 @@ import * as Animatable from 'react-native-animatable';
 import { grant } from '../services/CosmeticsService';
 import { useAuthStore } from './authStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserDataFromFirestore, setUserData } from '../firebase/user';
+import { setUserData } from '../firebase/user';
 
 interface UserState {
   userData: User | null;
@@ -58,18 +58,42 @@ export const useUserStore = create<UserState>((set, get) => ({
   getUserData: async () => {
     try {
       set({ isLoadingUser: true, userError: null });
-      const { user } = useAuthStore.getState();
-      let userId = user?.uid;
-      let userEmail = user?.email ?? undefined;
-      if (!userId) {
+      const auth = useAuthStore.getState(); // Get the whole auth store state
+      const firebaseUser = auth.user;      // Firebase auth user from the store
+
+      let userId = firebaseUser?.uid;
+      let userEmail = firebaseUser?.email ?? undefined;
+
+      // Only try AsyncStorage if there's no Firebase user AND auth isn't currently loading.
+      // This prevents fetching a guest ID if a Firebase login is in progress.
+      if (!userId && !auth.isLoading) {
+        console.log('[userStore.getUserData] No Firebase user and auth is not loading. Checking AsyncStorage for guest ID.');
         userId = await AsyncStorage.getItem('@user_id') || undefined;
+        // If we get a userId from AsyncStorage here, it's a guest, so email should be undefined.
+        if (userId) {
+            userEmail = undefined; // Explicitly ensure email is not carried over for guest IDs from storage
+        }
       }
-      if (!userId) throw new Error('No authenticated user');
-      // getUserData will create the user if it doesn't exist
-      const userData = await userService.getUserData(userId, userEmail);
-      if (!userData) throw new Error('Failed to load or create user');
-      set({ userData, isLoadingUser: false });
+
+      if (!userId) {
+        console.log('[userStore.getUserData] No user ID found from Firebase auth or AsyncStorage. Aborting.');
+        set({ isLoadingUser: false, userData: null }); // Clear userData if no ID
+        // Optional: throw new Error('No authenticated user or guest session ID');
+        return;
+      }
+
+      console.log(`[userStore.getUserData] Proceeding with userId: ${userId}, email: ${userEmail}`);
+      const userDataFromService = await userService.getUserData(userId, userEmail);
+
+      if (!userDataFromService) {
+        console.error(`[userStore.getUserData] Failed to load or create user data for UID: ${userId}`);
+        // Keep existing error state logic
+        set({ userError: 'Failed to load or create user', isLoadingUser: false });
+        return;
+      }
+      set({ userData: userDataFromService, isLoadingUser: false });
     } catch (error: any) {
+      console.error('[userStore.getUserData] Error:', error);
       set({ userError: error.message, isLoadingUser: false });
     }
   },
@@ -197,6 +221,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 }));
 
 export const resetUserStore = () => {
+  console.log('[resetUserStore] Called. Clearing user store state.');
   useUserStore.setState({
     userData: null,
     todayCheckIn: null,

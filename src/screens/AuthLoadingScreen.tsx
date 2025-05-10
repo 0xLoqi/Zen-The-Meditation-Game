@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '../store/authStore';
 import { useUserStore } from '../store/userStore';
@@ -13,77 +13,78 @@ type AuthLoadingNavigationProp = NativeStackNavigationProp<RootStackParamList, '
 const AuthLoadingScreen = () => {
   const navigation = useNavigation<AuthLoadingNavigationProp>();
   // Get necessary state and actions
-  const { isAuthenticated, isLoading: isAuthLoading, checkAuth } = useAuthStore();
-  const { userData, isLoadingUser, getUserData } = useUserStore();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
+  const { userData, isLoadingUser } = useUserStore();
   // Ref purely for initial load stabilization if needed elsewhere, not blocking nav
   const hasNavigatedInitiallyRef = useRef(false);
+  const [hasDetectedErrorRecently, setHasDetectedErrorRecently] = useState(false);
 
-  // Reset navigation flag when the screen comes into focus
+  // Reset navigation flag and error detection when the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[AuthLoadingScreen] Screen focused.');
-      // If needed, reset flags here, but primary logic below avoids blocking
-      // hasNavigatedInitiallyRef.current = false;
+      console.log('[AuthLoadingScreen] Screen focused. Resetting hasDetectedErrorRecently.');
+      setHasDetectedErrorRecently(false); 
+      // hasNavigatedInitiallyRef.current = false; // Keep this if needed for specific initial nav logic
     }, [])
   );
 
-  // Run initial auth check on mount
-  useEffect(() => {
-    console.log('[AuthLoadingScreen] Running checkAuth...');
-    const unsubscribe = checkAuth(); // Setup listener
-    return unsubscribe; // Cleanup on unmount
-  }, [checkAuth]);
-
-  // Attempt to load user data if authenticated but data isn't loaded/loading
-   useEffect(() => {
-    // Only fetch if authenticated AND we don't have user data AND it's not already loading
-    if (isAuthenticated && !userData && !isLoadingUser) {
-      console.log('[AuthLoadingScreen] Authenticated, attempting to fetch user data...');
-      getUserData().catch(err => console.error('[AuthLoadingScreen] Error fetching user data:', err));
-    }
-  }, [isAuthenticated, userData, isLoadingUser, getUserData]);
-
-
   // Navigation logic effect - Revised
   useEffect(() => {
-    // Wait for initial loading checks to settle
-    if (isAuthLoading || (isAuthenticated && isLoadingUser && !userData)) {
-       console.log(`[AuthLoadingScreen] Waiting... isAuthLoading=${isAuthLoading}, isAuthenticated=${isAuthenticated}, isLoadingUser=${isLoadingUser}, hasUserData=${!!userData}`);
+    const authState = useAuthStore.getState();
+    const currentAuthError = authState.error;
+
+    if (currentAuthError) {
+      console.log(`[AuthLoadingScreen] Auth error detected ('${currentAuthError}'). Halting navigation logic and flagging error.`);
+      setHasDetectedErrorRecently(true); // Flag that an error was seen
+      return; 
+    }
+
+    // If we previously detected an error, and it's now null (cleared by a new login attempt starting),
+    // reset our flag and allow navigation to proceed if other conditions are met.
+    if (hasDetectedErrorRecently && !currentAuthError) {
+      console.log('[AuthLoadingScreen] Previously detected error has been cleared. Resetting flag.');
+      setHasDetectedErrorRecently(false);
+    }
+
+    // If we are in an error-flagged state, don't navigate further until error is cleared AND re-evaluated
+    if (hasDetectedErrorRecently) {
+      console.log('[AuthLoadingScreen] In flagged error state, awaiting error to be cleared by new login attempt.');
+      return;
+    }
+
+    // Wait for initial loading checks to settle (only if no error is present and not in flagged error state)
+    if (authState.isLoading || (authState.isAuthenticated && (isLoadingUser || !userData))) {
+       console.log(`[AuthLoadingScreen] Waiting for userData... isAuthLoading=${authState.isLoading}, isAuthenticated=${authState.isAuthenticated}, isLoadingUser=${isLoadingUser}, hasUserData=${!!userData}`);
        return;
     }
 
+    // Debug logs for userData and username
+    console.log('[AuthLoadingScreen] userData:', userData);
+    console.log('[AuthLoadingScreen] userData.username:', userData?.username);
+
     // Determine the target route based on current state
     let targetRoute: keyof RootStackParamList | null = null;
-    // If authenticated and user data has been successfully fetched (even if incomplete),
-    // navigate to the main app. Handle missing profile info within MainApp/ProfileScreen.
-    if (isAuthenticated && userData) { 
+    if (authState.isAuthenticated && userData && userData.username) {
         targetRoute = 'MainApp';
     } else {
-        // Covers !isAuthenticated or cases where userData fetch failed (userData is null)
         targetRoute = 'Onboarding';
     }
-    console.log(`[AuthLoadingScreen] Current state suggests route: ${targetRoute}`);
+    // console.log(`[AuthLoadingScreen] Current state suggests route: ${targetRoute}`); // Reduced logging here for clarity
 
-    // Get the current route name from the navigation state
     const navState = navigation.getState();
-    const currentRoute = navState?.routes[navState?.index ?? 0]?.name;
-    console.log(`[AuthLoadingScreen] Current navigator route: ${currentRoute}`);
+    const currentRouteName = navState?.routes[navState?.index ?? 0]?.name;
+    // console.log(`[AuthLoadingScreen] Current navigator route: ${currentRouteName}`); // Reduced logging
 
-    // Prevent redundant navigation resets *to the same target*
-    // Also prevent resetting if we haven't determined a target yet
-    if (!targetRoute || currentRoute === targetRoute) {
-        console.log(`[AuthLoadingScreen] Navigation not needed (target: ${targetRoute}, current: ${currentRoute}).`);
-        // Ensure initial navigation flag is set if we stabilize here and it wasn't set
+    if (!targetRoute || currentRouteName === targetRoute) {
+        // console.log(`[AuthLoadingScreen] Navigation not needed (target: ${targetRoute}, current: ${currentRouteName}).`); // Reduced logging
         if(!hasNavigatedInitiallyRef.current && targetRoute) {
-            console.log('[AuthLoadingScreen] Setting initial navigation flag.');
+            // console.log('[AuthLoadingScreen] Setting initial navigation flag.'); // Reduced logging
             hasNavigatedInitiallyRef.current = true;
         }
         return;
     }
 
-    // Perform the navigation reset if the target route is different
-    console.log(`[AuthLoadingScreen] Resetting navigation to: ${targetRoute}`);
-    // Set initial flag after first successful navigation if needed
+    console.log(`[AuthLoadingScreen] PRE-RESET: Target: ${targetRoute}, Current: ${currentRouteName}, AuthLoading: ${authState.isLoading}, Authenticated: ${authState.isAuthenticated}, UserData: ${!!userData}, AuthStoreError (should be null): ${authState.error}`);
     if (!hasNavigatedInitiallyRef.current) {
         hasNavigatedInitiallyRef.current = true;
     }
@@ -92,7 +93,7 @@ const AuthLoadingScreen = () => {
       routes: [{ name: targetRoute }],
     });
 
-  }, [isAuthLoading, isAuthenticated, isLoadingUser, userData, navigation]);
+  }, [isAuthLoading, isAuthenticated, isLoadingUser, userData, navigation, hasDetectedErrorRecently]); // Added hasDetectedErrorRecently
 
   // Render loading indicator
   return (

@@ -188,7 +188,9 @@ export default function OnboardingChoiceScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.secondaryButton]}
-            onPress={() => navigation.replace('Login')}
+            onPress={() => {
+              navigation.replace('Login');
+            }}
             disabled={isAuthLoading || isProcessingGuest}
           >
             <Text style={styles.buttonText}>Log In</Text>

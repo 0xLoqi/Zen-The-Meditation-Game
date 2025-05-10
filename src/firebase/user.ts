@@ -35,7 +35,13 @@ export const getUserData = async (uid: string, email?: string): Promise<User | n
   const userRef = doc(db, 'users', uid);
   const snap = await getDoc(userRef);
   if (snap.exists()) {
-    return snap.data() as User;
+    const userData = snap.data() as User;
+    // Patch: If email is provided and different, update it in Firestore
+    if (email && userData.email !== email) {
+      await setDoc(userRef, { email }, { merge: true });
+      userData.email = email;
+    }
+    return userData;
   } else {
     const newUser: User = {
       uid,

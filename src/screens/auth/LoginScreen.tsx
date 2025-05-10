@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Image,
   Easing,
 } from 'react-native';
+import { CommonActions, NavigationProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
@@ -21,6 +22,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { RootStackParamList } from '../../navigation/RootNavigator';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
 import { useAuthStore } from '../../store/authStore';
 import { playSoundById } from '../../services/audio';
@@ -32,7 +34,7 @@ import FloatingLeaves from '../../components/FloatingLeaves';
 import MiniZenni from '../../components/MiniZenni';
 import PatternBackground from '../../components/PatternBackground';
 
-type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
+type LoginScreenNavigationProp = NavigationProp<AuthStackParamList & RootStackParamList>;
 
 interface LoginScreenProps {
   navigation: LoginScreenNavigationProp;
@@ -40,7 +42,7 @@ interface LoginScreenProps {
 
 WebBrowser.maybeCompleteAuthSession();
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
+const LoginScreenInternal: React.FC<LoginScreenProps> = ({ navigation }) => {
   // State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -61,138 +63,73 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     firebaseSignInWithGoogle
   } = useAuthStore();
 
-  // ADD THIS useEffect to log the error from the store
   useEffect(() => {
     console.log("LoginScreen: authStore error state changed to:", error);
   }, [error]);
-  // END ADDITION
 
-  // Animation state
   const floatAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
   const zenAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Google Auth Request
-  // Load client IDs from environment variables
-  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID; // Use the general web client ID
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
   const iosClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS;
   const androidClientIdEnv = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID;
 
-  // Log the raw environment variable values
-  console.log("LoginScreen: Raw env EXPO_PUBLIC_GOOGLE_CLIENT_ID (for web):", webClientId);
-  console.log("LoginScreen: Raw env EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS:", iosClientIdEnv);
-  console.log("LoginScreen: Raw env EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID:", androidClientIdEnv);
-
-  // --- MODIFICATION: Revert to native redirect URI and native Client ID for native platforms ---
   let redirectUri;
   let effectiveClientId;
 
   if (Platform.OS === 'web') {
-    redirectUri = AuthSession.makeRedirectUri({
-      preferLocalhost: true, // Required for web to correctly generate http://localhost... 
-    });
+    redirectUri = AuthSession.makeRedirectUri({ preferLocalhost: true });
     effectiveClientId = webClientId; 
   } else {
-    // For native, use the app scheme and a path. This should match your app.config.js scheme.
-    // Expo's makeRedirectUri will use the scheme from app.config.js by default for native.
-    redirectUri = AuthSession.makeRedirectUri({
-        path: 'oauthredirect', // Ensure a path component
-        // scheme: 'com.zenmeditation.app' // Already in app.config.js
-    });
-    effectiveClientId = androidClientIdEnv; // Use Android Client ID on Android
-    if (Platform.OS === 'ios') {
-        effectiveClientId = iosClientIdEnv; // Use iOS Client ID on iOS (if defined)
+    redirectUri = AuthSession.makeRedirectUri({ path: 'oauthredirect' });
+    effectiveClientId = Platform.OS === 'android' ? androidClientIdEnv : iosClientIdEnv;
+    if (Platform.OS === 'ios' && !iosClientIdEnv && androidClientIdEnv) {
+        effectiveClientId = androidClientIdEnv;
     }
   }
-  console.log("LoginScreen: Determined redirectUri for platform:", Platform.OS, redirectUri);
-  console.log("LoginScreen: Effective Client ID for Google request for platform:", Platform.OS, effectiveClientId);
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: effectiveClientId,          // This will be the native ID on native platforms
-    iosClientId: iosClientIdEnv,          // Still pass for consistency, hook might use it
-    androidClientId: androidClientIdEnv,    // Still pass for consistency, hook might use it
+    clientId: effectiveClientId,
+    iosClientId: iosClientIdEnv,
+    androidClientId: androidClientIdEnv,
     redirectUri: redirectUri, 
   });
-  // --- END MODIFICATION ---
 
-  // Log the effective clientId being used in the request URL (dynamically chosen by the library)
   useEffect(() => {
     if (request) {
-      // The request.url will contain the client_id that is actually being sent to Google.
-      // This is a good way to verify which ID is active for the current platform.
-      console.log("LoginScreen: Auth Request URL (check client_id parameter):", request.url);
+      // console.log("LoginScreen: Auth Request URL:", request.url);
     }
   }, [request]);
 
   useEffect(() => {
-    // ---- MODIFIED FOR MORE LOGGING ----
-    console.log("LoginScreen: Google Response received:", JSON.stringify(response, null, 2)); // Log the full response
-
     if (response?.type === 'success') {
       const { id_token } = response.params;
-      console.log("LoginScreen: Google Sign-In Success, id_token present:", !!id_token);
       if (id_token) {
         firebaseSignInWithGoogle(id_token);
-      } else {
-        console.error("LoginScreen: Google Sign-In Success, but id_token is missing in response.params", response.params);
       }
     } else if (response?.type === 'error') {
-      console.error("LoginScreen: Google Sign-In Response Error:", response.error);
-    } else if (response?.type === 'dismiss') {
-      console.log("LoginScreen: Google Sign-In Dismissed by user.");
-    } else if (response) {
-      // Catch any other response types or states
-      console.log("LoginScreen: Google Sign-In Response (unhandled type):", response.type, response);
+      console.error("LoginScreen: Google Sign-In Error:", response.error);
     }
-    // ---- END MODIFICATION ----
-  }, [response]);
+  }, [response, firebaseSignInWithGoogle]);
 
-  // Set up floating animation
   useEffect(() => {
-    // Initial animation for form and content
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: Platform.OS !== 'web',
-        easing: Easing.out(Easing.cubic)
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: Platform.OS !== 'web',
-        easing: Easing.out(Easing.cubic)
-      }),
-      Animated.timing(zenAnim, {
-        toValue: 1,
-        duration: 1200,
-        useNativeDriver: Platform.OS !== 'web',
-        easing: Easing.out(Easing.elastic(1.2))
-      })
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: Platform.OS !== 'web', easing: Easing.out(Easing.cubic) }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: Platform.OS !== 'web', easing: Easing.out(Easing.cubic) }),
+      Animated.timing(zenAnim, { toValue: 1, duration: 1200, useNativeDriver: Platform.OS !== 'web', easing: Easing.out(Easing.elastic(1.2)) })
     ]).start();
     
-    // Subtle breathing effect for Zenni
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 3000,
-          useNativeDriver: Platform.OS !== 'web',
-          easing: Easing.inOut(Easing.sin)
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 3000,
-          useNativeDriver: Platform.OS !== 'web',
-          easing: Easing.inOut(Easing.sin)
-        })
+        Animated.timing(pulseAnim, { toValue: 1.05, duration: 3000, useNativeDriver: Platform.OS !== 'web', easing: Easing.inOut(Easing.sin) }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 3000, useNativeDriver: Platform.OS !== 'web', easing: Easing.inOut(Easing.sin) })
       ])
     ).start();
   }, []);
 
-  // Handle login button press
   const handleLogin = async () => {
     if (!email || !password) {
       playSoundById('alert');
@@ -201,19 +138,28 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     try {
       playSoundById('select');
       await login(email, password);
-    } catch (error) {
+      
+      // After successful login, reset to AuthLoading in the Root stack
+      // This should ensure AuthLoadingScreen takes over.
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'AuthLoading' }], 
+        })
+      );
+
+    } catch (error: any) {
       playSoundById('alert');
-      console.log('Login error:', error);
+      console.log('Login error:', error.message || error);
+      // Error is already set in authStore and displayed by the component
     }
   };
 
-  // Handle Apple sign-in
   const handleAppleSignIn = async () => {
-    // TODO: Implement Apple sign-in logic and link to Firebase
     console.log('Apple sign-in pressed');
+    // Implement Apple sign-in
   };
 
-  // Interpolate floating animation
   const translateY = floatAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, -10]
@@ -270,13 +216,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               useNativeDriver={Platform.OS !== 'web'}
               style={styles.formContainer}
             >
-              {/* Google Sign-In Button */}
               <GoogleSignInButton
-                onPress={() => promptAsync()}
+                onPress={() => {
+                    if (!request) {
+                        console.warn("LoginScreen: Google Sign-In request not ready. Client ID or redirect URI might be missing or invalid.");
+                        // You could show a toast or alert to the user here
+                        return;
+                    }
+                    promptAsync();
+                }}
                 isLoading={googleAuthLoading}
                 style={styles.googleSignInButton}
+                disabled={!request}
               />
-              {/* Apple Sign-In Button is hidden until developer account is ready */}
+              {/* Apple Sign-In Button hidden until developer account is ready */}
               {/* {Platform.OS === 'ios' && (
                 <AppleAuthentication.AppleAuthenticationButton
                   buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
@@ -286,13 +239,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                   onPress={handleAppleSignIn}
                 />
               )} */}
-              {/* Divider */}
               <View style={styles.dividerContainer}>
                 <View style={styles.divider} />
                 <Text style={styles.dividerText}>or</Text>
                 <View style={styles.divider} />
               </View>
-              {/* Email/Password Form */}
               <Input
                 label="Email"
                 placeholder="Enter your email"
@@ -335,6 +286,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     </SafeAreaView>
   );
 };
+
+const LoginScreen = memo(LoginScreenInternal);
 
 const styles = StyleSheet.create({
   container: {
@@ -425,7 +378,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   formContainer: {
-    // Add appropriate styles for the form container
+    // Add appropriate styles for the form container if needed
   },
 });
 

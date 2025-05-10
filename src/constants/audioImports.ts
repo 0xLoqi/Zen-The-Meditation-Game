@@ -13,7 +13,6 @@ export const audioImports: { [id: string]: any } = {
   birds: require('../../assets/audio/ambient/birds.wav'),
   silence: require('../../assets/audio/ambient/silence.mp3'),
   waves: require('../../assets/audio/ambient/waves.mp3'),
-  rain: require('../../assets/audio/ambient/rain.mp3'),
 
   // Music
   ate_bit: require('../../assets/audio/music/ate-bit.wav'),
