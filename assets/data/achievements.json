@@ -1,44 +1,74 @@
 [
   {
     "id": "first_meditation",
-    "name": "First Meditation",
-    "description": "Complete your first meditation session.",
+    "name": "First Focus",
+    "description": "Complete your first focus session.",
     "icon": "first_meditation_colored.png",
-    "lockedIcon": "first_meditation_locked.png"
+    "lockedIcon": "first_meditation_locked.png",
+    "titleUnlock": {
+      "id": "focused_initiate",
+      "name": "Focused Initiate",
+      "rarity": "common"
+    }
   },
   {
     "id": "seven_day_streak",
     "name": "7-Day Streak",
-    "description": "Meditate 7 days in a row.",
+    "description": "Focus 7 days in a row.",
     "icon": "seven_day_streak_colored.png",
-    "lockedIcon": "seven_day_streak_locked.png"
+    "lockedIcon": "seven_day_streak_locked.png",
+    "titleUnlock": {
+      "id": "streak_seeker",
+      "name": "Streak Seeker",
+      "rarity": "rare"
+    }
   },
   {
     "id": "first_legendary",
     "name": "Legendary Drop",
     "description": "Open your first legendary Glowbag.",
     "icon": "first_legendary_colored.png",
-    "lockedIcon": "first_legendary_locked.png"
+    "lockedIcon": "first_legendary_locked.png",
+    "titleUnlock": {
+      "id": "legend_unlocked",
+      "name": "Legend Unlocked",
+      "rarity": "epic"
+    }
   },
   {
     "id": "early_bird",
     "name": "Early Bird",
-    "description": "Meditate before 7am.",
+    "description": "Focus before 7am.",
     "icon": "early_bird_colored.png",
-    "lockedIcon": "early_bird_locked.png"
+    "lockedIcon": "early_bird_locked.png",
+    "titleUnlock": {
+      "id": "sunrise_sage",
+      "name": "Sunrise Sage",
+      "rarity": "rare"
+    }
   },
   {
     "id": "night_owl",
     "name": "Night Owl",
-    "description": "Meditate after 10pm.",
+    "description": "Focus after 10pm.",
     "icon": "night_owl_colored.png",
-    "lockedIcon": "night_owl_locked.png"
+    "lockedIcon": "night_owl_locked.png",
+    "titleUnlock": {
+      "id": "moonlit_mind",
+      "name": "Moonlit Mind",
+      "rarity": "rare"
+    }
   },
   {
     "id": "quest_master",
     "name": "Quest Master",
     "description": "Complete all daily quests in one day.",
     "icon": "quest_master_colored.png",
-    "lockedIcon": "quest_master_locked.png"
+    "lockedIcon": "quest_master_locked.png",
+    "titleUnlock": {
+      "id": "daily_disciple",
+      "name": "Daily Disciple",
+      "rarity": "epic"
+    }
   }
-] 
+]

@@ -100,6 +100,13 @@ const HomeScreen = () => {
     getUserData();
     getTodayCheckIn();
     console.log('HomeScreen MOUNT: userData:', userData, 'isLoadingUser:', isLoadingUser, 'userError:', userError);
+    // Defensive quest initialization
+    const quests = useGameStore.getState().quests;
+    console.log('HomeScreen MOUNT: quests:', quests);
+    if (!quests.dailyQuests || quests.dailyQuests.length === 0) {
+      console.log('HomeScreen: No dailyQuests found, initializing...');
+      useGameStore.getState().resetQuests();
+    }
     if (userData?.uid) {
       getFriendCode(userData.uid).then(code => {
         if (code) {

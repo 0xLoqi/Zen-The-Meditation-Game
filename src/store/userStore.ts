@@ -6,6 +6,7 @@ import { grant } from '../services/CosmeticsService';
 import { useAuthStore } from './authStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setUserData } from '../firebase/user';
+import { useGameStore } from './index';
 
 interface UserState {
   userData: User | null;
@@ -92,6 +93,10 @@ export const useUserStore = create<UserState>((set, get) => ({
         return;
       }
       set({ userData: userDataFromService, isLoadingUser: false });
+      // Patch: Ensure daily quests are initialized if missing/empty after login
+      if (!userDataFromService.quests || !userDataFromService.quests.dailyQuests || userDataFromService.quests.dailyQuests.length === 0) {
+        useGameStore.getState().resetQuests();
+      }
     } catch (error: any) {
       console.error('[userStore.getUserData] Error:', error);
       set({ userError: error.message, isLoadingUser: false });

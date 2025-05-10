@@ -285,7 +285,7 @@ const MeditationSelectionScreen = () => {
         {/* Sticky Start Button */}
         <View style={styles.stickyStartButtonContainer}>
           <Button
-            title={selectedDuration ? `Begin ${selectedDuration} min Meditation` : 'Begin Meditation'}
+            title={selectedDuration ? `Begin ${selectedDuration} min Session` : 'Begin Session'}
             onPress={startMeditation}
             disabled={!selectedDuration}
             style={styles.startButton}
